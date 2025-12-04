@@ -132,7 +132,7 @@ app.post("/proxy/topaz/ewb/generate", (req, res) => {
 /* ======================================================================
    4. PRINT E-INVOICE (PDF)
    ====================================================================== */
-
+// Express route: /proxy/einvoice/print
 app.get("/proxy/einvoice/print", async (req, res) => {
   try {
     const { template = "STANDARD", id } = req.query;
@@ -141,26 +141,30 @@ app.get("/proxy/einvoice/print", async (req, res) => {
       return res.status(400).json({ error: "Missing id parameter" });
     }
 
-    const response = await axios.get(
-      `${BASE_URL}/irisgst/onyx/einvoice/print`,
-      {
-        params: { template, id },
-        headers: {
-          Accept: "*/*",
-          ...authHeaders(req),
-        },
-        responseType: "arraybuffer",
-      }
-    );
+    console.log("Proxy Headers:", req.headers, "Template:", template, "ID:", id);
 
-    res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename=einvoice_${id}.pdf`,
+    const response = await axios.get(`${BASE_URL}/irisgst/onyx/einvoice/print`, {
+      params: { template, id },
+      headers: {
+        "X-Auth-Token": authHeaders(req)["X-Auth-Token"],
+        companyId: authHeaders(req).companyId,
+        product: authHeaders(req).product,
+        Accept: "application/pdf",      // important for PDF
+      },
+      responseType: "arraybuffer",      // must be arraybuffer for PDF
     });
+
+    // Set proper response headers
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=einvoice_${id}.pdf`
+    );
 
     res.send(response.data);
   } catch (error) {
-    console.error("E-Invoice Print Error", error.message);
+    console.error("E-Invoice Print Error:", error.message, error.response?.data);
+
     res
       .status(error.response?.status || 500)
       .json(error.response?.data || { error: "Print failed" });
