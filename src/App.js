@@ -44,94 +44,94 @@ import CancelEwb from "./E-invoice/EwaybillBYIRN/CancelEwb";
 const EwaybillPrintSummary = () => <h2>EWB Print Summary</h2>;
 
 const ProtectedRoute = ({ isAllowed, children }) =>
-  isAllowed ? children : <Navigate to="/" replace />;
+ isAllowed ? children : <Navigate to="/" replace />;
 
 const App = () => {
-  const [allowEwayLogin, setAllowEwayLogin] = useState(false);
-  const [allowEinvoiceLogin, setAllowEinvoiceLogin] = useState(false);
+ const [allowEwayLogin, setAllowEwayLogin] = useState(false);
+const [allowEinvoiceLogin, setAllowEinvoiceLogin] = useState(false);
 
-  return (
-    <Router>
-      <div style={{ display: "flex", minHeight: "100vh" }}>
-        <Sidebar />
+return (
+<Router>
+ <div style={{ display: "flex", minHeight: "100vh" }}>
+ <Sidebar />
 
-        <div style={{ flex: 1, padding: 20, background: "#F5F5F7" }}>
-          <Routes>
+ <div style={{ flex: 1, padding: 20, background: "#F5F5F7" }}>
+ <Routes>
 
-            {/* ───────── Dashboard ───────── */}
-            <Route
-              path="/"
-              element={
-                <Dashboard
-                  setAllowEwayLogin={setAllowEwayLogin}
-                  setAllowEinvoiceLogin={setAllowEinvoiceLogin}
-                />
-              }
-            />
+ {/* ───────── Dashboard ───────── */}
+ <Route
+ path="/"
+ element={
+ <Dashboard
+ setAllowEwayLogin={setAllowEwayLogin}
+ setAllowEinvoiceLogin={setAllowEinvoiceLogin}
+ />
+ }
+ />
 
-            {/* ───────── Login ───────── */}
-            <Route path="/ewaybill-login" element={<EWayBillLoginPage />} />
-            <Route path="/einvoice-login" element={<EInvoiceLoginPage />} />
+ {/* ───────── Login ───────── */}
+ <Route path="/ewaybill-login" element={<EWayBillLoginPage />} />
+ <Route path="/einvoice-login" element={<EInvoiceLoginPage />} />
 
-            {/* ───────── EWB Core ───────── */}
-            <Route path="/ewb-generate-print" element={
-              <ProtectedRoute isAllowed={allowEwayLogin}>
-                <EwbGenerateAndPrint />
-              </ProtectedRoute>
-            } />
-            <Route path="/ewb-print" element={<EwaybillPrint />} />
-            <Route path="/ewb-print-summary" element={<EwaybillPrintSummary />} />
+ {/* ───────── EWB Core ───────── */}
+ <Route path="/ewb-generate-print" element={
+ <ProtectedRoute isAllowed={allowEwayLogin}>
+ <EwbGenerateAndPrint />
+ </ProtectedRoute>
+ } />
+ <Route path="/ewb-print" element={<EwaybillPrint />} />
+ <Route path="/ewb-print-summary" element={<EwaybillPrintSummary />} />
 
-            {/* ───────── Fetch EWB ───────── */}
-            <Route path="/ewb-details" element={<EwbDetails />} />
-            <Route path="/ewb-details-by-no" element={<EwbDetailsbyEwbNo />} />
+ {/* ───────── Fetch EWB ───────── */}
+ <Route path="/ewb-details" element={<EwbDetails />} />
+ <Route path="/ewb-details-by-no" element={<EwbDetailsbyEwbNo />} />
 
-            {/* ───────── EWB by IRN ───────── */}
-            <Route path="/ewb-by-irn-generate" element={
-              <ProtectedRoute isAllowed={allowEwayLogin}>
-                <GenerateEwbByIrn />
-              </ProtectedRoute>
-            } />
-            <Route path="/ewb-by-irn-cancel" element={
-              <ProtectedRoute isAllowed={allowEwayLogin}>
-                <CancelEwb />
-              </ProtectedRoute>
-            } />
+ {/* ───────── EWB by IRN ───────── */}
+ <Route path="/ewb-by-irn-generate" element={
+ <ProtectedRoute isAllowed={allowEwayLogin}>
+ <GenerateEwbByIrn />
+ </ProtectedRoute>
+ } />
+ <Route path="/ewb-by-irn-cancel" element={
+ <ProtectedRoute isAllowed={allowEwayLogin}>
+ <CancelEwb />
+ </ProtectedRoute>
+ } />
 
-            {/* ───────── E-Invoice Core ───────── */}
-            <Route path="/einvoice-generate" element={
-              <ProtectedRoute isAllowed={allowEinvoiceLogin}>
-                <GenerateAndPrintEinvoice />
-              </ProtectedRoute>
-            } />
-            <Route path="/einvoice-cancel-irn" element={<CancelIRN />} />
-            <Route path="/einvoice-get-by-irn" element={<GetInvByIrn />} />
-            <Route path="/einvoice-get-by-doc" element={<GetIrnByDocDetails />} />
+ {/* ───────── E-Invoice Core ───────── */}
+ <Route path="/einvoice-generate" element={
+ <ProtectedRoute isAllowed={allowEinvoiceLogin}>
+ <GenerateAndPrintEinvoice />
+ </ProtectedRoute>
+ } />
+ <Route path="/einvoice-cancel-irn" element={<CancelIRN />} />
+ <Route path="/einvoice-get-by-irn" element={<GetInvByIrn />} />
+ <Route path="/einvoice-get-by-doc" element={<GetIrnByDocDetails />} />
 
             {/* ───────── Print E-Invoice ───────── */}
             <Route path="/print-e-invoice-irn" element={<EInvoicePrintByIRN />} />
             
-            {/* ───────── Upload Invoice ───────── */}
-            <Route path="/upload-invoices" element={<UploadInvoices />} />
-            <Route path="/uploaded-file-status" element={<UploadedFileStatus />} />
+ {/* ───────── Upload Invoice ───────── */}
+<Route path="/upload-invoices" element={<UploadInvoices />} />
+ <Route path="/uploaded-file-status" element={<UploadedFileStatus />} />
 
-            {/* ───────── View Invoice ───────── */}
-            <Route path="/single-invoice-details" element={<Detailsofsingleinvoice />} />
-            <Route path="/list-of-invoices" element={<ListOfInvoices />} />
+ {/* ───────── View Invoice ───────── */}
+ <Route path="/single-invoice-details" element={<Detailsofsingleinvoice />} />
+ <Route path="/list-of-invoices" element={<ListOfInvoices />} />
 
-            {/* ───────── Print ───────── */}
+ {/* ───────── Print ───────── */}
             {/* The previous /einvoice-print route using the helper EInvoicePrint is removed/updated.
             If you want to keep the old path, you can map it to the new component: */}
             <Route path="/einvoice-print" element={<EInvoicePrintByIRN />} />
 
-            {/* ───────── 404 ───────── */}
-            <Route path="*" element={<h2>404 | Page Not Found</h2>} />
+ {/* ───────── 404 ───────── */}
+ <Route path="*" element={<h2>404 | Page Not Found</h2>} />
 
-          </Routes>
-        </div>
-      </div>
-    </Router>
-  );
+</Routes>
+ </div>
+ </div>
+</Router>
+ );
 };
 
 export default App;
