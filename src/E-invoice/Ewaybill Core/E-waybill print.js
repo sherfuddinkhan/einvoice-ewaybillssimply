@@ -191,21 +191,6 @@ const EwaybillPrint = () => {
   return (
     <div style={{ maxWidth: 720, margin: "28px auto", padding: 20, fontFamily: "Arial, sans-serif" }}>
       <h2 style={{ marginBottom: 8 }}>Print E-Way Bill (EWB)</h2>
-
-      <div style={{ marginBottom: 18, padding: 12, background: "#f7f9fb", borderRadius: 8 }}>
-        <strong style={{ display: "block", marginBottom: 6 }}>Authentication (auto-filled)</strong>
-        <pre style={{ margin: 0, fontSize: 13, lineHeight: 1.4, maxHeight: 120, overflow: "auto" }}>
-          {JSON.stringify(headersPreview, null, 2)}
-        </pre>
-      </div>
-
-      <div style={{ marginBottom: 18, padding: 12, background: "#fff", borderRadius: 8, border: "1px solid #eee" }}>
-        <strong style={{ display: "block", marginBottom: 8 }}>Payload Preview</strong>
-        <pre style={{ margin: 0, fontSize: 13, lineHeight: 1.4, maxHeight: 160, overflow: "auto" }}>
-          {JSON.stringify(payloadPreview, null, 2)}
-        </pre>
-      </div>
-
       <form onSubmit={handlePrint} style={{ marginBottom: 16 }}>
         <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>EWB Number(s)</label>
         <input

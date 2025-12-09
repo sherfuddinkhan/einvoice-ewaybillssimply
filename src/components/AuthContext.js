@@ -1,75 +1,111 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from "react";
 
-// Using a placeholder constant since actual Firebase config/auth isn't visible.
-const STORAGE_KEY = 'auth_token_for_proxy';
+/* ───────────────────────────────────────────
+   STORAGE KEYS (SUPPORTED PRODUCTS)
+─────────────────────────────────────────── */
+const EWAY_KEY = "iris_ewaybill_shared_config";
+const EINVOICE_KEY = "iris_einvoice_shared_config";
 
-// 1. Create the Context
+/* ───────────────────────────────────────────
+   Create Context
+─────────────────────────────────────────── */
 const AuthContext = createContext(null);
 
-// 2. Custom Hook to use the Auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    // This error indicates the component is used outside the provider
-    throw new Error('useAuth must be used within an AuthProvider');
+/* ───────────────────────────────────────────
+   Safe JSON parse helper
+─────────────────────────────────────────── */
+const safeParse = (value, fallback = {}) => {
+  try {
+    return JSON.parse(value || "null") ?? fallback;
+  } catch {
+    return fallback;
   }
-  return context;
 };
 
-// 3. Provider Component
+/* ───────────────────────────────────────────
+   useAuth Hook
+─────────────────────────────────────────── */
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+};
+
+/* ───────────────────────────────────────────
+   Auth Provider
+─────────────────────────────────────────── */
 export const AuthProvider = ({ children }) => {
-  const [authToken, setAuthToken] = useState(null);
+  const [token, setToken] = useState(null);
+  const [companyId, setCompanyId] = useState(null);
+  const [product, setProduct] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authReady, setAuthReady] = useState(false);
-  
-  // Initialize state from local storage on mount
+
+  /* ✅ Restore session on refresh */
   useEffect(() => {
-    // In a real Firebase/Canvas app, this is where onAuthStateChanged would run.
-    // For this boilerplate, we check localStorage for a saved token.
-    const token = localStorage.getItem(STORAGE_KEY);
-    if (token) {
-      setAuthToken(token);
+    const eway = safeParse(localStorage.getItem(EWAY_KEY));
+    const einvoice = safeParse(localStorage.getItem(EINVOICE_KEY));
+    const active =
+      eway?.token
+        ? { ...eway, product: "EWAY", key: EWAY_KEY }
+        : einvoice?.token
+        ? { ...einvoice, product: "EINVOICE", key: EINVOICE_KEY }
+        : null;
+    if (active) {
+      setToken(active.token);
+      setCompanyId(active.companyId);
+      setProduct(active.product);
       setIsLoggedIn(true);
     }
+
     setAuthReady(true);
   }, []);
 
-  // Function to be called from the login page upon successful API login
-  const login = (token) => {
-    localStorage.setItem(STORAGE_KEY, token);
-    setAuthToken(token);
+  /* ✅ Unified Login */
+  const login = (store, productType) => {
+    const key =
+      productType === "EINVOICE" ? EINVOICE_KEY : EWAY_KEY;
+
+    localStorage.setItem(key, JSON.stringify(store));
+
+    setToken(store.token);
+    setCompanyId(store.companyId);
+    setProduct(productType);
     setIsLoggedIn(true);
   };
 
-  // Function to handle logout
+  /* ✅ Unified Logout */
   const logout = () => {
-    // Clear the token saved by the proxy login, but typically Firebase logout would handle this.
-    localStorage.removeItem(STORAGE_KEY); 
-    setAuthToken(null);
+    localStorage.removeItem(EWAY_KEY);
+    localStorage.removeItem(EINVOICE_KEY);
+    setToken(null);
+    setCompanyId(null);
+    setProduct(null);
     setIsLoggedIn(false);
   };
 
-  const contextValue = {
-    isLoggedIn,
-    authToken,
-    authReady,
-    login,
-    logout,
-  };
-
   if (!authReady) {
-    // Optional: Render a loading state while checking initial auth status
-    return <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      Loading Authentication...
-    </div>;
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+        Loading Authentication…
+      </div>
+    );
   }
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider
+      value={{
+        token,
+        companyId,
+        product,
+        isLoggedIn,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Export the AuthProvider for wrapping the main App component
 export default AuthProvider;

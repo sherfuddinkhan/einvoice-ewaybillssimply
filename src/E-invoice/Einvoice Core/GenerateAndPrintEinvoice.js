@@ -1,7 +1,8 @@
 // GenerateAndPrintEinvoice.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useAuth } from "./AuthContext";
+// CORRECT (Moves up to src/, then down to components/)
+import { useAuth } from '../../components/AuthContext';
 
 // -------------------------
 // CONSTANTS & KEYS
@@ -347,24 +348,7 @@ const GenerateAndPrintEinvoice = () => {
   return (
     <div style={styles.container}>
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        <h1 style={styles.header}>📄 Generate & Print E-Invoice • IRIS ONYX</h1>
-
-        {/* Headers */}
-        <Section title="Request Headers">
-          <Grid cols={3}>
-            <ReadOnly label="Company ID" value="24" />
-            <ReadOnly label="X-Auth-Token" value={authToken ? authToken.slice(0, 40) + "..." : "Not logged in"} />
-            <ReadOnly label="Product" value="ONYX" />
-          </Grid>
-        </Section>
-
-        {/* Invoice Metadata */}
-        <Section title="Invoice Metadata">
-          <Grid cols={2}>
-            <Input label="Last Generated ID" value={payload.lastGeneratedId} onChange={(v) => setField("lastGeneratedId", v)} />
-          </Grid>
-        </Section>
-
+        <h1 style={styles.header}>Generate & Print E-Invoice</h1>
         {/* Invoice Header */}
         <Section title="Invoice Header Details">
           <Grid cols={4}>

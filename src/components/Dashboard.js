@@ -16,8 +16,8 @@ const Dashboard = ({ setAllowEwayLogin, setAllowEinvoiceLogin }) => {
 
   return (
     <div style={{ padding: 40, textAlign: "center" }}>
-      <h1>Choose a Compliance Service</h1>
-      <p>Select the necessary flow to begin the authentication process.</p>
+      <h1>calibrecue IT solutions </h1>
+      <p>Select the Type of service</p>
 
       <div style={{ display: "flex", justifyContent: "center", gap: "30px" }}>
         

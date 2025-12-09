@@ -1,7 +1,7 @@
 // PrintEinvoice.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../../components/AuthContext";
 
 const LAST_GENERATED_ID_KEY = "iris_last_generated_id";
 
