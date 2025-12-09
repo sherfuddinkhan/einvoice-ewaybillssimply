@@ -17,7 +17,6 @@ import GetInvByIrn from "./E-invoice/Einvoice Core/GetInvByIrn";
 import GetIrnByDocDetails from "./E-invoice/Einvoice Core/GetIrnByDocDetails";
 
 /* ─────────── printE-invoice ─────────── */
-// 🌟 NEW IMPORT ADDED FOR E-invoice print.js 🌟
 import EInvoicePrintByIRN from "./E-invoice/printE-invoice/E-invoice print"; 
 
 /* ─────────── Upload Invoice ─────────── */
@@ -60,13 +59,8 @@ return (
 
  {/* ───────── Dashboard ───────── */}
  <Route
- path="/"
- element={
- <Dashboard
- setAllowEwayLogin={setAllowEwayLogin}
- setAllowEinvoiceLogin={setAllowEinvoiceLogin}
- />
- }
+ path="/" element={<Dashboard setAllowEwayLogin={setAllowEwayLogin} setAllowEinvoiceLogin={setAllowEinvoiceLogin}/>
+}
  />
 
  {/* ───────── Login ───────── */}
@@ -74,8 +68,7 @@ return (
  <Route path="/einvoice-login" element={<EInvoiceLoginPage />} />
 
  {/* ───────── EWB Core ───────── */}
- <Route path="/ewb-generate-print" element={
- <ProtectedRoute isAllowed={allowEwayLogin}>
+ <Route path="/ewb-generate-print" element={<ProtectedRoute isAllowed={allowEwayLogin}>
  <EwbGenerateAndPrint />
  </ProtectedRoute>
  } />
@@ -87,20 +80,16 @@ return (
  <Route path="/ewb-details-by-no" element={<EwbDetailsbyEwbNo />} />
 
  {/* ───────── EWB by IRN ───────── */}
- <Route path="/ewb-by-irn-generate" element={
- <ProtectedRoute isAllowed={allowEwayLogin}>
- <GenerateEwbByIrn />
+ <Route path="/ewb-by-irn-generate" element={<ProtectedRoute isAllowed={allowEwayLogin}>
+ <GenerateEwbByIrn/>
  </ProtectedRoute>
  } />
- <Route path="/ewb-by-irn-cancel" element={
- <ProtectedRoute isAllowed={allowEwayLogin}>
- <CancelEwb />
- </ProtectedRoute>
+ <Route path="/ewb-by-irn-cancel" element={<ProtectedRoute isAllowed={allowEwayLogin}>
+ <CancelEwb /> </ProtectedRoute>
  } />
 
  {/* ───────── E-Invoice Core ───────── */}
- <Route path="/einvoice-generate" element={
- <ProtectedRoute isAllowed={allowEinvoiceLogin}>
+ <Route path="/einvoice-generate" element={<ProtectedRoute isAllowed={allowEinvoiceLogin}>
  <GenerateAndPrintEinvoice />
  </ProtectedRoute>
  } />
@@ -109,7 +98,7 @@ return (
  <Route path="/einvoice-get-by-doc" element={<GetIrnByDocDetails />} />
 
             {/* ───────── Print E-Invoice ───────── */}
-            <Route path="/print-e-invoice-irn" element={<EInvoicePrintByIRN />} />
+<Route path="/print-e-invoice-irn" element={<EInvoicePrintByIRN />} />
             
  {/* ───────── Upload Invoice ───────── */}
 <Route path="/upload-invoices" element={<UploadInvoices />} />
@@ -120,9 +109,9 @@ return (
  <Route path="/list-of-invoices" element={<ListOfInvoices />} />
 
  {/* ───────── Print ───────── */}
-            {/* The previous /einvoice-print route using the helper EInvoicePrint is removed/updated.
-            If you want to keep the old path, you can map it to the new component: */}
-            <Route path="/einvoice-print" element={<EInvoicePrintByIRN />} />
+{/* The previous /einvoice-print route using the helper EInvoicePrint is removed/updated.
+ If you want to keep the old path, you can map it to the new component: */}
+<Route path="/einvoice-print" element={<EInvoicePrintByIRN />} />
 
  {/* ───────── 404 ───────── */}
  <Route path="*" element={<h2>404 | Page Not Found</h2>} />
