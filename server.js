@@ -61,6 +61,29 @@ const proxy = async (res, fn) => {
 /* =====================================================
    1. AUTH
    ===================================================== */
+app.post("/proxy/ewaybill/login", (req, res) => {
+    console.log("Proxying E-Way Bill Login request...");
+    proxy(res, () =>
+        axios.post(`${BASE_URL}/irisgst/mgmt/login`, req.body, {
+            headers: { 
+                Accept: "application/json", 
+                "Content-Type": "application/json" 
+            },
+        })
+    );
+});
+
+app.post("/proxy/change-password", (req, res) =>
+  proxy(res, () =>
+    axios.post(
+      `${BASE_URL}/irisgst/mgmt/public/user/changepassword`,
+      req.body,
+      { headers: { "Content-Type": "application/json" } }
+    )
+  )
+);
+
+
 app.post("/proxy/login", (req, res) =>
   proxy(res, () =>
     axios.post(`${BASE_URL}/irisgst/mgmt/login`, req.body, {

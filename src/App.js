@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-/* ─────────── Login Pages ─────────── */
+/* ─────────── LOGIN ─────────── */
 import EWayBillLoginPage from "./loginAuthentication/EWayBillLoginPage";
 import EInvoiceLoginPage from "./loginAuthentication/EInvoiceLoginPage";
 
-/* ─────────── Layout ─────────── */
+/* ─────────── LAYOUT ─────────── */
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 
@@ -15,7 +15,7 @@ import CancelIRN from "./E-invoice/E-invoice&IRN/CancelIRN";
 import GetInvByIrn from "./E-invoice/E-invoice&IRN/GetInvByIrn";
 import GetIrnByDocDetailsForm from "./E-invoice/E-invoice&IRN/GetIrnByDocDetails";
 
-/* ─────────── E-WAY BILL BY IRN ─────────── */
+/* ─────────── E-WAY BILL FROM IRN ─────────── */
 import GenerateEwbByIrn from "./E-invoice/E-waybill/GenerateEwbByIrn";
 import CancelEwb from "./E-invoice/E-waybill/CancelEwb";
 import GetEwbByIrn from "./E-invoice/E-waybill/GetEwbByIrn";
@@ -31,7 +31,7 @@ import UploadStatus from "./E-invoice/Upload invoice/UploadStatus";
 import InvoiceDetails from "./E-invoice/Viewinvoice/InvoiceDetails";
 import ListEInvoices from "./E-invoice/Viewinvoice/ListEInvoices";
 
-/* ─────────── E-WAY BILL PLACEHOLDERS ─────────── */
+/* ─────────── E-WAY BILL (PLACEHOLDERS) ─────────── */
 const EwbGenerateAndPrint = () => <h2>EWB Generate & Print</h2>;
 const EwaybillPrint = () => <h2>E-Way Bill Print</h2>;
 const EwaybillPrintSummary = () => <h2>EWB Print Summary</h2>;
@@ -39,21 +39,21 @@ const EwaybillPrintSummary = () => <h2>EWB Print Summary</h2>;
 const EwaybillActions = () => <h2>E-Way Bill Actions</h2>;
 const UpdateTransporterId = () => <h2>Update Transporter ID</h2>;
 
-const ConsigneeEwaybill = () => <h2>Consignee E-Way Bills</h2>;
+const ConsigneeEwaybill = () => <h2>Consignee E-Way Bill</h2>;
 const FetchEwbByDate = () => <h2>Fetch EWB By Date</h2>;
-const TransporterEwaybill = () => <h2>Transporter E-Way Bills</h2>;
+const TransporterEwaybill = () => <h2>Transporter E-Way Bill</h2>;
 
-const EwaybillByDocType = () => <h2>EWB By Document Number & Type</h2>;
+const EwaybillByDocType = () => <h2>EWB by Doc Number & Type</h2>;
 const GeneratedEwbByDate = () => <h2>Generated EWB By Date</h2>;
-const GetEwbByDocNo = () => <h2>Get EWB By Doc No</h2>;
-const GetEwbDocDownload = () => <h2>EWB Doc Download</h2>;
-const GetEwbDocStatus = () => <h2>EWB Doc Status</h2>;
+const GetEwbByDocNo = () => <h2>Get EWB by Doc No</h2>;
+const GetEwbDocDownload = () => <h2>EWB Document Download</h2>;
+const GetEwbDocStatus = () => <h2>EWB Document Status</h2>;
 
-const MultiVehicleInitiate = () => <h2>Multi Vehicle Initiate</h2>;
-const MultiVehicleAdd = () => <h2>Multi Vehicle Add</h2>;
-const MultiVehicleEdit = () => <h2>Multi Vehicle Edit</h2>;
-const MultiVehicleGroupDetails = () => <h2>Multi Vehicle Group Details</h2>;
-const MultiVehicleRequests = () => <h2>Multi Vehicle Requests</h2>;
+const MultiVehicleInitiate = () => <h2>Multi-Vehicle Initiate</h2>;
+const MultiVehicleAdd = () => <h2>Multi-Vehicle Add</h2>;
+const MultiVehicleEdit = () => <h2>Multi-Vehicle Edit</h2>;
+const MultiVehicleGroupDetails = () => <h2>Multi-Vehicle Group Details</h2>;
+const MultiVehicleRequests = () => <h2>Multi-Vehicle Requests</h2>;
 
 /* ─────────── PROTECTED ROUTE ─────────── */
 const ProtectedRoute = ({ isAllowed, children }) =>
@@ -86,12 +86,19 @@ const App = () => {
             <Route path="/ewaybill-login" element={<EWayBillLoginPage />} />
             <Route path="/einvoice-login" element={<EInvoiceLoginPage />} />
 
-            {/* ───────── E-WAY BILL CORE ───────── */}
-            <Route path="/ewb-generate-print" element={<ProtectedRoute isAllowed={allowEwayLogin}><EwbGenerateAndPrint /></ProtectedRoute>} />
+            {/* ───────── EWB CORE ───────── */}
+            <Route
+              path="/ewb-generate-print"
+              element={
+                <ProtectedRoute isAllowed={allowEwayLogin}>
+                  <EwbGenerateAndPrint />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/ewb-print" element={<EwaybillPrint />} />
             <Route path="/ewb-print-summary" element={<EwaybillPrintSummary />} />
 
-            {/* ───────── E-WAY BILL ACTIONS ───────── */}
+            {/* ───────── EWB ACTIONS ───────── */}
             <Route path="/ewaybill-actions" element={<EwaybillActions />} />
             <Route path="/update-transporter-id" element={<UpdateTransporterId />} />
 
@@ -115,7 +122,14 @@ const App = () => {
             <Route path="/multi-vehicle-requests" element={<MultiVehicleRequests />} />
 
             {/* ───────── E-INVOICE CORE ───────── */}
-            <Route path="/einvoice-generate" element={<ProtectedRoute isAllowed={allowEinvoiceLogin}><GenerateAndPrintEinvoice /></ProtectedRoute>} />
+            <Route
+              path="/einvoice-generate"
+              element={
+                <ProtectedRoute isAllowed={allowEinvoiceLogin}>
+                  <GenerateAndPrintEinvoice />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/einvoice-cancel-irn" element={<CancelIRN />} />
             <Route path="/einvoice-get-by-irn" element={<GetInvByIrn />} />
             <Route path="/einvoice-get-by-doc" element={<GetIrnByDocDetailsForm />} />
