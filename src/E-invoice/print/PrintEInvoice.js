@@ -99,11 +99,6 @@ const PrintEInvoice = () => {
       fontFamily: 'Segoe UI, Arial, sans-serif',
       minHeight: '100vh'
     }}>
-      <h1 style={{ color: '#2e7d32', marginBottom: '10px' }}>Print E-Invoice PDF</h1>
-      <p style={{ color: '#555', fontSize: '15px' }}>
-        companyId & Token auto-filled from previous actions
-      </p>
-
       <div style={{
         background: 'white',
         padding: '35px',
@@ -111,29 +106,6 @@ const PrintEInvoice = () => {
         boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
         maxWidth: '700px'
       }}>
-        
-        {/* Header Status */}
-        <h3 style={{ color: '#1b5e20' }}>Authentication Status</h3>
-        <div style={{
-          background: isAuthReady ? '#e8f5e8' : '#ffebee',
-          padding: '15px',
-          borderRadius: '12px',
-          fontFamily: 'monospace',
-          fontSize: '14px'
-        }}>
-          {isAuthReady ? (
-            <>
-              <div><strong>companyId:</strong> {config.headers.companyId}</div>
-              <div><strong>X-Auth-Token:</strong> {config.headers['X-Auth-Token'].slice(0, 30)}...</div>
-              <div style={{ color: '#1b5e20', marginTop: '8px', fontWeight: 'bold' }}>Ready to print</div>
-            </>
-          ) : (
-            <div style={{ color: '#c62828' }}>
-              Not authenticated yet. Complete any other action first.
-            </div>
-          )}
-        </div>
-
         {/* Input */}
         <div style={{ marginTop: '30px' }}>
 

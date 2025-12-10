@@ -123,9 +123,6 @@ const InvoiceDetails = () => {
         minHeight: "100vh",
       }}
     >
-      <h1 style={{ color: "#2e7d32" }}>E-Invoice Details & Print</h1>
-      <p style={{ color: "#555" }}>companyId & Token auto-filled</p>
-
       <div
         style={{
           background: "white",
@@ -134,14 +131,6 @@ const InvoiceDetails = () => {
           boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
         }}
       >
-        <h3>Auto-Filled Headers</h3>
-        {["companyId", "X-Auth-Token"].map((key) => (
-          <div key={key} style={{ margin: "12px 0" }}>
-            <strong>{key}:</strong>{" "}
-            {config.headers[key] ? "Filled" : "Not set"}
-          </div>
-        ))}
-
         <div style={{ margin: "20px 0" }}>
           <strong>einvId:</strong>
           <input

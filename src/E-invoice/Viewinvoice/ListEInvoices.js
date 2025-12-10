@@ -130,28 +130,6 @@ const ListEInvoices = () => {
       <h1 style={{ color: "#8e24aa" }}>List E-Invoices</h1>
 
       {/* Headers */}
-      <h3 style={{ marginTop: "25px" }}>Request Headers</h3>
-      {Object.keys(headers).map((key) => (
-        <div key={key} style={{ marginBottom: "10px" }}>
-          <label>
-            <strong>{key}: </strong>
-          </label>
-          <input
-            type="text"
-            value={headers[key]}
-            onChange={(e) =>
-              setHeaders((prev) => ({ ...prev, [key]: e.target.value }))
-            }
-            style={{
-              width: "100%",
-              padding: "8px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-            }}
-          />
-        </div>
-      ))}
-
       {/* Payload */}
       <h3 style={{ marginTop: "25px" }}>Request Payload</h3>
       <textarea

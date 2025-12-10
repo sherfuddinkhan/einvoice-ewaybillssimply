@@ -75,7 +75,7 @@ const UploadInvoice = () => {
   };
 
   return (
-    <div style={{ padding: 30, background: "#f5f5f5", minHeight: "100vh" }}>
+    <div style={{ padding: 30, background: "#f5f5f5", minHeight: "50vh" }}>
       <h1 style={{ color: "#2d6a4f" }}>Upload Invoice (CSV / ZIP)</h1>
       <p style={{ color: "#555" }}>companyId, X-Auth-Token auto-filled from login step</p>
 
@@ -87,22 +87,16 @@ const UploadInvoice = () => {
           boxShadow: "0 5px 20px rgba(0,0,0,0.1)"
         }}
       >
-        {/* Auto Headers */}
-        <h3>Headers (Auto-populated)</h3>
-        <p><strong>companyId:</strong> {headers.companyId || "NOT SET"}</p>
-        <p><strong>X-Auth-Token:</strong> {headers["X-Auth-Token"] || "NOT SET"}</p>
-        <p><strong>product:</strong> ONYX</p>
-
         {/* companyUniqueCode */}
         <div style={{ margin: "15px 0" }}>
-          <label><strong>companyUniqueCode (GSTIN)</strong></label>
+          <label><strong>companyUniqueCode:</strong></label>
           <input
             type="text"
             value={companyUniqueCode}
             onChange={(e) => setCompanyUniqueCode(e.target.value)}
             placeholder="Enter GSTIN"
             style={{
-              width: "100%",
+              width: "30%",
               padding: "10px",
               marginTop: "8px",
               fontSize: "16px"
@@ -117,17 +111,16 @@ const UploadInvoice = () => {
             type="file"
             accept=".csv,.zip"
             onChange={(e) => setFile(e.target.files[0])}
-            style={{ width: "100%", paddingTop: 10 }}
+            style={{ width: "30%", paddingTop: 10 }}
           />
         </div>
 
         {/* Upload Button */}
-        <button
-          onClick={handleFileUpload}
+  <button onClick={handleFileUpload}
           disabled={loading}
           style={{
             marginTop: 20,
-            width: "100%",
+            width: "30%",
             padding: "15px",
             fontSize: "18px",
             background: "#2d6a4f",
@@ -167,7 +160,7 @@ const UploadInvoice = () => {
             borderRadius: 10
           }}
         >
-{JSON.stringify(response, null, 2)}
+            {JSON.stringify(response, null, 2)}
         </pre>
       )}
     </div>

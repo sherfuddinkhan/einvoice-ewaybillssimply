@@ -62,7 +62,7 @@ const UploadStatus = () => {
   };
 
   return (
-    <div style={{ padding: 30, background: "#f5f5f5", minHeight: "100vh" }}>
+    <div style={{ padding: 30, background: "#f5f5f5", minHeight: "50vh" }}>
       <h1 style={{ color: "#1d3557" }}>Check Upload Status</h1>
 
       <div
@@ -73,21 +73,17 @@ const UploadStatus = () => {
           boxShadow: "0 5px 25px rgba(0,0,0,0.1)",
         }}
       >
-        <h3>Auto Headers</h3>
-        <p><strong>companyId:</strong> {headers.companyId || "NOT SET"}</p>
-        <p><strong>X-Auth-Token:</strong> {headers["X-Auth-Token"] || "NOT SET"}</p>
-        <p><strong>product:</strong> ONYX</p>
-
+        
         {/* Upload ID */}
         <div style={{ marginTop: 20 }}>
-          <label><strong>Upload ID</strong></label>
+          <label><strong>Upload ID  </strong></label>
           <input
             type="text"
             value={uploadId}
             onChange={(e) => setUploadId(e.target.value)}
             placeholder="Enter Upload ID"
             style={{
-              width: "100%",
+              width: "50%",
               padding: "12px",
               marginTop: "8px",
               fontSize: "16px",
@@ -101,7 +97,7 @@ const UploadStatus = () => {
           disabled={loading}
           style={{
             marginTop: 20,
-            width: "100%",
+            width: "50%",
             padding: "15px",
             fontSize: "18px",
             background: "#1d3557",
