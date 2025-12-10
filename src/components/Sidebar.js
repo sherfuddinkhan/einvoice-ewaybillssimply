@@ -42,6 +42,14 @@ const Sidebar = () => {
         { path: "/UpdateTransporterId", label: "UpdateTransporterId" },
       ],
     },
+     {
+      title: "Ewaybill Core",
+      items: [
+        { path: "/EwbGenerateAndPrint", label: "EwbGenerateAndPrint" },
+        { path: "/FetchEWBbyNumber", label: "FetchEWBbyNumber" },
+        { path: "/ GetEwbDetails", label: " GetEwbDetails" },
+      ],
+    },
 
     // Fetch Ewaybill (Matches placeholder routes defined in App.js)
     {

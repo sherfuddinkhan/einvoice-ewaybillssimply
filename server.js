@@ -1,14 +1,21 @@
+// ===============================
+// server.js (CLEAN FINAL VERSION)
+// ===============================
+
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const multer = require("multer");
+const FormData = require("form-data");
 
 const app = express();
 const PORT = 3001;
+const BASE_URL = "https://stage-api.irisgst.com";
 
-// ----------------------
+// ===============================
 // Middleware
-// ----------------------
+// ===============================
 app.use(
   cors({
     origin: ["http://localhost:3000", "http://localhost:3002"],
@@ -16,203 +23,366 @@ app.use(
   })
 );
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// ----------------------
-// Constants & Helpers
-// ----------------------
-const BASE_URL = "https://stage-api.irisgst.com";
+// ===============================
+// File Upload (Memory)
+// ===============================
+const upload = multer();
 
+// ===============================
+// Helper: Auth Headers
+// ===============================
 const authHeaders = (req) => ({
   "X-Auth-Token":
     req.headers["x-auth-token"] ||
     req.headers["authorization"]?.replace("Bearer ", "") ||
     "",
   companyId: req.headers["companyid"] || req.headers["companyId"] || "",
-  product: req.headers["product"] || "",
+  product: req.headers["product"] || "ONYX",
 });
 
-// Generic proxy wrapper
-const proxyRequest = async (res, requestFn) => {
+// ===============================
+// Helper: Proxy Wrapper
+// ===============================
+const proxy = async (res, fn) => {
   try {
-    const response = await requestFn();
+    const response = await fn();
     res.json(response.data);
-  } catch (error) {
-    console.error("Proxy Error:", error.response?.data || error.message);
+  } catch (err) {
+    console.error("Proxy Error:", err.response?.data || err.message);
     res
-      .status(error.response?.status || 500)
-      .json(error.response?.data || { error: "Proxy error" });
+      .status(err.response?.status || 500)
+      .json(err.response?.data || { error: "Proxy Error" });
   }
 };
 
-/* ======================================================================
-   1. LOGIN (E-INVOICE / TOPAZ)
-   ====================================================================== */
-
-app.post("/proxy/einvoice/login", (req, res) => {
-  console.log("E-Invoice Login Payload:", req.body);
-  proxyRequest(res, () =>
+/* =====================================================
+   1. AUTH
+   ===================================================== */
+app.post("/proxy/login", (req, res) =>
+  proxy(res, () =>
     axios.post(`${BASE_URL}/irisgst/mgmt/login`, req.body, {
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
     })
-  );
-});
+  )
+);
 
-app.post("/proxy/ewaybill/login", (req, res) => {
-  console.log("E-Way Bill Login Payload:", req.body);
-  proxyRequest(res, () =>
-    axios.post(`${BASE_URL}/irisgst/mgmt/login`, req.body, {
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    })
-  );
-});
+app.post("/proxy/change-password", (req, res) =>
+  proxy(res, () =>
+    axios.post(
+      `${BASE_URL}/irisgst/mgmt/public/user/changepassword`,
+      req.body,
+      { headers: { "Content-Type": "application/json" } }
+    )
+  )
+);
 
-/* ======================================================================
-   2. IRN (E-INVOICE)
-   ====================================================================== */
+/* =====================================================
+   2. E-INVOICE (ONYX)
+   ===================================================== */
 
 // Generate IRN
-app.post("/proxy/irn/addInvoice", async (req, res) => {
-  try {
-    const headers = authHeaders(req);
-
-    if (!headers["X-Auth-Token"] || !headers.companyId) {
-      return res
-        .status(400)
-        .json({ error: "Missing required headers: X-Auth-Token or companyId" });
-    }
-
-    const response = await axios.post(
+app.post("/proxy/irn/addInvoice", (req, res) =>
+  proxy(res, () =>
+    axios.post(
       `${BASE_URL}/irisgst/onyx/irn/addInvoice`,
       req.body,
+      { headers: { ...authHeaders(req), "Content-Type": "application/json" } }
+    )
+  )
+);
+
+// Get Invoice by IRN
+app.get("/proxy/irn/getInvByIrn", (req, res) =>
+  proxy(res, () =>
+    axios.get(`${BASE_URL}/irisgst/onyx/irn/getInvByIrn`, {
+      params: req.query,
+      headers: authHeaders(req),
+    })
+  )
+);
+
+// Get IRN by Document
+app.get("/proxy/irn/getIrnByDocDetails", (req, res) =>
+  proxy(res, () =>
+    axios.get(`${BASE_URL}/irisgst/onyx/irn/getIrnByDocDetails`, {
+      params: {
+        ...req.query,
+        docDate: req.query.docDate?.replace(/-/g, "/"),
+      },
+      headers: authHeaders(req),
+    })
+  )
+);
+
+// Cancel IRN
+app.put("/proxy/irn/cancel", (req, res) =>
+  proxy(res, () =>
+    axios.put(`${BASE_URL}/irisgst/onyx/irn/cancel`, req.body, {
+      headers: { ...authHeaders(req), "Content-Type": "application/json" },
+    })
+  )
+);
+
+// Verify Signed QR
+app.post("/proxy/einvoice/verifySignature", (req, res) =>
+  proxy(res, () =>
+    axios.post(
+      `${BASE_URL}/irisgst/onyx/einvoice/verifySignature`,
+      { jwt: req.body.jwt },
+      { headers: { ...authHeaders(req), "Content-Type": "application/json" } }
+    )
+  )
+);
+
+// Print E-Invoice (PDF)
+app.get("/proxy/einvoice/print", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/irisgst/onyx/einvoice/print`,
       {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          ...headers,
-        },
+        params: req.query,
+        headers: { ...authHeaders(req), Accept: "application/pdf" },
+        responseType: "arraybuffer",
       }
     );
 
-    res.json(response.data);
-  } catch (error) {
-    console.error("IRN Generation Error:", error.response?.data || error.message);
-    res
-      .status(error.response?.status || 500)
-      .json(error.response?.data || { error: "Failed to generate IRN" });
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename=einvoice_${req.query.id}.pdf`,
+    });
+    res.send(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data);
   }
 });
 
-
-
-/* ======================================================================
+/* =====================================================
    3. E-WAY BILL (TOPAZ)
-   ====================================================================== */
+   ===================================================== */
 
 // Generate EWB
-app.post("/proxy/topaz/ewb/generate", (req, res) => {
-  proxyRequest(res, () =>
+app.post("/proxy/topaz/ewb/generate", (req, res) =>
+  proxy(res, () =>
     axios.post(`${BASE_URL}/irisgst/topaz/api/v0.3/ewb`, req.body, {
       headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        product: "TOPAZ",
         ...authHeaders(req),
+        product: "TOPAZ",
+        "Content-Type": "application/json",
       },
     })
-  );
-});
+  )
+);
 
-/* ======================================================================
-   4. PRINT E-INVOICE (PDF)
-   ====================================================================== */
-// Express route: /proxy/einvoice/print
-app.get("/proxy/einvoice/print", async (req, res) => {
-  try {
-    const { template = "STANDARD", id } = req.query;
+// Get EWB by Number
+app.get("/proxy/topaz/ewb/byNumber", (req, res) =>
+  proxy(res, () =>
+    axios.get(`${BASE_URL}/irisgst/topaz/api/v0.3/getewb/ewbNo`, {
+      params: req.query,
+      headers: { ...authHeaders(req), product: "TOPAZ" },
+    })
+  )
+);
 
-    if (!id) {
-      return res.status(400).json({ error: "Missing id parameter" });
-    }
-
-    console.log("Proxy Headers:", req.headers, "Template:", template, "ID:", id);
-
-    const response = await axios.get(`${BASE_URL}/irisgst/onyx/einvoice/print`, {
-      params: { template, id },
+// EWB Actions (Cancel / Update / Extend)
+app.put("/proxy/topaz/ewb/action", (req, res) =>
+  proxy(res, () =>
+    axios.put(`${BASE_URL}/irisgst/topaz/api/v0.3/ewb`, req.body, {
       headers: {
-        "X-Auth-Token": authHeaders(req)["X-Auth-Token"],
-        companyId: authHeaders(req).companyId,
-        product: authHeaders(req).product,
-        Accept: "application/pdf",      // important for PDF
+        ...authHeaders(req),
+        product: "TOPAZ",
+        "Content-Type": "application/json",
       },
-      responseType: "arraybuffer",      // must be arraybuffer for PDF
-    });
+    })
+  )
+);
 
-    // Set proper response headers
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=einvoice_${id}.pdf`
-    );
-
-    res.send(response.data);
-  } catch (error) {
-    console.error("E-Invoice Print Error:", error.message, error.response?.data);
-
-    res
-      .status(error.response?.status || 500)
-      .json(error.response?.data || { error: "Print failed" });
-  }
-});
-
-/* ======================================================================
-   5. PRINT E-WAY BILL (PDF)
-   ====================================================================== */
-
+// Print EWB (PDF)
 const printEWB = async (endpoint, req, res, filename) => {
   try {
-    const response = await axios.post(`${BASE_URL}${endpoint}`, req.body, {
-      headers: {
-        Accept: "application/pdf",
-        "Content-Type": "application/json",
-        product: "TOPAZ",
-        ...authHeaders(req),
-      },
-      responseType: "arraybuffer",
+    const response = await axios.post(
+      `${BASE_URL}${endpoint}`,
+      req.body,
+      {
+        headers: {
+          ...authHeaders(req),
+          product: "TOPAZ",
+          Accept: "application/pdf",
+          "Content-Type": "application/json",
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename=${filename}`,
     });
-
-    res.set("Content-Type", "application/pdf");
-    res.set("Content-Disposition", `attachment; filename=${filename}`);
-
     res.send(response.data);
-  } catch (error) {
-    console.error("EWB Print Error", error.message);
-    res
-      .status(error.response?.status || 500)
-      .json(error.response?.data || { error: "Print failed" });
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data);
   }
 };
 
-// Print EWB Details
 app.post("/proxy/topaz/ewb/printDetails", (req, res) =>
   printEWB("/irisgst/topaz/ewb/print/details", req, res, "ewb-details.pdf")
 );
 
-// Print EWB Summary
 app.post("/proxy/topaz/ewb/printSummary", (req, res) =>
   printEWB("/irisgst/topaz/ewb/print/summary", req, res, "ewb-summary.pdf")
 );
 
-/* ======================================================================
-   6. START SERVER
-   ====================================================================== */
+/* =====================================================
+   4. DOWNLOADS
+   ===================================================== */
 
-app.listen(PORT, () =>
-  console.log(`🚀 Proxy server running at http://localhost:${PORT}`)
+// E-Invoice Download
+app.post("/proxy/onyx/download/einvoices", (req, res) =>
+  proxy(res, () =>
+    axios.post(`${BASE_URL}/irisgst/onyx/download/einvoices`, req.body, {
+      headers: { ...authHeaders(req), "Content-Type": "application/json" },
+      timeout: 120000,
+    })
+  )
 );
+
+// Download Status
+app.get("/proxy/onyx/download/status", (req, res) =>
+  proxy(res, () =>
+    axios.get(`${BASE_URL}/irisgst/onyx/download/status`, {
+      params: req.query,
+      headers: authHeaders(req),
+    })
+  )
+);
+
+/* =====================================================
+   5. UPLOAD (CSV / ZIP)
+   ===================================================== */
+
+app.post(
+  "/proxy/onyx/upload/invoices",
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", req.file.buffer, req.file.originalname);
+
+      const response = await axios.post(
+        `${BASE_URL}/irisgst/onyx/upload/invoices`,
+        formData,
+        {
+          headers: { ...formData.getHeaders(), ...authHeaders(req) },
+          params: req.query,
+        }
+      );
+
+      res.json(response.data);
+    } catch (err) {
+      res.status(err.response?.status || 500).json(err.response?.data);
+    }
+  }
+);
+/* =====================================================
+   7. MULTI-VEHICLE (TOPAZ)
+   ===================================================== */
+
+// Initiate Multi-Vehicle
+app.post("/proxy/topaz/multiVehicle/initiate", (req, res) =>
+  proxy(res, () =>
+    axios.post(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/ewb/multiVehicle`,
+      req.body,
+      {
+        headers: {
+          ...authHeaders(req),
+          product: "TOPAZ",
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      }
+    )
+  )
+);
+
+// Get Multi-Vehicle Requests
+app.get("/proxy/topaz/multiVehicle/requests", (req, res) =>
+  proxy(res, () =>
+    axios.get(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/multiVehReq`,
+      {
+        params: req.query,
+        headers: {
+          ...authHeaders(req),
+          product: "TOPAZ",
+          Accept: "application/json",
+        },
+      }
+    )
+  )
+);
+
+// Get Multi-Vehicle Group Details
+app.get("/proxy/topaz/multiVehicle/groupDetails", (req, res) =>
+  proxy(res, () =>
+    axios.get(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/multiVehDet`,
+      {
+        params: req.query,
+        headers: {
+          ...authHeaders(req),
+          product: "TOPAZ",
+          Accept: "application/json",
+        },
+      }
+    )
+  )
+);
+
+// Add Vehicle to Multi-Vehicle
+app.post("/proxy/topaz/multiVehicle/add", (req, res) =>
+  proxy(res, () =>
+    axios.post(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/ewb/multiVehicle/add`,
+      req.body,
+      {
+        headers: {
+          ...authHeaders(req),
+          product: "TOPAZ",
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      }
+    )
+  )
+);
+
+// Edit Multi-Vehicle
+app.post("/proxy/topaz/multiVehicle/edit", (req, res) =>
+  proxy(res, () =>
+    axios.post(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/ewb/multiVehicle/edit`,
+      req.body,
+      {
+        headers: {
+          ...authHeaders(req),
+          product: "TOPAZ",
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      }
+    )
+  )
+);
+
+
+
+
+/* =====================================================
+   START SERVER
+   ===================================================== */
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Proxy server running on http://localhost:${PORT}`);
+});
