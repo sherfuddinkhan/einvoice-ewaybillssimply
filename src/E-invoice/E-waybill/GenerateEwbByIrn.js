@@ -151,26 +151,6 @@ const GenerateEwbByIrn = () => {
       <p style={{ color: '#666', fontSize: '16px', marginBottom: '30px' }}>All headers & payload visible before sending • Auto-filled from previous actions</p>
 
       <div style={{ background: 'white', padding: '35px', borderRadius: '20px', boxShadow: '0 12px 40px rgba(0,0,0,0.15)', maxWidth: '900px', margin: '0 auto' }}>
-
-        {/* REQUEST HEADERS */}
-        <h2 style={{ color: '#d84315', borderBottom: '3px solid #ff8a65', paddingBottom: '10px' }}>REQUEST HEADERS</h2>
-        <div style={{ background: '#fff3e0', padding: '20px', borderRadius: '12px', fontFamily: 'monospace', fontSize: '15px', margin: '20px 0', border: '2px solid #ff8a65' }}>
-          {Object.entries(config.headers).map(([key, value]) => (
-            <div key={key} style={{ margin: '12px 0', display: 'flex' }}>
-              <strong style={{ width: '160px', color: '#bf360c' }}>{key}:</strong>
-              <span style={{ color: key.includes('Token') ? '#666' : '#000', wordBreak: 'break-all', flex: 1 }}>
-                {key.includes('Token') ? value.slice(0, 30) + '...' + value.slice(-10) : value || <em style={{ color: '#999' }}>Not set</em>}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* REQUEST PAYLOAD */}
-        <h2 style={{ color: '#d84315', borderBottom: '3px solid #ff8a65', paddingBottom: '10px', marginTop: '40px' }}>REQUEST PAYLOAD (JSON Body)</h2>
-        <pre style={{ background: '#263238', color: '#00e676', padding: '20px', borderRadius: '12px', fontSize: '15px', margin: '20px 0', overflow: 'auto', border: '2px solid #ff8a65' }}>
-          {JSON.stringify(config.body, null, 2)}
-        </pre>
-
         {/* EDITABLE FORM */}
         <h2 style={{ color: '#e65100', marginTop: '40px' }}>Edit E-Way Bill Details</h2>
         {Object.entries(config.body).map(([key, value]) => (
