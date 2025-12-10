@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../components/AuthContext";
 
 const Sidebar = () => {
   const location = useLocation();
+  const { product } = useAuth(); // Get current logged-in product
   const [openSection, setOpenSection] = useState(null);
 
   const toggleSection = (title) => {
@@ -10,24 +12,13 @@ const Sidebar = () => {
   };
 
   const menuSections = [
-    /* ───────── Dashboard ───────── */
+    // Dashboard
     {
       title: "Dashboard",
       items: [{ path: "/", label: "Dashboard" }],
     },
 
-    /* ───────── Login ───────── */
-    {
-      title: "Login",
-      items: [
-        { path: "/ewaybill-login", label: "E-Way Bill Login" },
-        { path: "/einvoice-login", label: "E-Invoice Login" },
-      ],
-    },
-
-    /* ───────── E-WAY BILL ───────── */
-    { separator: true, heading: "E-Way Bill Modules" },
-
+    // E-Way Bill Modules
     {
       title: "EWB Generate & Print",
       items: [
@@ -35,16 +26,16 @@ const Sidebar = () => {
         { path: "/ewb-print", label: "Print E-Way Bill" },
         { path: "/ewb-print-summary", label: "Print Summary" },
       ],
+      product: "EWAY",
     },
-
     {
       title: "EWB Actions",
       items: [
         { path: "/ewaybill-actions", label: "E-Way Bill Actions" },
         { path: "/update-transporter-id", label: "Update Transporter ID" },
       ],
+      product: "EWAY",
     },
-
     {
       title: "Fetch E-Way Bill",
       items: [
@@ -52,8 +43,8 @@ const Sidebar = () => {
         { path: "/fetch-ewb-by-date", label: "Fetch by Date" },
         { path: "/transporter-ewaybill", label: "Transporter E-Way Bill" },
       ],
+      product: "EWAY",
     },
-
     {
       title: "EWB by Document",
       items: [
@@ -63,32 +54,20 @@ const Sidebar = () => {
         { path: "/get-ewb-doc-download", label: "Doc Download" },
         { path: "/get-ewb-doc-status", label: "Doc Status" },
       ],
+      product: "EWAY",
     },
 
-    {
-      title: "Multi-Vehicle",
-      items: [
-        { path: "/multi-vehicle-initiate", label: "Initiate" },
-        { path: "/multi-vehicle-add", label: "Add Vehicle" },
-        { path: "/multi-vehicle-edit", label: "Edit Vehicle" },
-        { path: "/multi-vehicle-group-details", label: "Group Details" },
-        { path: "/multi-vehicle-requests", label: "Requests" },
-      ],
-    },
-
-    /* ───────── E-INVOICE ───────── */
-    { separator: true, heading: "E-Invoice Modules" },
-
+    // E-Invoice Modules
     {
       title: "E-Invoice Core",
       items: [
-        { path: "/einvoice-generate", label: "Generate E-Invoice" },
+        { path: "/einvoice-generate-print", label: "Generate E-Invoice" },
         { path: "/einvoice-cancel-irn", label: "Cancel IRN" },
         { path: "/einvoice-get-by-irn", label: "Get by IRN" },
         { path: "/einvoice-get-by-doc", label: "Get IRN by Doc" },
       ],
+      product: "EINVOICE",
     },
-
     {
       title: "EWB from IRN",
       items: [
@@ -96,31 +75,40 @@ const Sidebar = () => {
         { path: "/cancel-ewb-by-irn", label: "Cancel EWB" },
         { path: "/get-ewb-by-irn", label: "Get EWB" },
       ],
+      product: "EINVOICE",
     },
-
     {
       title: "Print",
-      items: [
-        { path: "/print-e-invoice-irn", label: "Print E-Invoice" },
-      ],
+      items: [{ path: "/print-e-invoice-irn", label: "Print E-Invoice" }],
+      product: "EINVOICE",
     },
-
     {
       title: "Upload Invoice",
       items: [
         { path: "/upload-invoices", label: "Upload Invoice" },
         { path: "/uploaded-file-status", label: "Upload Status" },
       ],
+      product: "EINVOICE",
     },
-
     {
       title: "View Invoice",
       items: [
         { path: "/single-invoice-details", label: "Single Invoice" },
         { path: "/list-of-invoices", label: "Invoice List" },
       ],
+      product: "EINVOICE",
     },
   ];
+
+  // Filter menu sections based on logged-in product
+ // inside Sidebar component
+const filteredSections = menuSections.filter(
+  (section) =>
+    section.title === "Login" || // always show login links
+    !section.product ||
+    section.product === product
+);
+
 
   return (
     <div
@@ -135,18 +123,9 @@ const Sidebar = () => {
         overflowY: "auto",
       }}
     >
-      {menuSections.map((section, index) => {
-        if (section.separator) {
-          return (
-            <div key={index} style={{ margin: "10px 0", textAlign: "center" }}>
-              <hr />
-              <strong>{section.heading}</strong>
-            </div>
-          );
-        }
-
-        const isActive = section.items.some(
-          item => location.pathname === item.path
+      {filteredSections.map((section) => {
+        const isActive = section.items?.some(
+          (item) => location.pathname === item.path
         );
 
         return (
@@ -159,13 +138,14 @@ const Sidebar = () => {
                 fontWeight: "bold",
                 background: isActive ? "#2c84f8" : "transparent",
                 borderRadius: 6,
+                marginTop: 8,
               }}
             >
               {section.title}
             </div>
 
             {openSection === section.title &&
-              section.items.map(item => (
+              section.items?.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}

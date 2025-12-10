@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./components/AuthContext";
+import { AuthProvider } from "./components/AuthContext";
+
 
 /* ─────────── LOGIN ─────────── */
 import EWayBillLoginPage from "./loginAuthentication/EWayBillLoginPage";
@@ -55,9 +58,12 @@ const MultiVehicleEdit = () => <h2>Multi-Vehicle Edit</h2>;
 const MultiVehicleGroupDetails = () => <h2>Multi-Vehicle Group Details</h2>;
 const MultiVehicleRequests = () => <h2>Multi-Vehicle Requests</h2>;
 
-/* ─────────── PROTECTED ROUTE ─────────── */
-const ProtectedRoute = ({ isAllowed, children }) =>
-  isAllowed ? children : <Navigate to="/" replace />;
+
+
+const ProtectedRoute = ({ children }) => {
+  const { isLoggedIn } = useAuth();
+  return isLoggedIn ? children : <Navigate to="/" />;
+};
 
 const App = () => {
   const [allowEwayLogin, setAllowEwayLogin] = useState(false);
@@ -87,14 +93,17 @@ const App = () => {
             <Route path="/einvoice-login" element={<EInvoiceLoginPage />} />
 
             {/* ───────── EWB CORE ───────── */}
-            <Route
+       
+              <Route
               path="/ewb-generate-print"
               element={
-                <ProtectedRoute isAllowed={allowEwayLogin}>
-                  <EwbGenerateAndPrint />
+                <ProtectedRoute>
+                  <EwbGenerateAndPrint/>
                 </ProtectedRoute>
               }
-            />
+            />  
+     
+           
             <Route path="/ewb-print" element={<EwaybillPrint />} />
             <Route path="/ewb-print-summary" element={<EwaybillPrintSummary />} />
 
@@ -123,9 +132,9 @@ const App = () => {
 
             {/* ───────── E-INVOICE CORE ───────── */}
             <Route
-              path="/einvoice-generate"
+              path="/einvoice-generate-print"
               element={
-                <ProtectedRoute isAllowed={allowEinvoiceLogin}>
+                <ProtectedRoute >
                   <GenerateAndPrintEinvoice />
                 </ProtectedRoute>
               }

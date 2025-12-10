@@ -84,7 +84,7 @@ app.post("/proxy/change-password", (req, res) =>
 );
 
 
-app.post("/proxy/login", (req, res) =>
+app.post("/proxy/einvoice/login", (req, res) =>
   proxy(res, () =>
     axios.post(`${BASE_URL}/irisgst/mgmt/login`, req.body, {
       headers: { Accept: "application/json", "Content-Type": "application/json" },

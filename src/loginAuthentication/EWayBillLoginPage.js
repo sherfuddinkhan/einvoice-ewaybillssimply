@@ -4,116 +4,21 @@ import { useNavigate } from "react-router-dom";
 
 const STORAGE_KEY = "iris_ewaybill_shared_config";
 
-/* -------------------------- LOGIN CHECK -------------------------- */
-const isEwayLoggedIn = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    return Boolean(data?.token && data?.companyId);
-  } catch {
-    return false;
-  }
-};
-
-/* -------------------------- COLORS -------------------------- */
-const colors = {
-  primary: "#1A73E8",
-  primaryDark: "#0B4F9C",
-  success: "#34A853",
-  danger: "#EA4335",
-  background: "#F5F5F7",
-  cardBackground: "#FFFFFF",
-  textDark: "#333333",
-  textLight: "#707070",
-  codeBg: "#263238",
-  codeText: "#A8FFBF",
-};
-
-/* -------------------------- STYLES -------------------------- */
-const styles = {
-  container: {
-    padding: "40px",
-    background: colors.background,
-    minHeight: "100vh",
-    fontFamily: "Roboto, Arial, sans-serif",
-    display: "flex",
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
-  },
-  card: {
-    background: colors.cardBackground,
-    padding: "30px",
-    borderRadius: "16px",
-    boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)",
-    width: "450px",
-  },
-  header: {
-    textAlign: "center",
-    color: colors.primaryDark,
-    fontSize: "28px",
-    marginBottom: "24px",
-  },
-  label: {
-    fontWeight: 600,
-    marginBottom: "6px",
-    display: "block",
-  },
-  input: {
-    width: "100%",
-    padding: "12px",
-    borderRadius: "8px",
-    border: `1px solid ${colors.textLight}`,
-    marginBottom: "20px",
-    fontSize: "16px",
-  },
-  btnPrimary: (loading) => ({
-    width: "100%",
-    padding: "14px",
-    background: loading ? "#BDBDBD" : colors.primary,
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    cursor: loading ? "not-allowed" : "pointer",
-    fontWeight: "bold",
-    fontSize: "18px",
-  }),
-  responseBox: (ok) => ({
-    marginTop: "24px",
-    padding: "16px",
-    borderRadius: "10px",
-    background: ok ? "#34A85322" : "#EA433522",
-    border: `2px solid ${ok ? colors.success : colors.danger}`,
-  }),
-  codeBox: {
-    background: colors.codeBg,
-    color: colors.codeText,
-    padding: "10px",
-    borderRadius: "6px",
-    fontFamily: "monospace",
-    fontSize: "13px",
-    marginTop: "10px",
-  },
-};
-
-/* ============================================================
-   EWB LOGIN
-   ============================================================ */
 const EWayBillLoginPage = () => {
   const [email, setEmail] = useState("eway@gmail.com");
   const [password, setPassword] = useState("Abcd@12345");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 
-  const { login } = useAuth();
+  const { login, isLoggedIn, product } = useAuth();
   const navigate = useNavigate();
 
-  /* ✅ AUTO-REDIRECT IF ALREADY LOGGED IN */
+  // Redirect after login
   useEffect(() => {
-    if (isEwayLoggedIn()) {
+    if (isLoggedIn && product === "EWAY") {
       navigate("/ewb-generate-print", { replace: true });
-   }
-  }, [navigate]);
+    }
+  }, [isLoggedIn, product, navigate]);
 
   const handleLogin = async () => {
     setLoading(true);
@@ -125,24 +30,25 @@ const EWayBillLoginPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await res.json();
       setResponse(data);
 
       if (data.status === "SUCCESS" && data.response?.token) {
         const store = {
           token: data.response.token,
-          companyId: data.response.companyId,
+          companyId: data.response.companyId || "24",
           email,
+          product: "EWAY",
           fullResponse: data,
-          product: "TOPAZ",
           lastLogin: new Date().toISOString(),
         };
 
+        // Save in localStorage
         localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-        login(store.token);
 
-        navigate("/ewb-generate-print", { replace: true });
+        // Update AuthProvider state
+        login(store, "EWAY");
+        // navigation is handled by useEffect
       }
     } catch (err) {
       setResponse({ status: "ERROR", message: err.message });
@@ -152,37 +58,24 @@ const EWayBillLoginPage = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.header}>🔐 E-Way Bill Login</h2>
+    <div style={{ padding: 40, minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#F5F5F7" }}>
+      <div style={{ background: "#fff", padding: 30, borderRadius: 16, width: 400, boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
+        <h2 style={{ textAlign: "center", marginBottom: 24 }}>🚚 E-Way Bill Login</h2>
 
-        <label style={styles.label}>Email</label>
-        <input
-          style={styles.input}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <label>Email</label>
+        <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ width: "100%", padding: 12, marginBottom: 20, borderRadius: 8, border: "1px solid #707070" }} />
 
-        <label style={styles.label}>Password</label>
-        <input
-          type="password"
-          style={styles.input}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <label>Password</label>
+        <input type="password" value={password} onChange={e => setPassword(e.target.value)} style={{ width: "100%", padding: 12, marginBottom: 20, borderRadius: 8, border: "1px solid #707070" }} />
 
-        <button
-          style={styles.btnPrimary(loading)}
-          disabled={loading}
-          onClick={handleLogin}
-        >
+        <button onClick={handleLogin} disabled={loading} style={{ width: "100%", padding: 14, borderRadius: 10, background: loading ? "#BDBDBD" : "#1A73E8", color: "#fff", fontSize: 18, cursor: loading ? "not-allowed" : "pointer" }}>
           {loading ? "Logging in..." : "Login"}
         </button>
 
         {response && (
-          <div style={styles.responseBox(response.status === "SUCCESS")}>
+          <div style={{ marginTop: 20, padding: 16, borderRadius: 10, background: response.status === "SUCCESS" ? "#34A85322" : "#EA433522", border: `2px solid ${response.status === "SUCCESS" ? "#34A853" : "#EA4335"}` }}>
             <strong>Status: {response.status}</strong>
-            <pre style={styles.codeBox}>
+            <pre style={{ background: "#263238", color: "#A8FFBF", padding: 10, borderRadius: 6, fontFamily: "monospace", marginTop: 10 }}>
               {JSON.stringify(response, null, 2)}
             </pre>
           </div>

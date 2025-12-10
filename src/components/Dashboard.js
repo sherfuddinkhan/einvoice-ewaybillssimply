@@ -1,40 +1,43 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-const Dashboard = ({ setAllowEwayLogin, setAllowEinvoiceLogin }) => {
+const Dashboard = () => {
   const navigate = useNavigate();
 
-  const openEway = () => {
-    setAllowEwayLogin(true);
-    navigate("/ewaybill-login");
-  };
-
-  const openEinvoice = () => {
-    setAllowEinvoiceLogin(true);
-    navigate("/einvoice-login");
-  };
+  const openEwayLogin = () => navigate("/ewaybill-login");
+  const openEinvoiceLogin = () => navigate("/einvoice-login");
 
   return (
     <div style={{ padding: 40, textAlign: "center" }}>
-      <h1>calibrecue IT solutions </h1>
-      <p>Select the Type of service</p>
+      <h1>Calibrecue IT Solutions</h1>
+      <p>Select the type of service</p>
 
       <div style={{ display: "flex", justifyContent: "center", gap: "30px" }}>
-        
         <button
-          onClick={openEway}
-          style={{ padding: "15px 30px", fontSize: "22px", background: "#3498db", color: "white", borderRadius: 10 }}
+          onClick={openEwayLogin}
+          style={{
+            padding: "15px 30px",
+            fontSize: "22px",
+            background: "#3498db",
+            color: "white",
+            borderRadius: 10,
+          }}
         >
-          🚚 E-Way Bill Management
+          🚚 E-Way Bill Login
         </button>
 
         <button
-          onClick={openEinvoice}
-          style={{ padding: "15px 30px", fontSize: "22px", background: "#2ecc71", color: "white", borderRadius: 10 }}
+          onClick={openEinvoiceLogin}
+          style={{
+            padding: "15px 30px",
+            fontSize: "22px",
+            background: "#2ecc71",
+            color: "white",
+            borderRadius: 10,
+          }}
         >
-          🧾 E-Invoice Generation
+          🧾 E-Invoice Login
         </button>
-
       </div>
     </div>
   );
