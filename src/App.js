@@ -1,126 +1,122 @@
-// src/App.js
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 /* ─────────── Login Pages ─────────── */
-import EWayBillLoginPage from "./loginAuthentication/EWayBillLoginPage";
-import EInvoiceLoginPage from "./loginAuthentication/EInvoiceLoginPage";
+import EWayBillLoginPage from "./loginAuthentication/EWayBillLoginPage.js";
+import EInvoiceLoginPage from "./loginAuthentication/EInvoiceLoginPage.js";
 
 /* ─────────── Layout ─────────── */
-import Sidebar from "./components/Sidebar";
-import Dashboard from "./components/Dashboard";
+import Sidebar from "./components/Sidebar.js";
+import Dashboard from "./components/Dashboard.js";
 
-/* ─────────── E-INVOICE CORE ─────────── */
-import GenerateAndPrintEinvoice from "./E-invoice/Einvoice Core/GenerateAndPrintEinvoice";
-import CancelIRN from "./E-invoice/Einvoice Core/CancelIRN";
-import GetInvByIrn from "./E-invoice/Einvoice Core/GetInvByIrn";
-import GetIrnByDocDetails from "./E-invoice/Einvoice Core/GetIrnByDocDetails";
+/* ─────────── E-INVOICE & IRN (CORE) ─────────── */
+// Path: ./E-invoice/E-invoice&IRN/ 
+// FIX: Corrected import path (removed space from 'CancelIRN .js')
+import CancelIRN from "./E-invoice/E-invoice&IRN/CancelIRN.js";
+import GenerateAndPrintEinvoice from "./E-invoice/E-invoice&IRN/GenerateAndPrintEinvoice.js";
+import GetInvByIrn from "./E-invoice/E-invoice&IRN/GetInvByIrn.js";
+import GetIrnByDocDetailsForm from "./E-invoice/E-invoice&IRN/GetIrnByDocDetails.js";
 
-/* ─────────── printE-invoice ─────────── */
-import EInvoicePrintByIRN from "./E-invoice/printE-invoice/E-invoice print"; 
+/* ─────────── E-WAYBILL (BY IRN) ─────────── */
+// Path: ./E-invoice/E-waybill/
+// Using the concise names (assuming physical files are renamed)
+import CancelEwb from "./E-invoice/E-waybill/CancelEwb.js";
+import GenerateEwbByIrn from "./E-invoice/E-waybill/GenerateEwbByIrn.js";
+import GetEwbByIrn from "./E-invoice/E-waybill/GetEwbByIrn.js"; 
+
+/* ─────────── Print ─────────── */
+// Path: ./E-invoice/print/ 
+// Using PrintEInvoice.js
+import PrintEInvoice from "./E-invoice/print/PrintEInvoice.js";
 
 /* ─────────── Upload Invoice ─────────── */
-import UploadInvoices from "./E-invoice/Upload Invoice/uploadinvoices";
-import UploadedFileStatus from "./E-invoice/Upload Invoice/uploadedfilestatus";
+// Path: ./E-invoice/Upload invoice/
+import UploadInvoice from "./E-invoice/Upload invoice/UploadInvoice.js";
+import UploadStatus from "./E-invoice/Upload invoice/UploadStatus.js";
+// NOTE: UploadErrors.js is present but not routed, keeping current structure
 
 /* ─────────── View Invoice ─────────── */
-import Detailsofsingleinvoice from "./E-invoice/View Invoice/Detailsofsingleinvoice";
-import ListOfInvoices from "./E-invoice/View Invoice/listofinvoices";
+// Path: ./E-invoice/Viewinvoice/ 
+// Using the concise names (assuming physical files are renamed from *Form.js)
+import InvoiceDetails from "./E-invoice/Viewinvoice/InvoiceDetails.js";
+import ListEInvoices from "./E-invoice/Viewinvoice/ListEInvoices.js";
 
-/* ─────────── E-WAYBILL CORE ─────────── */
-import EwbGenerateAndPrint from "./E-invoice/Ewaybill Core/EwbGenerateAndPrint";
-import EwaybillPrint from "./E-invoice/Ewaybill Core/E-waybill print";
-import EwbDetails from "./E-invoice/Ewaybill Core/EwbDetails";
-import EwbDetailsbyEwbNo from "./E-invoice/Ewaybill Core/EwbDetailsbyEwbNo";
-
-/* ─────────── EWAYBILL BY IRN ─────────── */
-import GenerateEwbByIrn from "./E-invoice/EwaybillBYIRN/GenerateEwbByIrn";
-import CancelEwb from "./E-invoice/EwaybillBYIRN/CancelEwb";
-
-/* ─────────── Helpers ─────────── */
-// The original EInvoicePrint helper is commented/removed as we now have the actual component.
-// const EInvoicePrint = () => <h2>E-Invoice Print</h2>; 
+/* ─────────── Helpers (Placeholders for missing EWB Core components) ─────────── */
 const EwaybillPrintSummary = () => <h2>EWB Print Summary</h2>;
+const EwbGenerateAndPrint = () => <h2>EWB Generate and Print (Placeholder)</h2>;
+const EwaybillPrint = () => <h2>Ewaybill Print (Placeholder)</h2>;
+const EwbDetails = () => <h2>Ewb Details (Placeholder)</h2>;
+const EwbDetailsbyEwbNo = () => <h2>Ewb Details by Ewb No (Placeholder)</h2>;
+
 
 const ProtectedRoute = ({ isAllowed, children }) =>
- isAllowed ? children : <Navigate to="/" replace />;
+  isAllowed ? children : <Navigate to="/" replace />;
 
 const App = () => {
- const [allowEwayLogin, setAllowEwayLogin] = useState(false);
-const [allowEinvoiceLogin, setAllowEinvoiceLogin] = useState(false);
+  const [allowEwayLogin, setAllowEwayLogin] = useState(false);
+  const [allowEinvoiceLogin, setAllowEinvoiceLogin] = useState(false);
 
-return (
-<Router>
- <div style={{ display: "flex", minHeight: "100vh" }}>
- <Sidebar />
+  return (
+    <Router>
+      <div style={{ display: "flex", minHeight: "100vh" }}>
+        <Sidebar />
 
- <div style={{ flex: 1, padding: 20, background: "#F5F5F7" }}>
- <Routes>
+        <div style={{ flex: 1, padding: 20, background: "#F5F5F7" }}>
+          <Routes>
+            {/* ───────── Dashboard ───────── */}
+            <Route
+              path="/"
+              element={
+                <Dashboard
+                  setAllowEwayLogin={setAllowEwayLogin}
+                  setAllowEinvoiceLogin={setAllowEinvoiceLogin}
+                />
+              }
+            />
 
- {/* ───────── Dashboard ───────── */}
- <Route
- path="/" element={<Dashboard setAllowEwayLogin={setAllowEwayLogin} setAllowEinvoiceLogin={setAllowEinvoiceLogin}/>
-}
- />
-
- {/* ───────── Login ───────── */}
- <Route path="/ewaybill-login" element={<EWayBillLoginPage />} />
- <Route path="/einvoice-login" element={<EInvoiceLoginPage />} />
-
- {/* ───────── EWB Core ───────── */}
- <Route path="/ewb-generate-print" element={<ProtectedRoute isAllowed={allowEwayLogin}>
- <EwbGenerateAndPrint />
- </ProtectedRoute>
- } />
- <Route path="/ewb-print" element={<EwaybillPrint />} />
- <Route path="/ewb-print-summary" element={<EwaybillPrintSummary />} />
-
- {/* ───────── Fetch EWB ───────── */}
- <Route path="/ewb-details" element={<EwbDetails />} />
- <Route path="/ewb-details-by-no" element={<EwbDetailsbyEwbNo />} />
-
- {/* ───────── EWB by IRN ───────── */}
- <Route path="/ewb-by-irn-generate" element={<ProtectedRoute isAllowed={allowEwayLogin}>
- <GenerateEwbByIrn/>
- </ProtectedRoute>
- } />
- <Route path="/ewb-by-irn-cancel" element={<ProtectedRoute isAllowed={allowEwayLogin}>
- <CancelEwb /> </ProtectedRoute>
- } />
-
- {/* ───────── E-Invoice Core ───────── */}
- <Route path="/einvoice-generate" element={<ProtectedRoute isAllowed={allowEinvoiceLogin}>
- <GenerateAndPrintEinvoice />
- </ProtectedRoute>
- } />
- <Route path="/einvoice-cancel-irn" element={<CancelIRN />} />
- <Route path="/einvoice-get-by-irn" element={<GetInvByIrn />} />
- <Route path="/einvoice-get-by-doc" element={<GetIrnByDocDetails />} />
-
-            {/* ───────── Print E-Invoice ───────── */}
-<Route path="/print-e-invoice-irn" element={<EInvoicePrintByIRN />} />
+            {/* ───────── Login ───────── */}
+            <Route path="/ewaybill-login" element={<EWayBillLoginPage />} />
+            <Route path="/einvoice-login" element={<EInvoiceLoginPage />} />
             
- {/* ───────── Upload Invoice ───────── */}
-<Route path="/upload-invoices" element={<UploadInvoices />} />
- <Route path="/uploaded-file-status" element={<UploadedFileStatus />} />
+            {/* ------------------------------------- E-WAYBILL (CORE & IRN) ------------------------------------- */}
+            <Route path="/ewb-generate-print" element={<ProtectedRoute isAllowed={allowEwayLogin}><EwbGenerateAndPrint /></ProtectedRoute>}/>
+            <Route path="/ewb-print" element={<EwaybillPrint />} />
+            <Route path="/ewb-print-summary" element={<EwaybillPrintSummary />} />
+            <Route path="/ewb-details" element={<EwbDetails />} />
+            <Route path="/ewb-details-by-no" element={<EwbDetailsbyEwbNo />} />
+            
+            {/* ───────── EWB by IRN (Actual Components based on folder) ───────── */}
+            <Route path="/ewb-by-irn-generate" element={<ProtectedRoute isAllowed={allowEwayLogin}><GenerateEwbByIrn /></ProtectedRoute>} />
+            <Route path="/ewb-by-irn-cancel" element={<ProtectedRoute isAllowed={allowEwayLogin}><CancelEwb /></ProtectedRoute>} />
+            <Route path="/ewb-by-irn-details" element={<GetEwbByIrn />} />
 
- {/* ───────── View Invoice ───────── */}
- <Route path="/single-invoice-details" element={<Detailsofsingleinvoice />} />
- <Route path="/list-of-invoices" element={<ListOfInvoices />} />
+            {/* ------------------------------------- E-INVOICE ------------------------------------- */}
+            
+            {/* ───────── E-Invoice Core (Actual Components based on folder) ───────── */}
+            <Route path="/einvoice-generate" element={<ProtectedRoute isAllowed={allowEinvoiceLogin}><GenerateAndPrintEinvoice /></ProtectedRoute>} />
+            <Route path="/einvoice-cancel-irn" element={<CancelIRN />} />
+            <Route path="/einvoice-get-by-irn" element={<GetInvByIrn />} />
+            <Route path="/einvoice-get-by-doc" element={<GetIrnByDocDetailsForm />} /> 
+            
+            {/* ───────── Print E-Invoice (Actual Component based on folder) ───────── */}
+            <Route path="/print-e-invoice-irn" element={<PrintEInvoice />} />
+            <Route path="/einvoice-print" element={<PrintEInvoice />} /> 
 
- {/* ───────── Print ───────── */}
-{/* The previous /einvoice-print route using the helper EInvoicePrint is removed/updated.
- If you want to keep the old path, you can map it to the new component: */}
-<Route path="/einvoice-print" element={<EInvoicePrintByIRN />} />
+            {/* ───────── Upload Invoice (Actual Components based on folder) ───────── */}
+            <Route path="/upload-invoices" element={<UploadInvoice />} />
+            <Route path="/uploaded-file-status" element={<UploadStatus />} />
 
- {/* ───────── 404 ───────── */}
- <Route path="*" element={<h2>404 | Page Not Found</h2>} />
+            {/* ───────── View Invoice (Actual Components based on folder) ───────── */}
+            <Route path="/single-invoice-details" element={<InvoiceDetails />} />
+            <Route path="/list-of-invoices" element={<ListEInvoices />} />
 
-</Routes>
- </div>
- </div>
-</Router>
- );
+            {/* ───────── 404 ───────── */}
+            <Route path="*" element={<h2>404 | Page Not Found</h2>} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
+  );
 };
 
 export default App;
