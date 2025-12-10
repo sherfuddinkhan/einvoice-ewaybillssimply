@@ -5,7 +5,7 @@ const LOGIN_KEY = "iris_login_data";
 const MV_INITIATE_KEY = "mv_initiate_response"; // MultiVehicleInitiate response
 const LATEST_EWB_KEY = "latestEwbData";
 
-const AddVehicle = () => {
+const MultiVehicleAdd = () => {
   // ------------------------------------------
   // HEADERS STATE
   // ------------------------------------------
@@ -147,4 +147,4 @@ const AddVehicle = () => {
   );
 };
 
-export default AddVehicle;
+export default MultiVehicleAdd;

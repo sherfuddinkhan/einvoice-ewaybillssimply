@@ -4,7 +4,7 @@ import axios from "axios";
 const LOGIN_KEY = "iris_login_data";
 const LATEST_EWB_KEY = "latestEwbData";
 
-const EditVehicle = () => {
+const MultiVehicleEdit = () => {
   // -------------------------
   // HEADERS STATE
   // -------------------------
@@ -161,4 +161,4 @@ const EditVehicle = () => {
   );
 };
 
-export default EditVehicle;
+export default MultiVehicleEdit;

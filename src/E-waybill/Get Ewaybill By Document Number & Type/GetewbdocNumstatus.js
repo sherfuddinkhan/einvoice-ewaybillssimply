@@ -25,7 +25,7 @@ const getJson = (key) => {
 };
 
 
-const BulkStatus = () => {
+const GetewbdocNumstatus = () => {
    const login = getJson(LOGIN_KEY) || {};
   const latest = getJson(LATEST_EWB_KEY) || {};
   const saved = getJson(STORAGE_KEY) || {};
@@ -228,4 +228,4 @@ const styles = {
   },
 };
 
-export default BulkStatus;
+export default  GetewbdocNumstatus ;

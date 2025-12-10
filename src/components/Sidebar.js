@@ -36,11 +36,10 @@ const Sidebar = () => {
     
     // EWB by IRN (Synchronized with the routes pointing to components in E-invoice/E-waybill)
     {
-      title: "EWB by IRN",
+      title: "EWB Actions",
       items: [
-        { path: "/ewb-by-irn-generate", label: "Generate EWB by IRN" },
-        { path: "/ewb-by-irn-cancel", label: "Cancel EWB by IRN" },
-        { path: "/ewb-by-irn-details", label: "Get EWB Details by IRN" },
+        { path: "/Ewaybill Actions", label: "Ewaybill Actions" },
+        { path: "/UpdateTransporterId", label: "UpdateTransporterId" },
       ],
     },
 
@@ -48,11 +47,33 @@ const Sidebar = () => {
     {
       title: "Fetch Ewaybill",
       items: [
-        { path: "/ewb-details", label: "EWB Details (by Date)" },
-        { path: "/ewb-details-by-no", label: "EWB Details by No." },
+        { path: "/consinee Ewaybill", label: "consinee Ewaybill" },
+        { path: "/FetchByDate", label: "EWB DetailByDate" },
+        { path: "/Ttransporterewaybill", label: "Ttransporterewaybill" },
       ],
     },
-    
+     // Fetch Ewaybill (Matches placeholder routes defined in App.js)
+    {
+      title: "Get Ewaybill By Document Number & Type",
+      items: [
+        { path: "/EwaybillbyDocNumAndType", label: "EwaybillbyDocNumAndType" },
+        { path: "/Generated Ewaybydate", label: "Generated Ewaybydate" },
+        { path: "/GetewbbydocNum", label: "GetewbbydocNum" },
+        { path: "/GetewbdocNumdownload", label: "GetewbdocNumdownload" },
+        { path: "/GetewbdocNumstatus", label: "GetewbdocNumstatus" },
+      ],
+    },
+     {
+      title: "Multi-Vehicle",
+      items: [
+        { path: "/MultiVehicleInitiate", label: "MultiVehicleInitiate" },
+        { path: "/MultiVehicleAdd", label: "MultiVehicleAdd" },
+        { path: "/MultiVehicleEdit", label: "MultiVehicleEdit" },
+        { path: "/MultiVehicleGroupDetails", label: "MultiVehicleGroupDetails" },
+        { path: "/MultiVehicleRequests", label: "MultiVehicleRequests" },
+      ],
+    },
+
     // --- E-INVOICE SEPARATOR ---
     {
       separator: true,
@@ -71,13 +92,20 @@ const Sidebar = () => {
         { path: "/einvoice-get-by-doc", label: "Get IRN by Doc Details" },
       ],
     },
+     {
+      title: "E-way bill from IRN",
+      items: [
+        { path: "/einvoice-generate", label: "cancel E-way bill" },
+        { path: "/einvoice-cancel-irn", label: "Generate E-way bill by irn" },
+        { path: "/einvoice-get-by-irn", label: "Get e-way billby irn" },
+      ],
+    },
 
     // PRINT: Printing (Matches E-invoice/print/)
     {
       title: "Print E-Invoice",
       items: [
         { path: "/print-e-invoice-irn", label: "Print E-Invoice by IRN" },
-        { path: "/einvoice-print", label: "E-Invoice Print (Legacy)" }, // Shortcut route
       ],
     },
 
