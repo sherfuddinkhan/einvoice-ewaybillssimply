@@ -4,7 +4,7 @@ import axios from 'axios';
 const LOGIN_KEY = 'iris_login_data';
 const LATEST_EWB_KEY = 'latestEwbData';
 
-const PrintDetails = () => {
+const PrintEwaybill = () => {
   // ----------------------------
   // State
   // ----------------------------
@@ -114,4 +114,4 @@ const PrintDetails = () => {
   );
 };
 
-export default PrintDetails;
+export default PrintEwaybill;

@@ -4,7 +4,7 @@ import axios from 'axios';
 const LOGIN_KEY = 'iris_login_data';
 const LATEST_EWB_KEY = 'latestEwbData';
 
-const PrintSummary = () => {
+const Ewbprintsummary = () => {
   // ----------------------------
   // State
   // ----------------------------
@@ -123,4 +123,4 @@ const PrintSummary = () => {
   );
 };
 
-export default PrintSummary;
+export default Ewbprintsummary;

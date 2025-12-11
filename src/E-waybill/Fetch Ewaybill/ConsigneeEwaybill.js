@@ -1,11 +1,10 @@
-import api from "../../api/irisgstApi";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const LOGIN_RESPONSE_KEY = "iris_login_data";
 const LATEST_EWB_KEY = "latestEwbData";
 
-const FetchOtherParties = () => {
+const ConsigneeEwaybill = () => {
   const [authData, setAuthData] = useState({
     companyId: "",
     token: "",
@@ -175,4 +174,4 @@ const FetchOtherParties = () => {
   );
 };
 
-export default FetchOtherParties;
+export default ConsigneeEwaybill;

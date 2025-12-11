@@ -14,7 +14,7 @@ const load = (key) => {
   }
 };
 
-const UpdateCancelEwb = () => {
+const EwaybillActions = () => {
   // ---------------- AUTH DATA ----------------
   const [auth, setAuth] = useState({
     token: "",
@@ -307,4 +307,4 @@ const UpdateCancelEwb = () => {
   );
 };
 
-export default UpdateCancelEwb;
+export default EwaybillActions;
