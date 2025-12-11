@@ -1,25 +1,51 @@
-import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react"; // 👈 Added useState
+import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
-/**
- * Protects routes based on product type (EWAY or EINVOICE)
- */
 const RequireAuth = ({ children, product }) => {
-  const { isLoggedIn, product: loggedProduct } = useAuth();
-  const location = useLocation();
+    
+    const { isLoggedIn, product: loggedProduct, logout } = useAuth();
+    // 👈 NEW STATE: Tracks if we are currently logging out to switch modules
+    const [isSwitching, setIsSwitching] = useState(false); 
 
-  if (!isLoggedIn) {
-    // Not logged in → go to correct login page
-    return <Navigate to={product === "EWAY" ? "/ewaybill-login" : "/einvoice-login"} replace />;
-  }
+    // Define the side effect (logout) unconditionally
+    useEffect(() => {
+        // Logic: If the user is logged in, but the product type does not match the route requirement, initiate switch.
+        if (isLoggedIn && loggedProduct && loggedProduct !== product) {
+            console.log(`Mismatch detected: Initiating switch from ${loggedProduct} to ${product}.`);
+            
+            // 1. Set the flag to true
+            setIsSwitching(true); 
+            
+            // 2. Perform the logout (This causes a global state update/re-render)
+            logout();
+        }
+    }, [isLoggedIn, logout, loggedProduct, product]);
+    
+    // CONDITIONAL RETURN LOGIC
+    
+    // 1. BLOCK ALL UI RENDERING DURING SWITCH
+    if (isSwitching) {
+        // If the flag is set, don't show children OR the login page yet.
+        // This prevents the flickering of the incorrect UI.
+        return <div>Switching modules...</div>; 
+    }
 
-  if (loggedProduct !== product) {
-    // Logged in but for the other module → force correct login
-    return <Navigate to={product === "EWAY" ? "/ewaybill-login" : "/einvoice-login"} replace />;
-  }
+    // 2. Logged Out Check
+    if (!isLoggedIn) {
+        // The component lands here after the logout() call completes
+        return <Navigate to={product === "EWAY" ? "/ewaybill-login" : "/einvoice-login"} replace />;
+    }
 
-  return children;
+    // 3. Product Mismatch Check (Should only hit if isSwitching was false)
+    if (loggedProduct !== product) {
+        // This case should be rare now, as the useEffect should handle it,
+        // but it acts as a safety redirect to finalize the flow.
+        return <Navigate to={product === "EWAY" ? "/ewaybill-login" : "/einvoice-login"} replace />;
+    }
+
+    // 4. Access Granted
+    return children;
 };
 
 export default RequireAuth;

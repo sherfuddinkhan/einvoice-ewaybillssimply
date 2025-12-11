@@ -61,29 +61,18 @@ const proxy = async (res, fn) => {
 /* =====================================================
    1. AUTH
    ===================================================== */
+
+// E-Way Bill Login
 app.post("/proxy/ewaybill/login", (req, res) => {
-    console.log("Proxying E-Way Bill Login request...");
-    proxy(res, () =>
-        axios.post(`${BASE_URL}/irisgst/mgmt/login`, req.body, {
-            headers: { 
-                Accept: "application/json", 
-                "Content-Type": "application/json" 
-            },
-        })
-    );
+  console.log("Proxying E-Way Bill Login request...");
+  proxy(res, () =>
+    axios.post(`${BASE_URL}/irisgst/mgmt/login`, req.body, {
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+    })
+  );
 });
 
-app.post("/proxy/change-password", (req, res) =>
-  proxy(res, () =>
-    axios.post(
-      `${BASE_URL}/irisgst/mgmt/public/user/changepassword`,
-      req.body,
-      { headers: { "Content-Type": "application/json" } }
-    )
-  )
-);
-
-
+// E-Invoice Login
 app.post("/proxy/einvoice/login", (req, res) =>
   proxy(res, () =>
     axios.post(`${BASE_URL}/irisgst/mgmt/login`, req.body, {
@@ -92,6 +81,7 @@ app.post("/proxy/einvoice/login", (req, res) =>
   )
 );
 
+// Change Password
 app.post("/proxy/change-password", (req, res) =>
   proxy(res, () =>
     axios.post(
@@ -124,6 +114,17 @@ app.get("/proxy/irn/getInvByIrn", (req, res) =>
       params: req.query,
       headers: authHeaders(req),
     })
+  )
+);
+
+// Generate EWB from IRN
+app.put("/proxy/irn/generateEwbByIrn", (req, res) =>
+  proxy(res, () =>
+    axios.put(
+      `${BASE_URL}/irisgst/onyx/irn/generateEwbByIrn`,
+      req.body,
+      { headers: { ...authHeaders(req), "Content-Type": "application/json" } }
+    )
   )
 );
 
@@ -209,7 +210,7 @@ app.get("/proxy/topaz/ewb/byNumber", (req, res) =>
   )
 );
 
-// EWB Actions (Cancel / Update / Extend)
+// EWB Actions (update / cancel / extend)
 app.put("/proxy/topaz/ewb/action", (req, res) =>
   proxy(res, () =>
     axios.put(`${BASE_URL}/irisgst/topaz/api/v0.3/ewb`, req.body, {
@@ -222,7 +223,7 @@ app.put("/proxy/topaz/ewb/action", (req, res) =>
   )
 );
 
-// Print EWB (PDF)
+// Common PDF printer for EWB
 const printEWB = async (endpoint, req, res, filename) => {
   try {
     const response = await axios.post(
@@ -248,6 +249,65 @@ const printEWB = async (endpoint, req, res, filename) => {
     res.status(err.response?.status || 500).json(err.response?.data);
   }
 };
+
+// 6. GET E-WAY BILL BY IRN (GetEWBForm)
+app.get('/proxy/irn/getEwbByIrn', async (req, res) => {
+  console.log('Query params:', req.query); // DEBUG
+
+  const { irn, userGstin, updateFlag } = req.query; // <-- MUST BE req.query for GET
+
+  if (!irn || !userGstin) {
+    return res.status(400).json({ error: 'Missing irn or userGstin in query' });
+  }
+
+  const targetUrl = `https://stage-api.irisgst.com/irisgst/onyx/irn/getEwbByIrn?` +
+    `irn=${encodeURIComponent(irn)}&userGstin=${encodeURIComponent(userGstin)}&updateFlag=${updateFlag || 'true'}`;
+
+  const response = await axios.get(targetUrl, {
+    headers: {
+      'Accept': 'application/json',
+      'X-Auth-Token': req.headers['x-auth-token'] || '',
+      'companyId': req.headers['companyid'] || '24',
+      'product': req.headers['product'] || 'ONYX',
+      'userGstin': req.headers['usergstin'] || userGstin, // Fallback to query
+      'irn': req.headers['irn'] || irn,
+      'updateFlag': req.headers['updateflag'] || updateFlag,
+    },
+  });
+
+  res.json(response.data);
+});
+
+// 10. CANCEL E-WAY BILL (CancelEWB)
+app.put('/proxy/irn/cancelEwb', async (req, res) => {
+  try {
+    const { ewbNo, cnlRsn, cnlRem, userGstin } = req.body;
+
+    if (!ewbNo || !cnlRsn || !userGstin || cnlRem) {
+      return res.status(400).json({
+        error: 'Missing required fields: ewbNo, cnlRsn, userGstin'
+      });
+    }
+
+    const response = await axios.put(
+      `${BASE_URL}/irisgst/onyx/irn/cancelEwb`,
+      req.body,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...authHeaders(req),
+        },
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response ? error.response.status : 500).json(
+      error.response ? error.response.data : { error: 'Failed to cancel E-Way Bill' }
+    );
+  }
+});
+
 
 app.post("/proxy/topaz/ewb/printDetails", (req, res) =>
   printEWB("/irisgst/topaz/ewb/print/details", req, res, "ewb-details.pdf")
@@ -308,11 +368,12 @@ app.post(
     }
   }
 );
+
 /* =====================================================
-   7. MULTI-VEHICLE (TOPAZ)
+   6. MULTI-VEHICLE (TOPAZ)
    ===================================================== */
 
-// Initiate Multi-Vehicle
+// Initiate
 app.post("/proxy/topaz/multiVehicle/initiate", (req, res) =>
   proxy(res, () =>
     axios.post(
@@ -330,41 +391,35 @@ app.post("/proxy/topaz/multiVehicle/initiate", (req, res) =>
   )
 );
 
-// Get Multi-Vehicle Requests
+// Get Requests
 app.get("/proxy/topaz/multiVehicle/requests", (req, res) =>
   proxy(res, () =>
-    axios.get(
-      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/multiVehReq`,
-      {
-        params: req.query,
-        headers: {
-          ...authHeaders(req),
-          product: "TOPAZ",
-          Accept: "application/json",
-        },
-      }
-    )
+    axios.get(`${BASE_URL}/irisgst/topaz/api/v0.3/getewb/multiVehReq`, {
+      params: req.query,
+      headers: {
+        ...authHeaders(req),
+        product: "TOPAZ",
+        Accept: "application/json",
+      },
+    })
   )
 );
 
-// Get Multi-Vehicle Group Details
+// Get Group Details
 app.get("/proxy/topaz/multiVehicle/groupDetails", (req, res) =>
   proxy(res, () =>
-    axios.get(
-      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/multiVehDet`,
-      {
-        params: req.query,
-        headers: {
-          ...authHeaders(req),
-          product: "TOPAZ",
-          Accept: "application/json",
-        },
-      }
-    )
+    axios.get(`${BASE_URL}/irisgst/topaz/api/v0.3/getewb/multiVehDet`, {
+      params: req.query,
+      headers: {
+        ...authHeaders(req),
+        product: "TOPAZ",
+        Accept: "application/json",
+      },
+    })
   )
 );
 
-// Add Vehicle to Multi-Vehicle
+// Add Vehicle
 app.post("/proxy/topaz/multiVehicle/add", (req, res) =>
   proxy(res, () =>
     axios.post(
@@ -382,7 +437,7 @@ app.post("/proxy/topaz/multiVehicle/add", (req, res) =>
   )
 );
 
-// Edit Multi-Vehicle
+// Edit Vehicle
 app.post("/proxy/topaz/multiVehicle/edit", (req, res) =>
   proxy(res, () =>
     axios.post(
@@ -399,9 +454,6 @@ app.post("/proxy/topaz/multiVehicle/edit", (req, res) =>
     )
   )
 );
-
-
-
 
 /* =====================================================
    START SERVER
