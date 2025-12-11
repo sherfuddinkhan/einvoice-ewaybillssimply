@@ -102,7 +102,7 @@ const App = () => {
 
             {/* ───────── EWB CORE ───────── */}
    {/*ProtectedRoute checks only isLoggedIn but NOT which product(E-way or E-Invoice) is logged in.So even if you're logged in as E-INVOICE, when you try to open an E-WAY BILL route, it still allows routing OR still shows login because logic is mixed. so by sending product e-way or E-invoice as props to RequireAuth  component we are differentiating whether the protected route is E-invoice or E-way else one logic route in protected is shared with other to overcome we did this */}    
-  <Route path="/ewb-generate-print" element={<RequireAuth product="EWAY"><EwbGenerateAndPrint /></RequireAuth>}/>
+  <Route path="/ewb-generate-print" element={<RequireAuth product="EWAY"><EwbGenerateAndPrint/></RequireAuth>}/>
  
      
            
