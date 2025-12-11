@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./components/AuthContext";
 import { AuthProvider } from "./components/AuthContext";
+import RequireAuth from "./components/RequireAuth";
+
 
 
 /* ─────────── LOGIN ─────────── */
@@ -69,6 +71,11 @@ const App = () => {
   const [allowEwayLogin, setAllowEwayLogin] = useState(false);
   const [allowEinvoiceLogin, setAllowEinvoiceLogin] = useState(false);
 
+
+
+  // ⬇️ ADD THIS — FIXES ESLINT ERROR
+  const { isLoggedIn, product } = useAuth();
+
   return (
     <Router>
       <div style={{ display: "flex", minHeight: "100vh" }}>
@@ -89,19 +96,14 @@ const App = () => {
             />
 
             {/* ───────── Login ───────── */}
-            <Route path="/ewaybill-login" element={<EWayBillLoginPage />} />
-            <Route path="/einvoice-login" element={<EInvoiceLoginPage />} />
+{/* Note: with this routing ? no need of login ones we are logged in with (<Navigate to="/ewb-generate-print" replace />) : (<EWayBillLoginPage />) and next one is  even if we logged with one  say E-waybill its showing it is logged in as E-invoice so avoid we are using Product based login like{isLoggedIn && product === "EWAY" ?} and {isLoggedIn && product === "EINVOICE" ? product */}
+<Route path="/ewaybill-login" element={isLoggedIn && product === "EWAY" ? (<Navigate to="/ewb-generate-print" replace />) : (<EWayBillLoginPage />)}/>
+<Route path="/einvoice-login" element={isLoggedIn && product === "EINVOICE" ? (<Navigate to="/einvoice-generate-print" replace />) : (<EInvoiceLoginPage/>)}/>
 
             {/* ───────── EWB CORE ───────── */}
-       
-              <Route
-              path="/ewb-generate-print"
-              element={
-                <ProtectedRoute>
-                  <EwbGenerateAndPrint/>
-                </ProtectedRoute>
-              }
-            />  
+   {/*ProtectedRoute checks only isLoggedIn but NOT which product(E-way or E-Invoice) is logged in.So even if you're logged in as E-INVOICE, when you try to open an E-WAY BILL route, it still allows routing OR still shows login because logic is mixed. so by sending product e-way or E-invoice as props to RequireAuth  component we are differentiating whether the protected route is E-invoice or E-way else one logic route in protected is shared with other to overcome we did this */}    
+  <Route path="/ewb-generate-print" element={<RequireAuth product="EWAY"><EwbGenerateAndPrint /></RequireAuth>}/>
+ 
      
            
             <Route path="/ewb-print" element={<EwaybillPrint />} />
@@ -129,14 +131,14 @@ const App = () => {
             <Route path="/multi-vehicle-edit" element={<MultiVehicleEdit />} />
             <Route path="/multi-vehicle-group-details" element={<MultiVehicleGroupDetails />} />
             <Route path="/multi-vehicle-requests" element={<MultiVehicleRequests />} />
+ {/*ProtectedRoute checks only isLoggedIn but NOT which product(E-way or E-Invoice) is logged in.So even if you're logged in as E-INVOICE, when you try to open an E-WAY BILL route, it still allows routing OR still shows login because logic is mixed. so by sending product e-way or E-invoice as props to RequireAuth  component we are differentiating whether the protected route is E-invoice or E-way else one logic route in protected is shared with other to overcome we did this */}    
 
             {/* ───────── E-INVOICE CORE ───────── */}
             <Route
               path="/einvoice-generate-print"
-              element={
-                <ProtectedRoute >
+              element={<RequireAuth product="EINVOICE">
                   <GenerateAndPrintEinvoice />
-                </ProtectedRoute>
+                </RequireAuth>
               }
             />
             <Route path="/einvoice-cancel-irn" element={<CancelIRN />} />

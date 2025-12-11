@@ -14,11 +14,15 @@ const EWayBillLoginPage = () => {
   const navigate = useNavigate();
 
   // Redirect after login
-  useEffect(() => {
-    if (isLoggedIn && product === "EWAY") {
+useEffect(() => {
+  if (isLoggedIn && product === "EWAY") {
+    // Prevent redirect when already on /ewaybill-login
+    if (window.location.pathname !== "/ewaybill-login") {
       navigate("/ewb-generate-print", { replace: true });
     }
-  }, [isLoggedIn, product, navigate]);
+  }
+}, [isLoggedIn, product, navigate]);
+
 
   const handleLogin = async () => {
     setLoading(true);

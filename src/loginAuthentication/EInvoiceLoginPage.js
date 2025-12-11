@@ -16,6 +16,8 @@ const EInvoiceLoginPage = () => {
   // Auto redirect if already logged in
   useEffect(() => {
     if (isLoggedIn && product === "EINVOICE") {
+        // Prevent redirect when already on /ewaybill-login
+    if (window.location.pathname !== "/ewaybill-login")
       navigate("/einvoice-generate-print", { replace: true });
     }
   }, [isLoggedIn, product, navigate]);
