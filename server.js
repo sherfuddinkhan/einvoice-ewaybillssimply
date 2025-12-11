@@ -199,7 +199,21 @@ app.post("/proxy/topaz/ewb/generate", (req, res) =>
     })
   )
 );
+const printEWB = async (url, req, res, filename) => {
+  try {
+    const response = await axios.post(`${BASE_URL}${url}`, req.body, {
+      headers: { Accept: "application/pdf", "Content-Type": "application/json", product: "TOPAZ", ...authHeaders(req) },
+      responseType: "arraybuffer",
+    });
+    res.set("Content-Type", "application/pdf");
+    res.set("Content-Disposition", `attachment; filename=${filename}`);
+    res.send(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data || { error: "Print failed" });
+  }
+};
 
+app.post("/proxy/topaz/ewb/printDetails", (req, res) => printEWB("/irisgst/topaz/ewb/print/details", req, res, "ewb-details.pdf"));
 // Get EWB by Number
 app.get("/proxy/topaz/ewb/byNumber", (req, res) =>
   proxy(res, () =>
@@ -223,32 +237,7 @@ app.put("/proxy/topaz/ewb/action", (req, res) =>
   )
 );
 
-// Common PDF printer for EWB
-const printEWB = async (endpoint, req, res, filename) => {
-  try {
-    const response = await axios.post(
-      `${BASE_URL}${endpoint}`,
-      req.body,
-      {
-        headers: {
-          ...authHeaders(req),
-          product: "TOPAZ",
-          Accept: "application/pdf",
-          "Content-Type": "application/json",
-        },
-        responseType: "arraybuffer",
-      }
-    );
 
-    res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename=${filename}`,
-    });
-    res.send(response.data);
-  } catch (err) {
-    res.status(err.response?.status || 500).json(err.response?.data);
-  }
-};
 
 // 6. GET E-WAY BILL BY IRN (GetEWBForm)
 app.get('/proxy/irn/getEwbByIrn', async (req, res) => {

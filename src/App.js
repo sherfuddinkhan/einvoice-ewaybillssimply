@@ -45,7 +45,7 @@ import EwaybillActions from "./E-waybill/Ewaybill Actions/EwaybillActions";
 import UpdateTransporterId from "./E-waybill/Ewaybill Actions/UpdateTransporterId";
 
 /* ─────────── EWAYBILL FETCH / DOC TYPE / MULTI-VEHICLE ─────────── */
-import AssignedEwbTransporter from "./E-waybill/Fetch Ewaybill/AssignedEwbTransporter";
+import AssignedEwbTransporter from "./E-waybill/Fetch Ewaybill/Ttransporterewaybill";
 import ConsigneeEwaybill from "./E-waybill/Fetch Ewaybill/ConsigneeEwaybill";
 import FetchByDate from "./E-waybill/Fetch Ewaybill/FetchByDate";
 import FetchByDocNumType from "./E-waybill/Get Ewaybill By Document Number & Type/EwaybillbyDocNumAndType";
