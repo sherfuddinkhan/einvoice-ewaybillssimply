@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const LOGIN_KEY = "iris_login_data";
 const LATEST_EWB_KEY = "latestEwbData";
 
 const FetchByDate = () => {
-  const [date, setDate] = useState(""); // user input
+  const navigate = useNavigate();
+
+  const [date, setDate] = useState("");
   const [userGstin, setUserGstin] = useState("");
 
   const [headersUI, setHeadersUI] = useState({});
-  const [payloadUI, setPayloadUI] = useState({});
-  const [response, setResponse] = useState(null);
+  const [response, setResponse] = useState([]);
 
   // ----------------------------------------
   // Load headers + latest EWB
@@ -19,42 +21,27 @@ const FetchByDate = () => {
     const login = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
     const latest = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
 
-    const headers = {
+    setHeadersUI({
       accept: "application/json",
       product: "TOPAZ",
       companyid: login.companyId || "",
       "x-auth-token": login.token || "",
-    };
+    });
 
-    setHeadersUI(headers);
-
-    // Prefill date (DD/MM/YYYY)
     const latestDate = latest?.response?.ewbDate?.split(" ")[0] || "";
     setDate(latestDate);
 
-    // Prefill GSTIN
     setUserGstin(latest?.response?.fromGstin || "");
   }, []);
 
-  // ----------------------------------------
-  // Fix date → convert DD/MM/YY to DD/MM/YYYY
-  // ----------------------------------------
   const fixDateFormat = (d) => {
     if (!d) return d;
-
     const parts = d.split("/");
     if (parts.length !== 3) return d;
-
-    if (parts[2].length === 2) {
-      parts[2] = "20" + parts[2]; // convert 25 → 2025
-    }
-
+    if (parts[2].length === 2) parts[2] = "20" + parts[2];
     return parts.join("/");
   };
 
-  // ----------------------------------------
-  // Fetch EWBs (axios only)
-  // ----------------------------------------
   const fetchEwbs = async () => {
     const finalDate = fixDateFormat(date);
 
@@ -63,59 +50,43 @@ const FetchByDate = () => {
       userGstin,
     };
 
-    setPayloadUI(payload);
-
-    console.log("📤 REQUEST URL:", "http://localhost:3001/proxy/topaz/ewb/fetchByDate");
-    console.log("📤 REQUEST HEADERS:", headersUI);
-    console.log("📤 FIXED DATE SENT:", finalDate);
-    console.log("📤 REQUEST PARAMS:", payload);
-
     try {
       const res = await axios.get(
         "http://localhost:3001/proxy/topaz/ewb/fetchByDate",
-        {
-          params: payload,
-          headers: headersUI,
-        }
+        { params: payload, headers: headersUI }
       );
-
-      console.log("✅ RESPONSE SUCCESS:", res.data);
-      setResponse(res.data);
-
+      setResponse(res.data.response || []);
     } catch (error) {
-      const err = error.response?.data || error.message;
-      console.log("❌ RESPONSE ERROR:", err);
-      setResponse(err);
+      setResponse([]);
+      console.error("❌ ERROR:", error);
     }
   };
 
-  // ----------------------------------------
-  // UI
-  // ----------------------------------------
+  // Redirect to EWB Actions page
+  const goToEwbAction = (ewbNo) => {
+    navigate(`/ewb-action/${ewbNo}`);
+  };
+
   return (
     <div style={{ padding: 20, fontFamily: "Arial" }}>
       <h2>Fetch Generated E-Way Bills by Date</h2>
 
-      {/* Date input */}
       <div>
         <label>Date (DD/MM/YYYY)</label>
         <br />
         <input
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          placeholder="26/11/2025"
           style={{ padding: 6, width: 200 }}
         />
       </div>
 
-      {/* GSTIN input */}
       <div style={{ marginTop: 10 }}>
         <label>User GSTIN</label>
         <br />
         <input
           value={userGstin}
           onChange={(e) => setUserGstin(e.target.value)}
-          placeholder="Enter GSTIN"
           style={{ padding: 6, width: 200 }}
         />
       </div>
@@ -134,23 +105,64 @@ const FetchByDate = () => {
         Fetch EWB
       </button>
 
-      {/* Headers */}
-      <h3>Request Headers</h3>
-      <pre style={{ background: "#f3f3f3", padding: 10 }}>
-        {JSON.stringify(headersUI, null, 2)}
-      </pre>
+      {/* Table */}
+      <h3 style={{ marginTop: 30 }}>EWB List</h3>
 
-      {/* Query Params */}
-      <h3>Query Parameters (Payload)</h3>
-      <pre style={{ background: "#fafafa", padding: 10 }}>
-        {JSON.stringify(payloadUI, null, 2)}
-      </pre>
+      {response.length === 0 ? (
+        <p>No records found.</p>
+      ) : (
+        <table
+          border="1"
+          cellPadding="8"
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            background: "#fff",
+          }}
+        >
+          <thead style={{ background: "#1976d2", color: "white" }}>
+            <tr>
+              <th>EWB No</th>
+              <th>Document No</th>
+              <th>Document Date</th>
+              <th>EWB Date</th>
+              <th>Valid Upto</th>
+              <th>Status</th>
+              <th>Place</th>
+              <th>Action</th>
+            </tr>
+          </thead>
 
-      {/* Response */}
-      <h3>Response</h3>
-      <pre style={{ background: "#e8f5e9", padding: 10 }}>
-        {JSON.stringify(response, null, 2)}
-      </pre>
+          <tbody>
+            {response.map((row, idx) => (
+              <tr key={idx}>
+                <td>{row.ewbNo}</td>
+                <td>{row.docNo}</td>
+                <td>{row.docDate}</td>
+                <td>{row.ewbDate}</td>
+                <td>{row.validUpto}</td>
+                <td>{row.status}</td>
+                <td>{row.delPlace}</td>
+                <td>
+                  <button
+                    onClick={() => goToEwbAction(row.ewbNo)}
+                    style={{
+                      padding: "5px 12px",
+                      background: "#8e24aa",
+                      color: "white",
+                      border: "none",
+                      cursor: "pointer",
+                      borderRadius: 5,
+                    }}
+                  >
+                    View / Action
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };

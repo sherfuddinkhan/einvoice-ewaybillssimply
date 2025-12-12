@@ -237,7 +237,25 @@ app.put("/proxy/topaz/ewb/action", (req, res) =>
   )
 );
 
-
+// -------------------------------
+// GET EWB BY DATE - PROXY ROUTE
+// -------------------------------
+app.get("/proxy/topaz/ewb/fetchByDate", (req, res) =>
+  proxyRequest(res, () =>
+    axios.get(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/generatorEwbs`,
+      {
+        params: req.query,
+        headers: {
+          Accept: "application/json",
+          product: "TOPAZ",
+          "X-Auth-Token": req.headers["x-auth-token"],
+          companyId: req.headers["companyid"],
+        },
+      }
+    )
+  )
+);
 
 // 6. GET E-WAY BILL BY IRN (GetEWBForm)
 app.get('/proxy/irn/getEwbByIrn', async (req, res) => {

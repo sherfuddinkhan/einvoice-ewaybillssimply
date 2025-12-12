@@ -138,7 +138,7 @@ const App = () => {
                     <Route path="consolidate-ewb" element={<ByDocNumType/>} />
                     
                     {/* ACTIONS */}
-                    <Route path="actions" element={<EwaybillActions/>} />
+                    <Route path="ewb-action/:ewbNo" element={<EwaybillActions/>} />
                     <Route path="update-transporter-id" element={<UpdateTransporterId/>} />
                     
                     {/* FETCH */}
