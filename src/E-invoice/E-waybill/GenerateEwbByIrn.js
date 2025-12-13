@@ -77,7 +77,7 @@ const LabeledInput = ({ label, value, onChange, isHighlighted = false, type = 't
 // LocalStorage keys
 const STORAGE_KEY = "iris_einvoice_response";  
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
-const STORAGE_KEY2=  "iris_ewb_by_irn_success_data";
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 
 // Default values for EWB fields if not found in storage
 const FALLBACK_DEFAULTS = {
@@ -92,13 +92,14 @@ const GenerateEwbByIrn = () => {
     /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
   const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
   const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  
+    const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
+   
     // Derive Auth/ID values
     const initialAuthToken = savedResponse.token || savedConfig.token;
     const initialCompanyId = savedResponse.companyId || savedConfig.companyId;
 
     // Derive body values, prioritizing storage
-    const storageIrn = savedResponse.irn || savedConfig.irn;
+    const storageIrn = savedConfig2.irn;
     const storageUserGstin = savedResponse.companyUniqueCode || savedConfig.companyUniqueCode;
     const storageVehNo = savedResponse.vehNo || savedConfig.vehNo;
     const storageTransId = savedResponse.transId || savedConfig.transId;
@@ -164,8 +165,8 @@ const GenerateEwbByIrn = () => {
         const sourceCompanyId = savedResponse?.companyId || savedConfig?.companyId || "";
         
         const sourceGstin = savedResponse?.companyUniqueCode || savedConfig?.companyUniqueCode || FALLBACK_DEFAULTS.userGstin;
-        const sourceIrn = savedResponse?.irn || savedConfig?.irn || FALLBACK_DEFAULTS.irn;
-
+        const sourceIrn = savedResponse?.irn || savedConfig2?.irn || FALLBACK_DEFAULTS.irn;
+         console.log("sourceIrn",savedConfig2?.irn)
         setConfig(prev => ({
             ...prev,
             headers: {

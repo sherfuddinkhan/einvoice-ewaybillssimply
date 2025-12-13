@@ -51,6 +51,8 @@ const tableStyles = {
 // Storage Keys
 const STORAGE_KEY = "iris_einvoice_response";
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
+
 const LAST_GENERATED_ID_KEY = "iris_last_generated_id";
 const LAST_DOC_DETAILS_KEY = "iris_last_used_doc_details";
 const LAST_IRN_KEY = "iris_last_used_irn";
@@ -369,7 +371,8 @@ const GenerateAndPrintEinvoice = () => {
 
       if (data.status === "SUCCESS" && data.response?.irn) {
         saveResponseForAutoPopulate(data);
-
+          console.log("responsedata",data)
+             localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
         alert(`IRN Generated Successfully!\nIRN: ${data.response.irn}\nAck No: ${data.response.ackNo}`);
       } else if (data.status === "FAILURE") {
         const errorMsg = data.errors?.[0]?.msg || "Unknown error";
