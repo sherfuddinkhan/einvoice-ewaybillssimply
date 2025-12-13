@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
 const STORAGE_KEY = 'iris_einvoice_shared_config';
+const STORAGE_KEY2=  "iris_ewb_by_irn_success_data";
 const LAST_EWB_KEY = 'iris_last_ewb_details';
 const LAST_IRN_KEY = 'iris_last_used_irn';
+  const savedResponse3 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
+console.log("savedResponse3",savedResponse3)
 
 const cancelReasons = {
   '1': 'Duplicate',

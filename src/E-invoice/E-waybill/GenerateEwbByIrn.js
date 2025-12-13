@@ -77,6 +77,7 @@ const LabeledInput = ({ label, value, onChange, isHighlighted = false, type = 't
 // LocalStorage keys
 const STORAGE_KEY = "iris_einvoice_response";  
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
+const STORAGE_KEY2=  "iris_ewb_by_irn_success_data";
 
 // Default values for EWB fields if not found in storage
 const FALLBACK_DEFAULTS = {
@@ -209,12 +210,8 @@ const GenerateEwbByIrn = () => {
       if (res.ok && data.status === 'SUCCESS') {
         alert('E-Way Bill Generated Successfully!');
         // Save the successful response data back to the storage key
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-             ...savedResponse, 
-             ...data.response, 
-             irn: config.body.irn, 
-             companyUniqueCode: config.body.userGstin 
-         })); 
+localStorage.setItem(STORAGE_KEY2, JSON.stringify({data})); 
+console.log("responsedata",data)
       }
     } catch (err) {
       setResponse({ error: err.message });
