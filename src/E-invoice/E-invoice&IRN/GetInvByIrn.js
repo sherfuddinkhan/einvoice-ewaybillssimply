@@ -20,9 +20,9 @@ const GetInvByIrn = ({ previousResponse }) => {
   console.log("savedResponse",savedResponse)
 
   /* -------------------- STATE -------------------- */
-  const [irn, setIrn] = useState(lastIrn || savedConfig.irn || "");
+  const [irn, setIrn] = useState( savedResponse.irn|| savedConfig.irn || "");
   const [userGstin, setUserGstin] = useState(
-    lastUserGstin || savedConfig.companyUniqueCode
+    lastUserGstin ||savedResponse.companyUniqueCode
  || ""
   );
 

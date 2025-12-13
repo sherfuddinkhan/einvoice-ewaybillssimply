@@ -33,13 +33,11 @@ const STORAGE_KEY1  = "iris_einvoice_shared_config";
   // Deduplicated IRN sourcing
   const irn = previousResponse?.irn || savedConfig1?.irn || '';
   console.log("irn",irn)
-  const initialGstin = previousResponse?.userGstin
-    || previousResponse?.companyGstin
-    || previousResponse?.gstin
-    || savedConfig?.gstin
+  const initialGstin = savedConfig1?.companyUniqueCode
+    || savedConfig?.companyUniqueCode
     || savedConfig?.userGstin
     || "";
-  const initialCompanyCode = previousResponse?.companyUniqueCode
+  const initialCompanyCode = savedConfig1?.companyUniqueCode
     || savedConfig?.companyUniqueCode
     || previousResponse?.userGstin
     || "";
