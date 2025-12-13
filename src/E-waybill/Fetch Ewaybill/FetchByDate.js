@@ -62,9 +62,9 @@ const FetchByDate = () => {
     }
   };
 
-  // Redirect to EWB Actions page
+  // ⭐ Correct path for EWB Action screen
   const goToEwbAction = (ewbNo) => {
-    navigate(`/ewb-action/${ewbNo}`);
+    navigate(`/ewaybill/ewb-action/${ewbNo}`);
   };
 
   return (
@@ -72,8 +72,7 @@ const FetchByDate = () => {
       <h2>Fetch Generated E-Way Bills by Date</h2>
 
       <div>
-        <label>Date (DD/MM/YYYY)</label>
-        <br />
+        <label>Date (DD/MM/YYYY)</label><br />
         <input
           value={date}
           onChange={(e) => setDate(e.target.value)}
@@ -82,8 +81,7 @@ const FetchByDate = () => {
       </div>
 
       <div style={{ marginTop: 10 }}>
-        <label>User GSTIN</label>
-        <br />
+        <label>User GSTIN</label><br />
         <input
           value={userGstin}
           onChange={(e) => setUserGstin(e.target.value)}
@@ -105,7 +103,6 @@ const FetchByDate = () => {
         Fetch EWB
       </button>
 
-      {/* Table */}
       <h3 style={{ marginTop: 30 }}>EWB List</h3>
 
       {response.length === 0 ? (

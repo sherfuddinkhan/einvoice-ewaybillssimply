@@ -71,14 +71,15 @@ const Sidebar = () => {
             ],
             product: "EWAY",
         },
-        {
-            title: "EWB Actions",
-            items: [
-                { path: "/ewaybill/actions", label: "Cancel/Reject EWB" },
-                { path: "/ewaybill/update-transporter-id", label: "Update Transporter ID" },
-            ],
-            product: "EWAY",
-        },
+       {
+    title: "EWB Actions",
+    items: [
+        { path: "/ewb-action", label: "Cancel / Reject EWB" },
+        { path: "/ewaybill/update-transporter-id", label: "Update Transporter ID" },
+    ],
+    product: "EWAY",
+},
+
         {
             title: "Fetch EWB / Consignee",
             items: [
@@ -103,12 +104,21 @@ const Sidebar = () => {
         {
             title: "Multi-Vehicle / Consolidate",
             items: [
-                { path: "/ewaybill/multi-vehicle-initiate", label: "Multi-Vehicle Initiate" },
-                { path: "/ewaybill/consolidated-ewb-details", label: "Consolidated EWB Details" },
-                { path: "/ewaybill/consolidate-ewb", label: "Consolidate EWB" },
-            ],
+              // Multi-Vehicle routes grouped under /ewaybill/multi-vehicle
+                     { path: "/ewaybill/multi-vehicle-initiate", label: "Multi-Vehicle Initiate" },
+                     { path: "/ewaybill/multi-vehicle-add", label: "Multi-Vehicle Add" },
+                     { path: "/ewaybill/multi-vehicle-edit", label: "Multi-Vehicle Edit" },
+                     { path: "/ewaybill/multi-vehicle-group-details", label: "Multi-Vehicle Group Details" },
+                     { path: "/ewaybill/multi-vehicle-requests", label: "Multi-Vehicle Requests" },
+                      {/*CONSOLIDATED */} ,
+
+                      { path: "/ewaybill/consolidated-ewb-details", label: "Generateconsolidated-ewb-details" },
+                      { path: "/ewaybill/consolidate-ewb", label: "consolidate-ewb" },
+
+                   ],
             product: "EWAY",
         },
+       
 
         // -----------------------------------------------------------------
         // E-INVOICE MODULES (Prefix: /einvoice)
@@ -172,7 +182,7 @@ const Sidebar = () => {
             }}
         >
             <h3 style={{ margin: "0 0 20px 0", textAlign: 'center' }}>
-                IRIS API Portal 
+                IRISGST API Portal 
                 {product && <span style={{display: 'block', fontSize: '14px', color: '#B3E5FC'}}>({product})</span>}
             </h3>
             

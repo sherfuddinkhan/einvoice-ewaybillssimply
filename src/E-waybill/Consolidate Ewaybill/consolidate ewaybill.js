@@ -169,6 +169,22 @@ if (previousGstin.length === 0) {
       <h2 style={{ color: "#2c3e50" }}>
         Fetch Consolidated E-Way Bill (CEWB) Details
       </h2>
+<h2 style={{ color: "#2c3e50", fontSize: "12px", lineHeight: "1.5" }}>
+  2️⃣ Consolidated EWB (CEWB) Flow
+  <br /><br />
+  <strong>NOTE:</strong> The Consolidated EWB (CEWB) can only be generated if there is no active Multi-Vehicle (MV) movement for the same consignments.
+  <br /><br />
+  <strong>Consolidated EWB Details</strong> (/ewaybill/consolidated-ewb-details): View details of already created CEWBs.
+  <br /><br />
+  <strong>Generate CEWB</strong> (/ewaybill/consolidate-ewb): Create a CEWB to consolidate multiple invoices/shipments under a single EWB.
+  <br /><br />
+  <strong>Important:</strong> CEWB generation is not allowed if a Multi-Vehicle movement is active. To generate a CEWB, you must either:
+  <ul style={{ margin: "2px 0", paddingLeft: "15px" }}>
+    <li>Cancel or complete the active Multi-Vehicle movement, or</li>
+    <li>Remove the consignments from the Multi-Vehicle movement.</li>
+  </ul>
+</h2>
+
       <p style={{ color: "#7f8c8d" }}>
         Enter or auto-filled CEWB number to get full details.
       </p>

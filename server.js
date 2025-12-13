@@ -240,9 +240,9 @@ app.put("/proxy/topaz/ewb/action", (req, res) =>
 // -------------------------------
 // GET EWB BY DATE - PROXY ROUTE
 // -------------------------------
-app.get("/proxy/topaz/ewb/fetchByDate", (req, res) =>
-  proxyRequest(res, () =>
-    axios.get(
+app.get("/proxy/topaz/ewb/fetchByDate", async (req, res) => {
+  try {
+    const response = await axios.get(
       `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/generatorEwbs`,
       {
         params: req.query,
@@ -253,9 +253,226 @@ app.get("/proxy/topaz/ewb/fetchByDate", (req, res) =>
           companyId: req.headers["companyid"],
         },
       }
+    );
+    res.json(response.data);
+  } catch (err) {
+    console.error(err);
+    res.status(err.response?.status || 500).json({
+      message: err.response?.data?.message || err.message,
+    });
+  }
+});
+
+app.get("/proxy/topaz/api/transporter-ewb", async (req, res) => {
+  try {
+    const { date, userGstin, page = "1", size = "10", updateNeeded = "true" } = req.query;
+
+    const companyId = req.headers["companyid"] || req.headers["companyId"];
+    const token = req.headers["x-auth-token"];
+
+    if (!companyId || !token) {
+      return res.status(401).json({ status: "ERROR", message: "Missing auth headers" });
+    }
+    if (!date || !userGstin) {
+      return res.status(400).json({ status: "ERROR", message: "date & userGstin required" });
+    }
+
+    const irisResponse = await axios.get(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/transporter`,
+      {
+        params: { date, userGstin, page, size, updateNeeded: updateNeeded === "true" },
+        headers: {
+          accept: "application/json",
+          companyId,
+          "X-Auth-Token": token,
+          product: "TOPAZ",
+        },
+        timeout: 30000,
+      }
+    );
+
+    res.json({
+      status: "SUCCESS",
+      response: irisResponse.data.response || irisResponse.data,
+    });
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      status: "ERROR",
+      message: error.message,
+      details: error.response?.data || null,
+    });
+  }
+});
+
+
+app.post("/proxy/topaz/cewb/generate", async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/cewb`,
+      req.body, // payload from the client
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          product: "TOPAZ",
+          ...authHeaders(req), // include authentication headers
+        },
+      }
+    );
+
+    // send the response data back to the client
+    res.json(response.data);
+  } catch (err) {
+    // handle errors
+    const status = err.response?.status || 500;
+    const data = err.response?.data || { message: err.message };
+    res.status(status).json(data);
+  }
+});
+
+app.get("/proxy/topaz/cewb/details", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/cewb/getcewb`,
+      {
+        params: req.query,
+        headers: {
+          Accept: "application/json",
+          product: "TOPAZ",
+          ...authHeaders(req), // assuming authHeaders(req) returns token & companyId
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error(err);
+    res.status(err.response?.status || 500).json({
+      message: err.response?.data?.message || err.message,
+    });
+  }
+});
+
+
+// Get EWB Details
+app.get("/proxy/topaz/ewb/details", (req, res) =>
+  proxy(res, () =>
+    axios.get(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/ewbDetails`,
+      {
+        params: req.query,
+        headers: {
+          Accept: "application/json",
+          product: "TOPAZ",
+          ...authHeaders(req),
+        },
+      }
     )
   )
 );
+
+app.get("/proxy/topaz/ewb/getByDocNumAndType", async (req, res) => {
+  try {
+    const { userGstin, docType, docNum } = req.query;
+
+    if (!userGstin || !docType || !docNum) {
+      return res.status(400).json({
+        error: "Missing required query params: userGstin, docType, docNum",
+        received: req.query,
+      });
+    }
+
+    const irisUrl = `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/docNumAndType`;
+
+    const response = await axios.get(irisUrl, {
+      params: {
+        userGstin,
+        docType,
+        docNum,
+      },
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        product: "TOPAZ",
+        companyId: req.headers.companyid,       // from frontend
+        "X-Auth-Token": req.headers["x-auth-token"],
+      },
+    });
+
+    res.json(response.data);
+  } catch (err) {
+    // Handle API errors
+    if (err.response) {
+      return res.status(err.response.status).json(err.response.data);
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ======================================================================
+   6. EWB BY DOC NUM & TYPE
+   ====================================================================== */
+// -------------------------------
+// POST /proxy/topaz/ewb/docNum
+// -------------------------------
+app.post("/proxy/topaz/ewb/docNum", async (req, res) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/docNum`,
+      req.body, // payload body
+      {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          companyId: req.headers["companyid"],   // forward companyId header
+          "X-Auth-Token": req.headers["x-auth-token"],
+          product: "TOPAZ",
+          ...authHeaders(req), // if you have additional auth headers
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error(err);
+    res.status(err.response?.status || 500).json({
+      message: err.response?.data?.message || err.message,
+    });
+  }
+});
+
+
+// -------------------------------
+// GET /proxy/topaz/ewb/bulkStatus
+// -------------------------------
+app.get("/proxy/topaz/ewb/bulkStatus", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/docNum/status`,
+      {
+        params: {
+          companyId: req.query.companyId,
+          userGstin: req.query.userGstin,
+          docType: req.query.docType,
+          docNumList: req.query.docNumList,
+        },
+        headers: {
+          Accept: "application/json",
+          product: "TOPAZ",
+          ...authHeaders(req),
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error(err);
+    res.status(err.response?.status || 500).json({
+      message: err.response?.data?.message || err.message,
+    });
+  }
+});
 
 // 6. GET E-WAY BILL BY IRN (GetEWBForm)
 app.get('/proxy/irn/getEwbByIrn', async (req, res) => {
