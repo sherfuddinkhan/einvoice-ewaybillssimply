@@ -3,245 +3,252 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
 const Sidebar = () => {
-    const location = useLocation();
-    const { product, isLoggedIn } = useAuth(); // Get product and login status
-    const [openSection, setOpenSection] = useState(null);
+  const location = useLocation();
+  const { product } = useAuth();
 
-    const toggleSection = (title) => {
-        setOpenSection(prev => (prev === title ? null : title));
-    };
+  // Store open/close state per section
+  const [openSections, setOpenSections] = useState({});
 
-    // 1. Initial opening of the relevant section based on the current product/path
-    useEffect(() => {
-        if (location.pathname.startsWith('/ewaybill')) {
-            // Find the main section title corresponding to the EWAY product
-            const ewaySectionTitle = menuSections.find(s => s.product === 'EWAY')?.title;
-            setOpenSection(ewaySectionTitle || null);
-        } else if (location.pathname.startsWith('/einvoice')) {
-            // Find the main section title corresponding to the EINVOICE product
-            const einvoiceSectionTitle = menuSections.find(s => s.product === 'EINVOICE')?.title;
-            setOpenSection(einvoiceSectionTitle || null);
-        } else if (location.pathname === '/') {
-             setOpenSection("Dashboard");
+  const toggle = (title) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
+
+  const isActive = (path) =>
+    location.pathname === path ||
+    location.pathname.startsWith(path + "/");
+
+  /* --------------------------------
+     AUTO OPEN SECTION ON ROUTE
+  --------------------------------- */
+  useEffect(() => {
+    setOpenSections((prev) => {
+      const updated = { ...prev };
+
+      menuSections.forEach((section) => {
+        if (section.items?.some((i) => isActive(i.path))) {
+          updated[section.title] = true;
         }
-    }, [location.pathname, product]); // Re-run effect when path changes or product changes
+      });
 
-    // Helper function to check if any item in a section is active
-    const isSectionActive = (section) => {
-        const path = location.pathname;
-        return section.items?.some(item => path.startsWith(item.path));
-    };
+      return updated;
+    });
+  }, [location.pathname]);
 
-    // 2. Define Menu Structure with NEW Nested Paths
-    const menuSections = [
-        // Login Links (Show only if not logged in)
-        {
-            title: "Login / Switch",
-            items: [
-                { path: "/ewaybill-login", label: "E-Way Bill Login" },
-                { path: "/einvoice-login", label: "E-Invoice Login" },
-            ],
-            // Only show if the user is NOT logged into both products
-            showCondition: !isLoggedIn || true, // Always show for switching/login
-        },
+  /* --------------------------------
+     MENU CONFIG
+  --------------------------------- */
+  const menuSections = [
+    {
+      title: "Dashboard",
+      items: [{ path: "/", label: "Dashboard" }],
+    },
+    {
+      title: "Login / Switch",
+      items: [
+        { path: "/ewaybill-login", label: "E-Way Bill Login" },
+        { path: "/einvoice-login", label: "E-Invoice Login" },
+      ],
+    },
+      {
+      title: "Change Password",
+      product: "EWAY",
+      items: [{ path: "/ewaybill/change-password", label: "Change Password" }],
+    },
 
-        // Dashboard
-        {
-            title: "Dashboard",
-            items: [{ path: "/", label: "Dashboard" }],
-        },
-
-        // -----------------------------------------------------------------
-        // E-WAY BILL MODULES (Prefix: /ewaybill)
-        // -----------------------------------------------------------------
-        {
-            title: "E-Way Bill Core",
-            items: [
-                { path: "/ewaybill/ewb-generate-print", label: "Generate & Print" },
-                { path: "/ewaybill/fetch-ewb", label: "Fetch by EWB No" },
-                { path: "/ewaybill/ewb-details", label: "Get EWB Details" },
-            ],
-            product: "EWAY",
-        },
-        {
-            title: "EWB Print / Summary",
-            items: [
-                { path: "/ewaybill/ewb-print", label: "Print E-Way Bill" },
-                { path: "/ewaybill/ewb-print-summary", label: "Print Summary" },
-            ],
-            product: "EWAY",
-        },
-       {
-    title: "EWB Actions",
-    items: [
-        { path: "/ewb-action", label: "Cancel / Reject EWB" },
+    /* ================= E-WAY BILL ================= */
+    {
+      title: "E-Way Bill Core",
+      product: "EWAY",
+      items: [
+        { path: "/ewaybill/ewb-generate-print", label: "Generate & Print" },
+        { path: "/ewaybill/fetch-ewb", label: "Fetch by EWB No" },
+        { path: "/ewaybill/ewb-details", label: "Get EWB Details" },
+      ],
+    },
+    {
+      title: "EWB Actions",
+      product: "EWAY",
+      items: [
+        { path: "/ewaybill/ewb-action", label: "Cancel / Reject EWB" },
         { path: "/ewaybill/update-transporter-id", label: "Update Transporter ID" },
-    ],
-    product: "EWAY",
-},
+      ],
+    },
+    {
+      title: "Fetch EWB / Consignee",
+      product: "EWAY",
+      items: [
+        { path: "/ewaybill/assigned-ewb", label: "Transporter EWB" },
+        { path: "/ewaybill/consignee-ewb", label: "Consignee EWB" },
+        { path: "/ewaybill/fetch-by-date", label: "Fetch by Date" },
+      ],
+    },
+     {
+      title: "Consolidate Ewaybill",
+      product: "EWAY",
+      items: [
+        { path: "/ewaybill/consolidated-ewb-details", label: "Consolidated EWB" },
+        { path: "/ewaybill/consolidate-ewb", label: "Generate Consolidated" },
+      ],
+    },
 
-        {
-            title: "Fetch EWB / Consignee",
-            items: [
-                // Path corrected based on assumed App.js route name
-                { path: "/ewaybill/assigned-ewb", label: "Transporter EWB" }, 
-                { path: "/ewaybill/consignee-ewb", label: "Consignee EWB" },
-                { path: "/ewaybill/fetch-by-date", label: "Fetch by Date" },
-            ],
-            product: "EWAY",
-        },
-        {
-            title: "EWB by Document",
-            items: [
-                { path: "/ewaybill/by-doc-type", label: "By Doc No & Type" },
-                { path: "/ewaybill/generated-by-date", label: "Generated by Date" },
-                { path: "/ewaybill/get-by-doc-no", label: "Get by Doc No" },
-                { path: "/ewaybill/download-doc", label: "Doc Download" },
-                { path: "/ewaybill/get-doc-status", label: "Doc Status" },
-            ],
-            product: "EWAY",
-        },
-        {
-            title: "Multi-Vehicle / Consolidate",
-            items: [
-              // Multi-Vehicle routes grouped under /ewaybill/multi-vehicle
-                     { path: "/ewaybill/multi-vehicle-initiate", label: "Multi-Vehicle Initiate" },
-                     { path: "/ewaybill/multi-vehicle-add", label: "Multi-Vehicle Add" },
-                     { path: "/ewaybill/multi-vehicle-edit", label: "Multi-Vehicle Edit" },
-                     { path: "/ewaybill/multi-vehicle-group-details", label: "Multi-Vehicle Group Details" },
-                     { path: "/ewaybill/multi-vehicle-requests", label: "Multi-Vehicle Requests" },
-                      {/*CONSOLIDATED */} ,
+    {
+      title: "EWB by Document",
+      product: "EWAY",
+      items: [
+        { path: "/ewaybill/by-doc-type", label: "By Doc No & Type" },
+        { path: "/ewaybill/generated-by-date", label: "Generated by Date" },
+        { path: "/ewaybill/get-by-doc-no", label: "Get by Doc No" },
+        { path: "/ewaybill/download-doc", label: "Doc Download" },
+        { path: "/ewaybill/get-doc-status", label: "Doc Status" },
+      ],
+    },
+    {
+      title: "Multi-Vehicle",
+      product: "EWAY",
+      items: [
+        { path: "/ewaybill/multi-vehicle-initiate", label: "Multi-Vehicle Initiate" },
+        { path: "/ewaybill/multi-vehicle-add", label: "Multi-Vehicle Add" },
+        { path: "/ewaybill/multi-vehicle-edit", label: "Multi-Vehicle Edit" },
+        { path: "/ewaybill/multi-vehicle-group-details", label: "Group Details" },
+        { path: "/ewaybill/multi-vehicle-requests", label: "Requests" },
+      ],
+    },
+     {
+      title: "EWB Print / Summary",
+      product: "EWAY",
+      items: [
+        { path: "/ewaybill/ewb-print", label: "Print EWB" },
+        { path: "/ewaybill/ewb-print-summary", label: "Print Summary" },
+      ],
+    },
+   
+    /* ================= E-INVOICE ================= */
+    {
+      title: "Change Password",
+      product: "EINVOICE",
+      items: [{ path: "/einvoice/change-password", label: "Change Password" }],
+    },
 
-                      { path: "/ewaybill/consolidated-ewb-details", label: "Generateconsolidated-ewb-details" },
-                      { path: "/ewaybill/consolidate-ewb", label: "consolidate-ewb" },
+    {
+      title: "E-Invoice Core",
+      product: "EINVOICE",
+      items: [
+        { path: "/einvoice/generate-print", label: "Generate Invoice" },
+        { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
+        { path: "/einvoice/get-by-irn", label: "Get by IRN" },
+        { path: "/einvoice/get-by-doc", label: "Get by Document" },
+      ],
+    },
+    {
+      title: "EWB from IRN",
+      product: "EINVOICE",
+      items: [
+        { path: "/einvoice/generate-ewb-by-irn", label: "Generate EWB" },
+        { path: "/einvoice/cancel-ewb-by-irn", label: "Cancel EWB" },
+        { path: "/einvoice/get-ewb-by-irn", label: "Get EWB" },
+      ],
+    },
+    {
+      title: "Print",
+      product: "EINVOICE",
+      items: [
+        { path: "/einvoice/print-irn", label: "Print Invoice" },
+      ],
+    },
+    {
+      title: "Upload",
+      product: "EINVOICE",
+      items: [
+        { path: "/einvoice/upload-invoices", label: "Upload Invoice" },
+        { path: "/einvoice/uploaded-file-status", label: "Upload Status" },
+      ],
+    },
 
-                   ],
-            product: "EWAY",
-        },
-       
+    {
+      title: "View",
+      product: "EINVOICE",
+      items: [
+         { path: "/einvoice/single-invoice-details", label: "Single Invoice" },
+         { path: "/einvoice/list-of-invoices", label: "Invoice List" },
+      ],
+    },
 
-        // -----------------------------------------------------------------
-        // E-INVOICE MODULES (Prefix: /einvoice)
-        // -----------------------------------------------------------------
-        {
-            title: "E-Invoice Core",
-            items: [
-                { path: "/einvoice/generate-print", label: "Generate E-Invoice" },
-                { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
-                { path: "/einvoice/get-by-irn", label: "Get by IRN" },
-                { path: "/einvoice/get-by-doc", label: "Get IRN by Doc" },
-            ],
-            product: "EINVOICE",
-        },
-        {
-            title: "EWB from IRN",
-            items: [
-                { path: "/einvoice/generate-ewb-by-irn", label: "Generate EWB" },
-                { path: "/einvoice/cancel-ewb-by-irn", label: "Cancel EWB" },
-                { path: "/einvoice/get-ewb-by-irn", label: "Get EWB" },
-            ],
-            product: "EINVOICE",
-        },
-        {
-            title: "Print / View / Upload",
-            items: [
-                { path: "/einvoice/print-irn", label: "Print E-Invoice" },
-                { path: "/einvoice/upload-invoices", label: "Upload Invoice" },
-                { path: "/einvoice/uploaded-file-status", label: "Upload Status" },
-                { path: "/einvoice/single-invoice-details", label: "Single Invoice" },
-                { path: "/einvoice/list-of-invoices", label: "Invoice List" },
-            ],
-            product: "EINVOICE",
-        },
-    ];
+  ];
 
-    // 3. Filter menu sections based on logged-in product
-    const filteredSections = menuSections.filter(
-        (section) =>
-            // Always show the section if it has no product dependency (like Dashboard)
-            !section.product || 
-            // Show Login/Switch section if showCondition is true
-            (section.title === "Login / Switch" && section.showCondition) ||
-            // Show section if the current product matches the section's product
-            section.product === product
-    );
+  const visibleSections = menuSections.filter(
+    (s) => !s.product || s.product === product
+  );
 
+  /* --------------------------------
+     UI
+  --------------------------------- */
+  return (
+    <div
+      style={{
+        width: 270,
+        background: "#1A73E8",
+        color: "#fff",
+        height: "100vh",
+        padding: 20,
+        overflowY: "auto",
+      }}
+    >
+      <h3 style={{ textAlign: "center", marginBottom: 20 }}>
+        IRISGST API Portal
+        {product && (
+          <div style={{ fontSize: 13, color: "#B3E5FC" }}>
+            ({product})
+          </div>
+        )}
+      </h3>
 
-    return (
-        <div
+      {visibleSections.map((section) => (
+        <div key={section.title} style={{ marginBottom: 6 }}>
+          <div
+            onClick={() => toggle(section.title)}
             style={{
-                width: 260, // Slightly increased width for readability
-                background: "#1A73E8",
-                color: "#fff",
-                padding: 20,
-                position: "sticky",
-                top: 0,
-                height: "100vh",
-                overflowY: "auto",
-                boxShadow: "4px 0 10px rgba(0,0,0,0.1)",
+              cursor: "pointer",
+              padding: "10px 12px",
+              fontWeight: "bold",
+              borderRadius: 6,
+              background: openSections[section.title]
+                ? "#2c84f8"
+                : "transparent",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
-        >
-            <h3 style={{ margin: "0 0 20px 0", textAlign: 'center' }}>
-                IRISGST API Portal 
-                {product && <span style={{display: 'block', fontSize: '14px', color: '#B3E5FC'}}>({product})</span>}
-            </h3>
-            
-            {filteredSections.map((section) => {
-                // Determine if any link within the section is currently active
-                const isActive = isSectionActive(section); 
+          >
+            {section.title}
+            <span>{openSections[section.title] ? "▾" : "▸"}</span>
+          </div>
 
-                return (
-                    <div key={section.title}>
-                        <div
-                            onClick={() => toggleSection(section.title)}
-                            style={{
-                                cursor: "pointer",
-                                padding: "10px 8px",
-                                fontWeight: "bold",
-                                background: isActive || openSection === section.title ? "#2c84f8" : "transparent",
-                                borderRadius: 6,
-                                marginTop: 8,
-                                transition: 'background 0.2s',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                            }}
-                        >
-                            {section.title}
-                            <span style={{ transform: openSection === section.title ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
-                                &gt; 
-                            </span>
-                        </div>
-
-                        {/* Sub-menu Items */}
-                        {(openSection === section.title || isActive) && // Keep open if active
-                            <div style={{ maxHeight: openSection === section.title ? '500px' : '0', overflow: 'hidden', transition: 'max-height 0.3s ease-in-out' }}>
-                                {section.items?.map((item) => (
-                                    <Link
-                                        key={item.path}
-                                        to={item.path}
-                                        style={{
-                                            display: "block",
-                                            padding: "8px 15px",
-                                            marginTop: 4,
-                                            borderRadius: 6,
-                                            textDecoration: "none",
-                                            fontSize: '14px',
-                                            color: location.pathname.startsWith(item.path) ? "#1A73E8" : "#fff",
-                                            background: location.pathname.startsWith(item.path) ? "#fff" : "transparent",
-                                            transition: 'all 0.1s',
-                                        }}
-                                    >
-                                        {item.label}
-                                    </Link>
-                                ))}
-                            </div>
-                        }
-                    </div>
-                );
-            })}
+          {openSections[section.title] &&
+            section.items.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                style={{
+                  display: "block",
+                  padding: "8px 18px",
+                  marginTop: 4,
+                  borderRadius: 6,
+                  fontSize: 14,
+                  textDecoration: "none",
+                  background: isActive(item.path) ? "#fff" : "transparent",
+                  color: isActive(item.path) ? "#1A73E8" : "#fff",
+                }}
+              >
+                {item.label}
+              </Link>
+            ))}
         </div>
-    );
+      ))}
+    </div>
+  );
 };
 
 export default Sidebar;

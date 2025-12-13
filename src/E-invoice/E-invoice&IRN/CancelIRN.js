@@ -4,9 +4,14 @@ import React, { useState, useEffect } from 'react';
 const CancelIRN  = ({ previousResponse }) => {
   const STORAGE_KEY = 'iris_einvoice_shared_config';
   const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+ const STORAGE_KEY1  = "einvoicedata";
+ console.log("STORAGE_KEY1",STORAGE_KEY1)
+  const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
+  console.log("savedConfig",savedConfig);
 
   // Deduplicated IRN sourcing
-  const irn = previousResponse?.irn || savedConfig?.irn || '';
+  const irn = previousResponse?.irn || savedConfig?.lastGeneratedResponse?.irn || '';
+  console.log("irn",irn)
   const initialGstin = previousResponse?.userGstin
     || previousResponse?.companyGstin
     || previousResponse?.gstin
@@ -24,8 +29,8 @@ const CancelIRN  = ({ previousResponse }) => {
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'companyId': previousResponse?.companyId || savedConfig?.companyId || '',
-      'X-Auth-Token': previousResponse?.token || savedConfig?.token || '',
+      'companyId': previousResponse?.companyId || STORAGE_KEY?.companyId || '',
+      'X-Auth-Token': previousResponse?.token || STORAGE_KEY?.token || '',
       'product': 'ONYX'
     },
     body: {
