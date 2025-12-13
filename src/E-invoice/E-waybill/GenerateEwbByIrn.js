@@ -1,8 +1,82 @@
 import React, { useState, useEffect } from 'react';
 
+// Define the standard colors object (Required for tableStyles)
+const colors = {
+  primary: "#1A73E8",
+  success: "#34A853",
+  danger: "#EA4335",
+  background: "#F8F9FA",
+};
+
+// --- Table Styles from User Input ---
+const tableStyles = {
+  container: { padding: "20px", background: colors.background, minHeight: "100vh", fontFamily: "'Segoe UI', Roboto, sans-serif" },
+  header: { textAlign: "center", color: colors.primary, fontSize: "28px", marginBottom: "30px", fontWeight: 500 },
+  table: { width: "100%", borderCollapse: "collapse", marginBottom: "30px", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", borderRadius: "8px", overflow: "hidden" },
+  th: { background: "#E3F2FD", color: colors.primary, textAlign: "left", padding: "16px", fontWeight: 600, fontSize: "16px" },
+  td: { padding: "14px 16px", borderBottom: "1px solid #eee", verticalAlign: "top" },
+  labelText: { fontWeight: "600", color: "#333", fontSize: "14px", display: "block", marginBottom: "8px" },
+  input: { width: "100%", padding: "12px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "14px", boxSizing: "border-box" },
+  inputFocus: { borderColor: colors.primary, boxShadow: "0 0 0 3px rgba(26,115,232,0.2)", outline: "none" },
+  select: { width: "100%", padding: "12px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "14px" },
+  btnGreen: { padding: "12px 24px", background: colors.success, color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "15px" },
+  btnRed: { padding: "8px 16px", background: colors.danger, color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "13px" },
+  btnGenerate: (loading, token) => ({
+    padding: "20px 100px",
+    fontSize: "22px",
+    fontWeight: "bold",
+    background: loading || !token ? "#999" : colors.primary,
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    cursor: loading || !token ? "not-allowed" : "pointer",
+    boxShadow: "0 10px 30px rgba(26,115,232,0.4)",
+  }),
+  itemCard: { background: "#f8fbff", border: "1px solid #d0e4ff", borderRadius: "12px", padding: "24px", marginBottom: "24px", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" },
+  twoColGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px" },
+  col: { display: "flex", flexDirection: "column", gap: "16px" },
+  itemFooter: { marginTop: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px dashed #bbb" },
+  responseBox: (status) => ({
+    background: "#1e1e1e",
+    color: (status === 'SUCCESS' || status === 200) ? "#A8FFBF" : "#FFB4A9",
+    padding: "24px",
+    borderRadius: "10px",
+    fontFamily: "monospace",
+    fontSize: "13px",
+    overflow: "auto",
+    border: `1px solid ${(status === 'SUCCESS' || status === 200) ? colors.success : colors.danger}`,
+  }),
+};
+
+// --- Labeled Input Component (Styled with tableStyles) ---
+const LabeledInput = ({ label, value, onChange, isHighlighted = false, type = 'text', readOnly = false }) => {
+  const [focused, setFocused] = useState(false);
+  const inputStyle = {
+    ...tableStyles.input,
+    ...(focused ? tableStyles.inputFocus : {}),
+    ...(isHighlighted ? { background: '#fffbe5', fontWeight: 'bold' } : {}),
+    opacity: readOnly ? 0.7 : 1,
+  };
+
+  return (
+    <label style={{ display: 'block' }}>
+      <span style={tableStyles.labelText}>{label}</span>
+      <input
+        type={type}
+        value={value ?? ''}
+        onChange={e => onChange(e.target.value)}
+        style={inputStyle}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        readOnly={readOnly}
+      />
+    </label>
+  );
+};
+
 // LocalStorage keys
-const STORAGE_KEY = "iris_einvoice_response";      // Used for savedResponse
-const STORAGE_KEY1 = "iris_einvoice_shared_config"; // Used for savedConfig
+const STORAGE_KEY = "iris_einvoice_response";  
+const STORAGE_KEY1 = "iris_einvoice_shared_config";
 
 // Default values for EWB fields if not found in storage
 const FALLBACK_DEFAULTS = {
@@ -10,47 +84,13 @@ const FALLBACK_DEFAULTS = {
     userGstin: "01AAACI9260R002",
     vehNo: "MH20ZZ8888",
     transId: "01ACQPN4602B002",
-};
-
-// Reusable Input Component for styling consistency
-const LabeledInput = ({ label, value, onChange, isHighlighted = false, type = 'text', readOnly = false }) => {
-    const inputStyle = {
-        width: '100%',
-        padding: '10px',
-        borderRadius: '6px',
-        border: '1px solid #ffb74d',
-        marginTop: '4px',
-        boxSizing: 'border-box',
-        background: isHighlighted ? '#fffbe5' : 'white',
-        fontWeight: isHighlighted ? 'bold' : 'normal',
-        opacity: readOnly ? 0.7 : 1,
-    };
-
-    return (
-        <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontWeight: '600', color: '#333', fontSize: '14px', display: 'block', marginBottom: '4px' }}>
-                {label}
-            </label>
-            <input
-                type={type}
-                value={value ?? ''}
-                onChange={e => onChange(e.target.value)}
-                style={inputStyle}
-                readOnly={readOnly}
-            />
-        </div>
-    );
+    transDocDate: "14-11-2025", 
 };
 
 const GenerateEwbByIrn = () => {
     /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
-  const savedConfig = JSON.parse(
-    localStorage.getItem(STORAGE_KEY1) || "{}"
-  );
-  
-  const savedResponse = JSON.parse(
-    localStorage.getItem(STORAGE_KEY) || "{}"
-  );
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
+  const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
   
     // Derive Auth/ID values
     const initialAuthToken = savedResponse.token || savedConfig.token;
@@ -64,9 +104,8 @@ const GenerateEwbByIrn = () => {
 
 
     /* -------------------- CONSOLIDATED REQUEST BODY DEFINITION -------------------- */
-    // This defines the complete, initial state of the request body.
     const INITIAL_REQUEST_BODY = {
-        // 1. Mandatory E-Invoice Reference (Prioritized from storage)
+        // 1. Mandatory E-Invoice Reference
         "irn": storageIrn || FALLBACK_DEFAULTS.irn, 
         "userGstin": storageUserGstin || FALLBACK_DEFAULTS.userGstin,
         
@@ -76,7 +115,7 @@ const GenerateEwbByIrn = () => {
         "transDist": 0,
         "transName": "Safe and Secure",
         "transDocNo": "10294",
-        "transDocDate": "14-11-2025", 
+        "transDocDate": FALLBACK_DEFAULTS.transDocDate, 
         "vehNo": storageVehNo || FALLBACK_DEFAULTS.vehNo,
         "transId": storageTransId || FALLBACK_DEFAULTS.transId,
         
@@ -98,7 +137,7 @@ const GenerateEwbByIrn = () => {
         "disstcd": "27",    
         "dispin": "400602"
     };
-    // ---------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------
 
 
     /* -------------------- STATE INITIALIZATION -------------------- */
@@ -119,12 +158,10 @@ const GenerateEwbByIrn = () => {
   const [loading, setLoading] = useState(false);
 
     /* -------------------- AUTO-FILL/UPDATE EFFECT -------------------- */
-    // This effect ensures dynamic data from storage is applied, especially if storage keys are updated after mount.
     useEffect(() => {
         const sourceToken = savedResponse?.token || savedConfig?.token || "";
         const sourceCompanyId = savedResponse?.companyId || savedConfig?.companyId || "";
         
-        // Re-read storage fields for reactivity
         const sourceGstin = savedResponse?.companyUniqueCode || savedConfig?.companyUniqueCode || FALLBACK_DEFAULTS.userGstin;
         const sourceIrn = savedResponse?.irn || savedConfig?.irn || FALLBACK_DEFAULTS.irn;
 
@@ -200,159 +237,208 @@ const GenerateEwbByIrn = () => {
     }));
   };
 
+  // Generate button style using the provided btnGenerate style (using primary color)
+  const generateBtnStyle = tableStyles.btnGenerate(loading, isReady);
+
+  // Helper to check if a response indicates success
+  const isSuccessResponse = response && (response.status === 200 || response.body.status === 'SUCCESS');
+
   return (
-    <div style={{ padding: '30px', background: '#fff3e0', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      <h1 style={{ color: '#ef6c00', textAlign: 'center' }}>Generate E-Way Bill by IRN</h1>
+    <div style={tableStyles.container}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        <h1 style={tableStyles.header}>Generate E-Way Bill by IRN</h1>
 
-      <div style={{ background: 'white', padding: '25px', borderRadius: '14px', maxWidth: '1200px', margin: '0 auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-        <div style={{
-          padding: '12px',
-          background: isReady ? '#e8f5e9' : '#ffebee',
-          borderRadius: '10px',
-          marginBottom: '30px',
-          fontWeight: 'bold',
-          color: isReady ? '#388e3c' : '#d32f2f',
-          textAlign: 'center'
-        }}>
-          <strong>Auth Status:</strong> {isReady ? 'Ready' : 'Missing token or company ID'}
-        </div>
+        <div style={{
+            padding: '12px',
+            background: isReady ? '#e8f5e9' : '#ffebee',
+            borderRadius: '10px',
+            marginBottom: '30px',
+            fontWeight: 'bold',
+            color: isReady ? colors.success : colors.danger,
+            textAlign: 'center'
+        }}>
+            Auth Status: {isReady ? 'Ready' : 'Missing X-Auth-Token or Company ID'}
+        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '30px' }}>
-            
-            {/* ================== COLUMN 1: E-Invoice Ref & Supply ================== */}
-            <div style={{ padding: '15px', border: '1px solid #ffcc80', borderRadius: '8px', background: '#fff9e6' }}>
-                <h3 style={{ color: '#ef6c00', marginTop: 0 }}>Reference & Supply Details</h3>
-                
-                <LabeledInput 
-                    label="IRN (Invoice Reference Number)" 
-                    value={payload.irn} 
-                    onChange={v => handleBodyChange('irn', v)}
-                    isHighlighted
-                />
-                
-                <LabeledInput 
-                    label="User GSTIN" 
-                    value={payload.userGstin} 
-                    onChange={v => handleBodyChange('userGstin', v)}
-                    isHighlighted
-                />
-                
-                <LabeledInput 
-                    label="Supply Type (subSplyTyp)" 
-                    value={payload.subSplyTyp} 
-                    onChange={v => handleBodyChange('subSplyTyp', v)}
-                />
-                
-                <LabeledInput 
-                    label="Supply Description (subSplyDes)" 
-                    value={payload.subSplyDes} 
-                    onChange={v => handleBodyChange('subSplyDes', v)}
-                />
-            </div>
+        {/* =========================================================================
+            SECTION 1: E-Invoice Reference & Supply Details (2 Columns) 
+        ========================================================================= */}
+        <table style={tableStyles.table}>
+          <thead>
+            <tr>
+              <th colSpan={2} style={{ background: colors.primary, color: "white", fontSize: "16px" }}>E-Invoice Reference & Supply Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="IRN (Invoice Reference Number)" 
+                    value={payload.irn} 
+                    onChange={v => handleBodyChange('irn', v)}
+                    isHighlighted 
+                />
+              </td>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="User GSTIN" 
+                    value={payload.userGstin} 
+                    onChange={v => handleBodyChange('userGstin', v)}
+                    isHighlighted 
+                />
+              </td>
+            </tr>
+            <tr>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="Supply Type (subSplyTyp)" 
+                    value={payload.subSplyTyp} 
+                    onChange={v => handleBodyChange('subSplyTyp', v)}
+                />
+              </td>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="Supply Description (subSplyDes)" 
+                    value={payload.subSplyDes} 
+                    onChange={v => handleBodyChange('subSplyDes', v)}
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-            {/* ================== COLUMN 2: Transport Details ================== */}
-            <div style={{ padding: '15px', border: '1px solid #90caf9', borderRadius: '8px', background: '#e3f2fd' }}>
-                <h3 style={{ color: '#1565c0', marginTop: 0 }}>Transport Details</h3>
-                
-                <LabeledInput 
-                    label="Vehicle Number (vehNo)" 
-                    value={payload.vehNo} 
-                    onChange={v => handleBodyChange('vehNo', v)}
-                />
-                
-                <LabeledInput 
-                    label="Transporter ID (transId)" 
-                    value={payload.transId} 
-                    onChange={v => handleBodyChange('transId', v)}
-                />
+        {/* =========================================================================
+            SECTION 2: Transport Details (3 Columns)
+        ========================================================================= */}
+        <table style={tableStyles.table}>
+          <thead>
+            <tr>
+              <th colSpan={3} style={{ background: "#FF9800", color: "white", fontSize: "16px" }}>Transport Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="Vehicle Number (vehNo)" 
+                    value={payload.vehNo} 
+                    onChange={v => handleBodyChange('vehNo', v)}
+                />
+              </td>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="Transporter ID (transId)" 
+                    value={payload.transId} 
+                    onChange={v => handleBodyChange('transId', v)}
+                />
+              </td>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="Transporter Name (transName)" 
+                    value={payload.transName} 
+                    onChange={v => handleBodyChange('transName', v)}
+                />
+              </td>
+            </tr>
+            <tr>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="Mode (transMode)" 
+                    value={payload.transMode} 
+                    onChange={v => handleBodyChange('transMode', v)}
+                />
+              </td>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="Vehicle Type (vehTyp)" 
+                    value={payload.vehTyp} 
+                    onChange={v => handleBodyChange('vehTyp', v)}
+                />
+              </td>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="Distance (transDist)" 
+                    value={payload.transDist} 
+                    onChange={v => handleBodyChange('transDist', v)}
+                    type='number'
+                />
+              </td>
+            </tr>
+            <tr>
+              <td style={tableStyles.td}>
+                <LabeledInput 
+                    label="Transporter Doc No (transDocNo)" 
+                    value={payload.transDocNo} 
+                    onChange={v => handleBodyChange('transDocNo', v)}
+                />
+              </td>
+              <td colSpan={2} style={tableStyles.td}>
+                <LabeledInput 
+                    label="Transporter Doc Date (transDocDate)" 
+                    value={payload.transDocDate} 
+                    onChange={v => handleBodyChange('transDocDate', v)}
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-                <LabeledInput 
-                    label="Mode (transMode)" 
-                    value={payload.transMode} 
-                    onChange={v => handleBodyChange('transMode', v)}
-                />
-                
-                <LabeledInput 
-                    label="Vehicle Type (vehTyp)" 
-                    value={payload.vehTyp} 
-                    onChange={v => handleBodyChange('vehTyp', v)}
-                />
-                
-                <LabeledInput 
-                    label="Distance (transDist)" 
-                    value={payload.transDist} 
-                    onChange={v => handleBodyChange('transDist', v)}
-                    type='number'
-                />
-                
-                <LabeledInput 
-                    label="Transporter Document No (transDocNo)" 
-                    value={payload.transDocNo} 
-                    onChange={v => handleBodyChange('transDocNo', v)}
-                />
-                
-                <LabeledInput 
-                    label="Transporter Document Date (transDocDate)" 
-                    value={payload.transDocDate} 
-                    onChange={v => handleBodyChange('transDocDate', v)}
-                />
-            </div>
+        {/* =========================================================================
+            SECTION 3: Place & Delivery Details (2 Columns for clarity)
+        ========================================================================= */}
+        <table style={tableStyles.table}>
+          <thead>
+            <tr>
+              <th style={{ background: colors.success, color: "white", fontSize: "16px" }}>Dispatch (p...) Details</th>
+              <th style={{ background: colors.primary, color: "white", fontSize: "16px" }}>Delivery (d...) Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={tableStyles.td}>
+                <LabeledInput label="Address 1 (paddr1)" value={payload.paddr1} onChange={v => handleBodyChange('paddr1', v)} />
+                <LabeledInput label="Address 2 (paddr2)" value={payload.paddr2} onChange={v => handleBodyChange('paddr2', v)} />
+                <LabeledInput label="Location (ploc)" value={payload.ploc} onChange={v => handleBodyChange('ploc', v)} />
+                <LabeledInput label="State Code (pstcd)" value={payload.pstcd} onChange={v => handleBodyChange('pstcd', v)} />
+                <LabeledInput label="PIN (ppin)" value={payload.ppin} onChange={v => handleBodyChange('ppin', v)} />
+                <LabeledInput label="Place of Bill EWB (pobewb)" value={payload.pobewb} onChange={v => handleBodyChange('pobewb', v)} />
+              </td>
+              <td style={tableStyles.td}>
+                <LabeledInput label="Recipient Name (dNm)" value={payload.dNm} onChange={v => handleBodyChange('dNm', v)} />
+                <LabeledInput label="Address 1 (daddr1)" value={payload.daddr1} onChange={v => handleBodyChange('daddr1', v)} />
+                <LabeledInput label="Address 2 (daddr2)" value={payload.daddr2} onChange={v => handleBodyChange('daddr2', v)} />
+                <LabeledInput label="Location (disloc)" value={payload.disloc} onChange={v => handleBodyChange('disloc', v)} />
+                <LabeledInput label="State Code (disstcd)" value={payload.disstcd} onChange={v => handleBodyChange('disstcd', v)} />
+                <LabeledInput label="PIN (dispin)" value={payload.dispin} onChange={v => handleBodyChange('dispin', v)} />
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-            {/* ================== COLUMN 3: Place & Delivery Details ================== */}
-            <div style={{ padding: '15px', border: '1px solid #a5d6a7', borderRadius: '8px', background: '#e8f5e9' }}>
-                <h3 style={{ color: '#388e3c', marginTop: 0 }}>Dispatch / Delivery Address</h3>
+        {/* --- Action Button --- */}
+        <div style={{ textAlign: "center", margin: "40px 0" }}>
+            <button
+                onClick={generateEWB}
+                disabled={loading || !isReady}
+                style={generateBtnStyle}
+            >
+                {loading ? 'Generating EWB...' : 'GENERATE E-WAY BILL'}
+            </button>
+        </div>
 
-                <h4 style={{ color: '#66bb6a', marginBottom: '8px', borderBottom: '1px solid #c8e6c9' }}>Dispatch (p...)</h4>
-                <LabeledInput label="Address 1 (paddr1)" value={payload.paddr1} onChange={v => handleBodyChange('paddr1', v)} />
-                <LabeledInput label="Address 2 (paddr2)" value={payload.paddr2} onChange={v => handleBodyChange('paddr2', v)} />
-                <LabeledInput label="Location (ploc)" value={payload.ploc} onChange={v => handleBodyChange('ploc', v)} />
-                <LabeledInput label="State Code (pstcd)" value={payload.pstcd} onChange={v => handleBodyChange('pstcd', v)} />
-                <LabeledInput label="PIN (ppin)" value={payload.ppin} onChange={v => handleBodyChange('ppin', v)} />
-                <LabeledInput label="Place of Bill EWB (pobewb)" value={payload.pobewb} onChange={v => handleBodyChange('pobewb', v)} />
 
-
-                <h4 style={{ color: '#66bb6a', marginTop: '20px', marginBottom: '8px', borderBottom: '1px solid #c8e6c9' }}>Delivery (d...)</h4>
-                <LabeledInput label="Recipient Name (dNm)" value={payload.dNm} onChange={v => handleBodyChange('dNm', v)} />
-                <LabeledInput label="Address 1 (daddr1)" value={payload.daddr1} onChange={v => handleBodyChange('daddr1', v)} />
-                <LabeledInput label="Location (disloc)" value={payload.disloc} onChange={v => handleBodyChange('disloc', v)} />
-                <LabeledInput label="State Code (disstcd)" value={payload.disstcd} onChange={v => handleBodyChange('disstcd', v)} />
-                <LabeledInput label="PIN (dispin)" value={payload.dispin} onChange={v => handleBodyChange('dispin', v)} />
-
-            </div>
-        </div>
-
-        <button
-          onClick={generateEWB}
-          disabled={loading || !isReady}
-          style={{
-            width: '100%',
-            padding: '18px',
-            background: '#ef6c00',
-            color: 'white',
-            borderRadius: '12px',
-            fontSize: '20px',
-            marginTop: '35px',
-            border: 'none',
-            cursor: loading || !isReady ? 'not-allowed' : 'pointer',
-            opacity: loading || !isReady ? 0.6 : 1,
-          }}
-        >
-          {loading ? 'Generating EWB...' : 'GENERATE E-WAY BILL'}
-        </button>
-      </div>
-
-      {response && (
-        <pre style={{ 
-          background: '#222', 
-          color: (response.body.status === 'SUCCESS' || response.status === 200) ? '#0f0' : '#ffb74d', 
-          padding: '20px', 
-          marginTop: '30px',
-          borderRadius: '8px',
-          whiteSpace: 'pre-wrap'
-        }}>
-          {JSON.stringify(response.body, null, 2)}
-        </pre>
-      )}
+        {/* --- API Response --- */}
+        {response && (
+            <div>
+                <h3 style={{ color: isSuccessResponse ? colors.success : colors.danger, marginBottom: "16px", fontSize: "18px" }}>
+                    API Response (Status: {response.status})
+                </h3>
+                <pre style={tableStyles.responseBox(response.body.status || response.status)}>
+                    {JSON.stringify(response.body, null, 2)}
+                </pre>
+            </div>
+        )}
+      </div>
     </div>
   );
 };
