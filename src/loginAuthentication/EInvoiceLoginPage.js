@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../components/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const STORAGE_KEY1 = "iris_einvoice_response";
+const STORAGE_KEY = "iris_einvoice_response";
 
 const EInvoiceLoginPage = () => {
+  const STORAGE_KEY = "iris_einvoice_response";
   const [email, setEmail] = useState("ateeq@calibrecue.com");
   const [password, setPassword] = useState("Abcd@1234567");
   const [loading, setLoading] = useState(false);
@@ -46,7 +47,7 @@ const EInvoiceLoginPage = () => {
           lastLogin: new Date().toISOString(),
         };
 
-        localStorage.setItem(STORAGE_KEY1 , JSON.stringify(store));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 
         login(store, "EINVOICE"); // AuthProvider will handle redirect via useEffect
       }

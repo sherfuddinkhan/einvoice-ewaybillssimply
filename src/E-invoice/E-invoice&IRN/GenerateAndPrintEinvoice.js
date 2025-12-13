@@ -50,7 +50,8 @@ const tableStyles = {
 };
 
 // Storage Keys
-const STORAGE_KEY1 = "iris_einvoice_shared_config";
+const STORAGE_KEY = "iris_einvoice_response";
+const STORAGE_KEY1  = "iris_einvoice_shared_config";
 const LAST_GENERATED_ID_KEY = "iris_last_generated_id";
 const LAST_DOC_DETAILS_KEY = "iris_last_used_doc_details";
 const LAST_IRN_KEY = "iris_last_used_irn";
@@ -87,7 +88,7 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
 );
 
 const GenerateAndPrintEinvoice = () => {
-  const { token, setLastInvoice } = useAuth();
+  const {token, setLastInvoice } = useAuth();
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [template, setTemplate] = useState("STANDARD");
@@ -344,26 +345,6 @@ const GenerateAndPrintEinvoice = () => {
     ]
   });
 
-  // Load persisted data on mount
-  useEffect(() => {
-    const savedId = localStorage.getItem(LAST_GENERATED_ID_KEY);
-    if (savedId) {
-      setPayload((prev) => ({ ...prev, lastGeneratedId: savedId }));
-    }
-
-    const savedShared = localStorage.getItem(STORAGE_KEY1);
-    if (savedShared) {
-      try {
-        const parsed = JSON.parse(savedShared);
-        if (parsed.lastGeneratedResponse) {
-          setResponse({ status: "SUCCESS", response: parsed.lastGeneratedResponse });
-        }
-      } catch (e) {
-        console.error("Failed to load shared config", e);
-      }
-    }
-  }, []);
-
   const setField = (field, value) => setPayload((prev) => ({ ...prev, [field]: value }));
 
   const updateItem = (idx, field, value) => {
@@ -437,57 +418,69 @@ const GenerateAndPrintEinvoice = () => {
   };
 
   const saveResponseForAutoPopulate = (data) => {
-    if (!data?.response) return;
+        if (!data?.response) return;
+        const responseData = data.response;
 
-    const responseData = data.response;
+        if (responseData.id) {
+            try {
+                localStorage.setItem(LAST_GENERATED_ID_KEY, String(responseData.id));
+                setPayload(prev => ({ ...prev, lastGeneratedId: String(responseData.id) }));
+            } catch (e) {
+                console.warn('Could not save generated id to localStorage', e);
+            }
+        }
+        
+    // Step 1: Define the variable to hold the final, ready-to-use object.
+/*const sharedData = 
 
-    if (responseData.id) {
-      const idStr = String(responseData.id);
-      localStorage.setItem(LAST_GENERATED_ID_KEY, idStr);
-      setPayload((prev) => ({ ...prev, lastGeneratedId: idStr }));
-    }
+    // Step 4: Convert the resulting string back into a usable JavaScript object. 
+    // This process is called Deserialization.
+    JSON.parse(
 
-    const sharedData = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
-    sharedData.companyId = "24";
-    sharedData.token = token;
-    sharedData.irn = responseData.irn;
-    sharedData.companyUniqueCode = payload.userGstin;
-    sharedData.lastGeneratedResponse = responseData;
-    sharedData.lastGeneratedAt = new Date().toISOString();
+        // Step 2: Attempt to retrieve the JSON string from the browser's persistent storage.
+        // If data exists under the key (e.g., "iris_einvoice_response"), the string is returned.
+        // If the key is not found (e.g., on first load), this returns null.
+        localStorage.getItem(STORAGE_KEY) 
+        
+        // Step 3: The logical OR operator (||) acts as a safety check and provides a default.
+        // If the result of localStorage.getItem() is 'falsy' (like null), 
+        // the code uses the value to the right: the string representation of an empty object ("{}").
+        || "{}"
+    
+    // Step 4 closing parenthesis
+    ); */
 
-    localStorage.setItem(STORAGE_KEY1, JSON.stringify(sharedData));
-     console.log("STORAGE_KEY1",STORAGE_KEY1) 
+        const sharedData = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
+        console.log("sharedtoken",sharedData)
+        sharedData.companyId = '24';
+        sharedData.token = token;
+        sharedData.irn = responseData.irn;
+        sharedData.companyUniqueCode = payload.userGstin;
+        sharedData.lastGeneratedResponse = responseData;
+        sharedData.lastGeneratedAt = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEY1, JSON.stringify(sharedData));
 
-    localStorage.setItem(
-      LAST_DOC_DETAILS_KEY,
-      JSON.stringify({
-        docNum: payload.no.trim(),
-        docDate: payload.dt.trim(),
-        docType: payload.docType,
-        timestamp: new Date().toISOString(),
-      })
-    );
+        localStorage.setItem(LAST_DOC_DETAILS_KEY, JSON.stringify({
+            docNum: payload.no.trim(),
+            docDate: payload.dt.trim(),
+            docType: payload.docType,
+            timestamp: new Date().toISOString()
+        }));
 
-    localStorage.setItem(
-      LAST_IRN_KEY,
-      JSON.stringify({ irn: responseData.irn, timestamp: new Date().toISOString() })
-    );
+        localStorage.setItem(LAST_IRN_KEY, JSON.stringify({ irn: responseData.irn, timestamp: new Date().toISOString() }));
 
-    if (responseData.signedQrCode) {
-      localStorage.setItem(LAST_SIGNED_QR_JWT_KEY, responseData.signedQrCode);
-    }
+        if (responseData.signedQrCode) {
+            localStorage.setItem(LAST_SIGNED_QR_JWT_KEY, responseData.signedQrCode);
+        }
 
-    localStorage.setItem(
-      LAST_EWB_DETAILS_KEY,
-      JSON.stringify({
-        ewbNo: responseData.ewbNo || "",
-        ewbDate: responseData.ewbDate || "",
-        timestamp: new Date().toISOString(),
-      })
-    );
+        localStorage.setItem(LAST_EWB_DETAILS_KEY, JSON.stringify({
+            ewbNo: responseData.ewbNo || '',
+            ewbDate: responseData.ewbDate || '',
+            timestamp: new Date().toISOString()
+        }));
 
-    setLastInvoice?.(responseData.irn, payload.userGstin, payload.no, payload.dt, payload.docType);
-  };
+        setLastInvoice?.(responseData.irn, payload.userGstin, payload.no, payload.dt, payload.docType);
+    };
 
   const handleGenerate = async () => {
     if (!token) return alert("Login required!");

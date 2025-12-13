@@ -2,15 +2,36 @@
 import React, { useState, useEffect } from 'react';
 
 const CancelIRN  = ({ previousResponse }) => {
-  const STORAGE_KEY = 'iris_einvoice_shared_config';
-  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
- const STORAGE_KEY1  = "einvoicedata";
- console.log("STORAGE_KEY1",STORAGE_KEY1)
+const STORAGE_KEY1  = "iris_einvoice_shared_config";
+  const STORAGE_KEY = "iris_einvoice_response";
+
+    // Step 1: Define the variable to hold the final, ready-to-use object.
+/*const sharedData = 
+
+    // Step 4: Convert the resulting string back into a usable JavaScript object. 
+    // This process is called Deserialization.
+    JSON.parse(
+
+        // Step 2: Attempt to retrieve the JSON string from the browser's persistent storage.
+        // If data exists under the key (e.g., "iris_einvoice_response"), the string is returned.
+        // If the key is not found (e.g., on first load), this returns null.
+        localStorage.getItem(STORAGE_KEY) 
+        
+        // Step 3: The logical OR operator (||) acts as a safety check and provides a default.
+        // If the result of localStorage.getItem() is 'falsy' (like null), 
+        // the code uses the value to the right: the string representation of an empty object ("{}").
+        || "{}"
+    
+    // Step 4 closing parenthesis
+    ); */
   const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
-  console.log("savedConfig",savedConfig);
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+ 
+ console.log("savedConfig1",savedConfig1)
+ console.log("savedConfig",savedConfig)
 
   // Deduplicated IRN sourcing
-  const irn = previousResponse?.irn || savedConfig?.lastGeneratedResponse?.irn || '';
+  const irn = previousResponse?.irn || savedConfig1?.irn || '';
   console.log("irn",irn)
   const initialGstin = previousResponse?.userGstin
     || previousResponse?.companyGstin
