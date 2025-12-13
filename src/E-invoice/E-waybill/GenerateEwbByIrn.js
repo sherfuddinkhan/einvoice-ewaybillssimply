@@ -4,15 +4,6 @@ import React, { useState, useEffect } from 'react';
 const STORAGE_KEY = "iris_einvoice_response";      // Used for savedResponse
 const STORAGE_KEY1 = "iris_einvoice_shared_config"; // Used for savedConfig
 
-// Utility: returns today in dd-mm-yyyy format (Retained for completeness)
-const todayIST = () => {
-  const d = new Date();
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}-${month}-${year}`; 
-};
-
 // Default values for EWB fields if not found in storage
 const FALLBACK_DEFAULTS = {
     irn: "5eb8ce1121003e0b0b44059d85b660d2f4f00e3587bac05e16fed14a791386cd",
@@ -22,25 +13,30 @@ const FALLBACK_DEFAULTS = {
 };
 
 // Reusable Input Component for styling consistency
-const LabeledInput = ({ label, value, onChange, isRequired = false, isHighlighted = false, type = 'text' }) => {
+const LabeledInput = ({ label, value, onChange, isHighlighted = false, type = 'text', readOnly = false }) => {
+    const inputStyle = {
+        width: '100%',
+        padding: '10px',
+        borderRadius: '6px',
+        border: '1px solid #ffb74d',
+        marginTop: '4px',
+        boxSizing: 'border-box',
+        background: isHighlighted ? '#fffbe5' : 'white',
+        fontWeight: isHighlighted ? 'bold' : 'normal',
+        opacity: readOnly ? 0.7 : 1,
+    };
+
     return (
         <div style={{ marginBottom: '16px' }}>
             <label style={{ fontWeight: '600', color: '#333', fontSize: '14px', display: 'block', marginBottom: '4px' }}>
-                {label} {isRequired && <span style={{ color: 'red' }}>*</span>}
+                {label}
             </label>
             <input
                 type={type}
                 value={value ?? ''}
                 onChange={e => onChange(e.target.value)}
-                style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '6px',
-                    border: '1px solid #ffb74d',
-                    // Highlight key dynamic fields
-                    background: isHighlighted ? '#fffbe5' : 'white',
-                    boxSizing: 'border-box',
-                }}
+                style={inputStyle}
+                readOnly={readOnly}
             />
         </div>
     );
@@ -192,6 +188,7 @@ const GenerateEwbByIrn = () => {
 
     /* -------------------- RENDER -------------------- */
   const isReady = config.headers.companyId && config.headers['X-Auth-Token'];
+  const payload = config.body;
 
   const handleBodyChange = (key, value) => {
     setConfig(prev => ({
@@ -204,10 +201,10 @@ const GenerateEwbByIrn = () => {
   };
 
   return (
-    <div style={{ padding: '30px', background: '#fff3e0', minHeight: '100vh', fontFamily: "'Segoe UI', Roboto, sans-serif" }}>
-      <h1 style={{ color: '#ef6c00', textAlign: 'center', marginBottom: '30px' }}>Generate E-Way Bill by IRN (Consolidated Payload)</h1>
+    <div style={{ padding: '30px', background: '#fff3e0', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
+      <h1 style={{ color: '#ef6c00', textAlign: 'center' }}>Generate E-Way Bill by IRN</h1>
 
-      <div style={{ background: 'white', padding: '25px', borderRadius: '14px', maxWidth: '1200px', margin: '0 auto', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+      <div style={{ background: 'white', padding: '25px', borderRadius: '14px', maxWidth: '1200px', margin: '0 auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
         <div style={{
           padding: '12px',
           background: isReady ? '#e8f5e9' : '#ffebee',
@@ -215,40 +212,40 @@ const GenerateEwbByIrn = () => {
           marginBottom: '30px',
           fontWeight: 'bold',
           color: isReady ? '#388e3c' : '#d32f2f',
+          textAlign: 'center'
         }}>
           <strong>Auth Status:</strong> {isReady ? 'Ready' : 'Missing token or company ID'}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '30px' }}>
+            
             {/* ================== COLUMN 1: E-Invoice Ref & Supply ================== */}
             <div style={{ padding: '15px', border: '1px solid #ffcc80', borderRadius: '8px', background: '#fff9e6' }}>
-                <h3 style={{ color: '#ef6c00', marginTop: 0 }}>Reference & Supply</h3>
+                <h3 style={{ color: '#ef6c00', marginTop: 0 }}>Reference & Supply Details</h3>
                 
                 <LabeledInput 
                     label="IRN (Invoice Reference Number)" 
-                    value={config.body.irn} 
+                    value={payload.irn} 
                     onChange={v => handleBodyChange('irn', v)}
-                    isRequired 
                     isHighlighted
                 />
                 
                 <LabeledInput 
                     label="User GSTIN" 
-                    value={config.body.userGstin} 
+                    value={payload.userGstin} 
                     onChange={v => handleBodyChange('userGstin', v)}
-                    isRequired 
                     isHighlighted
                 />
-
+                
                 <LabeledInput 
                     label="Supply Type (subSplyTyp)" 
-                    value={config.body.subSplyTyp} 
+                    value={payload.subSplyTyp} 
                     onChange={v => handleBodyChange('subSplyTyp', v)}
                 />
                 
                 <LabeledInput 
                     label="Supply Description (subSplyDes)" 
-                    value={config.body.subSplyDes} 
+                    value={payload.subSplyDes} 
                     onChange={v => handleBodyChange('subSplyDes', v)}
                 />
             </div>
@@ -259,68 +256,67 @@ const GenerateEwbByIrn = () => {
                 
                 <LabeledInput 
                     label="Vehicle Number (vehNo)" 
-                    value={config.body.vehNo} 
+                    value={payload.vehNo} 
                     onChange={v => handleBodyChange('vehNo', v)}
                 />
                 
                 <LabeledInput 
                     label="Transporter ID (transId)" 
-                    value={config.body.transId} 
+                    value={payload.transId} 
                     onChange={v => handleBodyChange('transId', v)}
                 />
 
                 <LabeledInput 
-                    label="Transporter Document No (transDocNo)" 
-                    value={config.body.transDocNo} 
-                    onChange={v => handleBodyChange('transDocNo', v)}
-                />
-
-                <LabeledInput 
-                    label="Transporter Document Date (transDocDate)" 
-                    value={config.body.transDocDate} 
-                    onChange={v => handleBodyChange('transDocDate', v)}
-                />
-                
-                <LabeledInput 
                     label="Mode (transMode)" 
-                    value={config.body.transMode} 
+                    value={payload.transMode} 
                     onChange={v => handleBodyChange('transMode', v)}
                 />
                 
                 <LabeledInput 
                     label="Vehicle Type (vehTyp)" 
-                    value={config.body.vehTyp} 
+                    value={payload.vehTyp} 
                     onChange={v => handleBodyChange('vehTyp', v)}
                 />
                 
                 <LabeledInput 
                     label="Distance (transDist)" 
-                    value={config.body.transDist} 
+                    value={payload.transDist} 
                     onChange={v => handleBodyChange('transDist', v)}
                     type='number'
                 />
+                
+                <LabeledInput 
+                    label="Transporter Document No (transDocNo)" 
+                    value={payload.transDocNo} 
+                    onChange={v => handleBodyChange('transDocNo', v)}
+                />
+                
+                <LabeledInput 
+                    label="Transporter Document Date (transDocDate)" 
+                    value={payload.transDocDate} 
+                    onChange={v => handleBodyChange('transDocDate', v)}
+                />
             </div>
 
-            {/* ================== COLUMN 3: Place & Delivery ================== */}
+            {/* ================== COLUMN 3: Place & Delivery Details ================== */}
             <div style={{ padding: '15px', border: '1px solid #a5d6a7', borderRadius: '8px', background: '#e8f5e9' }}>
-                <h3 style={{ color: '#388e3c', marginTop: 0 }}>Place of Dispatch/Delivery</h3>
+                <h3 style={{ color: '#388e3c', marginTop: 0 }}>Dispatch / Delivery Address</h3>
 
-                <h4 style={{ color: '#66bb6a', marginBottom: '8px' }}>Dispatch (p...)</h4>
-                <LabeledInput label="Address 1 (paddr1)" value={config.body.paddr1} onChange={v => handleBodyChange('paddr1', v)} />
-                <LabeledInput label="Address 2 (paddr2)" value={config.body.paddr2} onChange={v => handleBodyChange('paddr2', v)} />
-                <LabeledInput label="Location (ploc)" value={config.body.ploc} onChange={v => handleBodyChange('ploc', v)} />
-                <LabeledInput label="State Code (pstcd)" value={config.body.pstcd} onChange={v => handleBodyChange('pstcd', v)} />
-                <LabeledInput label="PIN (ppin)" value={config.body.ppin} onChange={v => handleBodyChange('ppin', v)} />
-                <LabeledInput label="Place of Bill EWB (pobewb)" value={config.body.pobewb} onChange={v => handleBodyChange('pobewb', v)} />
+                <h4 style={{ color: '#66bb6a', marginBottom: '8px', borderBottom: '1px solid #c8e6c9' }}>Dispatch (p...)</h4>
+                <LabeledInput label="Address 1 (paddr1)" value={payload.paddr1} onChange={v => handleBodyChange('paddr1', v)} />
+                <LabeledInput label="Address 2 (paddr2)" value={payload.paddr2} onChange={v => handleBodyChange('paddr2', v)} />
+                <LabeledInput label="Location (ploc)" value={payload.ploc} onChange={v => handleBodyChange('ploc', v)} />
+                <LabeledInput label="State Code (pstcd)" value={payload.pstcd} onChange={v => handleBodyChange('pstcd', v)} />
+                <LabeledInput label="PIN (ppin)" value={payload.ppin} onChange={v => handleBodyChange('ppin', v)} />
+                <LabeledInput label="Place of Bill EWB (pobewb)" value={payload.pobewb} onChange={v => handleBodyChange('pobewb', v)} />
 
 
-                <h4 style={{ color: '#66bb6a', marginTop: '20px', marginBottom: '8px' }}>Delivery (d...)</h4>
-                <LabeledInput label="Recipient Name (dNm)" value={config.body.dNm} onChange={v => handleBodyChange('dNm', v)} />
-                <LabeledInput label="Address 1 (daddr1)" value={config.body.daddr1} onChange={v => handleBodyChange('daddr1', v)} />
-                <LabeledInput label="Address 2 (daddr2)" value={config.body.daddr2} onChange={v => handleBodyChange('daddr2', v)} />
-                <LabeledInput label="Location (disloc)" value={config.body.disloc} onChange={v => handleBodyChange('disloc', v)} />
-                <LabeledInput label="State Code (disstcd)" value={config.body.disstcd} onChange={v => handleBodyChange('disstcd', v)} />
-                <LabeledInput label="PIN (dispin)" value={config.body.dispin} onChange={v => handleBodyChange('dispin', v)} />
+                <h4 style={{ color: '#66bb6a', marginTop: '20px', marginBottom: '8px', borderBottom: '1px solid #c8e6c9' }}>Delivery (d...)</h4>
+                <LabeledInput label="Recipient Name (dNm)" value={payload.dNm} onChange={v => handleBodyChange('dNm', v)} />
+                <LabeledInput label="Address 1 (daddr1)" value={payload.daddr1} onChange={v => handleBodyChange('daddr1', v)} />
+                <LabeledInput label="Location (disloc)" value={payload.disloc} onChange={v => handleBodyChange('disloc', v)} />
+                <LabeledInput label="State Code (disstcd)" value={payload.disstcd} onChange={v => handleBodyChange('disstcd', v)} />
+                <LabeledInput label="PIN (dispin)" value={payload.dispin} onChange={v => handleBodyChange('dispin', v)} />
 
             </div>
         </div>
@@ -336,8 +332,9 @@ const GenerateEwbByIrn = () => {
             borderRadius: '12px',
             fontSize: '20px',
             marginTop: '35px',
+            border: 'none',
             cursor: loading || !isReady ? 'not-allowed' : 'pointer',
-            border: 'none'
+            opacity: loading || !isReady ? 0.6 : 1,
           }}
         >
           {loading ? 'Generating EWB...' : 'GENERATE E-WAY BILL'}
@@ -345,20 +342,16 @@ const GenerateEwbByIrn = () => {
       </div>
 
       {response && (
-        <div>
-          <h3 style={{ color: '#ef6c00', marginTop: '30px' }}>API Response ({response.status})</h3>
-          <pre style={{ 
-              background: '#222', 
-              color: (response.body.status === 'SUCCESS' || response.status === 200) ? '#a5d6a7' : '#ffb74d', 
-              padding: '20px', 
-              marginTop: '10px', 
-              borderRadius: '8px',
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'monospace'
-           }}>
-            {JSON.stringify(response.body, null, 2)}
-          </pre>
-        </div>
+        <pre style={{ 
+          background: '#222', 
+          color: (response.body.status === 'SUCCESS' || response.status === 200) ? '#0f0' : '#ffb74d', 
+          padding: '20px', 
+          marginTop: '30px',
+          borderRadius: '8px',
+          whiteSpace: 'pre-wrap'
+        }}>
+          {JSON.stringify(response.body, null, 2)}
+        </pre>
       )}
     </div>
   );
