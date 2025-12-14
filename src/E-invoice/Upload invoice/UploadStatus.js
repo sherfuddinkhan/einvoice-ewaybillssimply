@@ -1,12 +1,11 @@
-// src/components/UploadStatus.js
 import React, { useState, useEffect } from "react";
 
-const STORAGE_KEY = "iris_einvoice_shared_config";
-const STORAGE_KEY4 = "iris_einvoice_uploadfile";
-
+const STORAGE_KEY = "iris_einvoice_shared_config"; // header info
+const STORAGE_KEY4 = "iris_einvoice_uploadfile";   // upload info
 
 const UploadStatus = () => {
   const [uploadId, setUploadId] = useState("");
+
   const [headers, setHeaders] = useState({
     companyId: "",
     "X-Auth-Token": "",
@@ -18,41 +17,63 @@ const UploadStatus = () => {
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Load saved companyId, token, and uploadId
+  /* ----------------------------------------
+     Load headers + last uploadId
+  ---------------------------------------- */
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
+    // Load header data
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
         const parsed = JSON.parse(saved);
         setHeaders((prev) => ({
           ...prev,
           companyId: parsed.companyId || "",
           "X-Auth-Token": parsed.token || "",
         }));
-      } catch {}
+      }
+    } catch (e) {
+      console.error("Header storage parse error", e);
     }
 
-    const lastUpload = JSON.parse(localStorage.getItem(STORAGE_KEY4 ));
-    console.log("lastUpload",lastUpload)
-    if (lastUpload) setUploadId(lastUpload.uploadId);
+    // Load last upload info
+    try {
+      const uploadSaved = localStorage.getItem(STORAGE_KEY4);
+      if (uploadSaved) {
+        const parsedUpload = JSON.parse(uploadSaved);
+        if (parsedUpload?.uploadId) {
+          setUploadId(parsedUpload.uploadId);
+        }
+      }
+    } catch (e) {
+      console.error("Upload storage parse error", e);
+    }
   }, []);
 
+  /* ----------------------------------------
+     Check upload status
+  ---------------------------------------- */
   const checkStatus = async () => {
-    if (!uploadId) return alert("Upload ID is required!");
+    if (!uploadId) {
+      alert("Upload ID is required");
+      return;
+    }
 
     setLoading(true);
     setResponse(null);
 
+    const endpoint = `/proxy/onyx/upload/status?uploadId=${uploadId}`;
+
     setPreview({
-      endpoint: `/proxy/onyx/upload/status?uploadId=${uploadId}`,
+      endpoint,
       headers,
     });
 
     try {
-      const res = await fetch(
-        `/proxy/onyx/upload/status?uploadId=${uploadId}`,
-        { headers }
-      );
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers,
+      });
 
       const data = await res.json();
       setResponse(data);
@@ -69,43 +90,45 @@ const UploadStatus = () => {
 
       <div
         style={{
-          background: "white",
+          background: "#fff",
           padding: 25,
           borderRadius: 16,
           boxShadow: "0 5px 25px rgba(0,0,0,0.1)",
+          maxWidth: 700,
         }}
       >
-        
         {/* Upload ID */}
-        <div style={{ marginTop: 20 }}>
-          <label><strong>Upload ID  </strong></label>
+        <div style={{ marginBottom: 20 }}>
+          <label>
+            <strong>Upload ID</strong>
+          </label>
           <input
             type="text"
             value={uploadId}
             onChange={(e) => setUploadId(e.target.value)}
             placeholder="Enter Upload ID"
             style={{
-              width: "50%",
-              padding: "12px",
-              marginTop: "8px",
-              fontSize: "16px",
+              display: "block",
+              width: "100%",
+              padding: 12,
+              marginTop: 8,
+              fontSize: 16,
             }}
           />
         </div>
 
-        {/* Check Status Button */}
+        {/* Button */}
         <button
           onClick={checkStatus}
           disabled={loading}
           style={{
-            marginTop: 20,
-            width: "50%",
-            padding: "15px",
-            fontSize: "18px",
+            width: "100%",
+            padding: 15,
+            fontSize: 18,
             background: "#1d3557",
             border: "none",
             borderRadius: 12,
-            color: "white",
+            color: "#fff",
             fontWeight: "bold",
           }}
         >

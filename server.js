@@ -713,6 +713,42 @@ app.post("/proxy/onyx/upload/invoices", upload.single("file"), async (req, res) 
   }
 });
 
+// E-INVOICE → UPLOAD (Updated)
+// ===============================
+/* =====================================================
+   E-INVOICE → UPLOAD STATUS
+   ===================================================== */
+app.get("/proxy/onyx/upload/status", async (req, res) => {
+  try {
+    const { uploadId } = req.query;
+
+    if (!uploadId) {
+      return res.status(400).json({ status: "FAILURE", message: "uploadId is required" });
+    }
+
+    const response = await axios.get(
+      `${BASE_URL}/irisgst/onyx/upload/status`,
+      {
+        params: { uploadId }, // → ?uploadId=429030
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          companyId: req.headers.companyid || "",
+          "X-Auth-Token": req.headers["x-auth-token"] || "",
+          product: req.headers.product || "ONYX",
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error("Upload Status Error:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json(
+      err.response?.data || { status: "FAILURE", message: err.message }
+    );
+  }
+});
+
 
 /* =====================================================
    14. E-INVOICE → VIEW / DOWNLOADS
