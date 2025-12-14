@@ -682,30 +682,37 @@ app.get("/proxy/einvoice/print", async (req, res) => {
 /* =====================================================
    13. E-INVOICE → UPLOAD
    ===================================================== */
+// Upload Invoices
+app.post("/proxy/onyx/upload/invoices", upload.single("file"), async (req, res) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", req.file.buffer, req.file.originalname);
 
-app.post(
-  "/proxy/onyx/upload/invoices",
-  upload.single("file"),
-  async (req, res) => {
-    try {
-      const formData = new FormData();
-      formData.append("file", req.file.buffer, req.file.originalname);
+    const companyUniqueCode = req.query.companyUniqueCode;
+    if (!companyUniqueCode) return res.status(400).json({ error: "companyUniqueCode is required" });
 
-      const response = await axios.post(
-        `${BASE_URL}/irisgst/onyx/upload/invoices`,
-        formData,
-        {
-          headers: { ...formData.getHeaders(), ...authHeaders(req) },
-          params: req.query,
-        }
-      );
+    const response = await axios.post(
+      `${BASE_URL}/irisgst/onyx/upload/invoices?companyUniqueCode=${companyUniqueCode}`,
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          "X-Auth-Token": req.headers["x-auth-token"] || "",
+          companyId: req.headers["companyid"] || "24",
+          product: req.headers.product || "ONYX",
+          Accept: "application/json",
+        },
+        maxBodyLength: Infinity,
+        timeout: 60000,
+      }
+    );
 
-      res.json(response.data);
-    } catch (err) {
-      res.status(err.response?.status || 500).json(err.response?.data);
-    }
-  }
-);
+    res.json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(err.response?.data || { error: err.message });
+  }
+});
+
 
 /* =====================================================
    14. E-INVOICE → VIEW / DOWNLOADS

@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 
 const STORAGE_KEY = "iris_einvoice_shared_config";
-const LAST_UPLOAD_KEY = "lastUploadId";
+const STORAGE_KEY4 = "iris_einvoice_uploadfile";
+
 
 const UploadStatus = () => {
   const [uploadId, setUploadId] = useState("");
@@ -31,8 +32,9 @@ const UploadStatus = () => {
       } catch {}
     }
 
-    const lastUpload = localStorage.getItem(LAST_UPLOAD_KEY);
-    if (lastUpload) setUploadId(lastUpload);
+    const lastUpload = JSON.parse(localStorage.getItem(STORAGE_KEY4 ));
+    console.log("lastUpload",lastUpload)
+    if (lastUpload) setUploadId(lastUpload.uploadId);
   }, []);
 
   const checkStatus = async () => {

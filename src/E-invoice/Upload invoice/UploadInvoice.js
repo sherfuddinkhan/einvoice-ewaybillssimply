@@ -1,24 +1,22 @@
-// UploadInvoice.js
 import React, { useState, useEffect } from "react";
 
 const STORAGE_KEY = "iris_einvoice_shared_config";
+const STORAGE_KEY4 = "iris_einvoice_uploadfile";
 
 const UploadInvoice = () => {
   const [companyUniqueCode, setCompanyUniqueCode] = useState("");
   const [file, setFile] = useState(null);
-
   const [headers, setHeaders] = useState({
     companyId: "",
     "X-Auth-Token": "",
     product: "ONYX",
-    Accept: "application/json"
+    Accept: "application/json",
   });
-
   const [preview, setPreview] = useState(null);
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Load auto-filled companyId & token from localStorage
+  // Auto-populate headers & companyUniqueCode from localStorage
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -27,9 +25,8 @@ const UploadInvoice = () => {
         setHeaders((prev) => ({
           ...prev,
           companyId: parsed.companyId || "",
-          "X-Auth-Token": parsed.token || ""
+          "X-Auth-Token": parsed.token || "",
         }));
-
         setCompanyUniqueCode(parsed.companyUniqueCode || "");
       } catch (e) {
         console.log("Parsing error", e);
@@ -44,12 +41,11 @@ const UploadInvoice = () => {
     setLoading(true);
     setResponse(null);
 
-    // Show header & payload preview
     setPreview({
       endpoint: `/proxy/onyx/upload/invoices?companyUniqueCode=${companyUniqueCode}`,
       headers,
       fileName: file.name,
-      fileSize: `${(file.size / 1024).toFixed(2)} KB`
+      fileSize: `${(file.size / 1024).toFixed(2)} KB`,
     });
 
     try {
@@ -57,15 +53,26 @@ const UploadInvoice = () => {
       formData.append("file", file);
 
       const res = await fetch(
-        `/proxy/onyx/upload/invoices?companyUniqueCode=${companyUniqueCode}`,
+        `http://localhost:3001/proxy/onyx/upload/invoices?companyUniqueCode=${companyUniqueCode}`,
         {
           method: "POST",
-          headers,
-          body: formData
+          headers: {
+            ...headers, // Do NOT set Content-Type manually for FormData
+          },
+          body: formData,
         }
       );
 
       const data = await res.json();
+
+      // Auto-populate localStorage for next upload
+      localStorage.setItem(STORAGE_KEY4, JSON.stringify({
+        companyId: headers.companyId,
+        token: headers["X-Auth-Token"],
+        companyUniqueCode,
+        lastResponse: data
+      }));
+
       setResponse(data);
     } catch (error) {
       setResponse({ error: error.message });
@@ -77,17 +84,9 @@ const UploadInvoice = () => {
   return (
     <div style={{ padding: 30, background: "#f5f5f5", minHeight: "50vh" }}>
       <h1 style={{ color: "#2d6a4f" }}>Upload Invoice (CSV / ZIP)</h1>
-      <p style={{ color: "#555" }}>companyId, X-Auth-Token auto-filled from login step</p>
+      <p style={{ color: "#555" }}>companyId, X-Auth-Token auto-filled from localStorage</p>
 
-      <div
-        style={{
-          background: "white",
-          padding: "25px",
-          borderRadius: "14px",
-          boxShadow: "0 5px 20px rgba(0,0,0,0.1)"
-        }}
-      >
-        {/* companyUniqueCode */}
+      <div style={{ background: "white", padding: 25, borderRadius: 14, boxShadow: "0 5px 20px rgba(0,0,0,0.1)" }}>
         <div style={{ margin: "15px 0" }}>
           <label><strong>companyUniqueCode:</strong></label>
           <input
@@ -95,16 +94,10 @@ const UploadInvoice = () => {
             value={companyUniqueCode}
             onChange={(e) => setCompanyUniqueCode(e.target.value)}
             placeholder="Enter GSTIN"
-            style={{
-              width: "30%",
-              padding: "10px",
-              marginTop: "8px",
-              fontSize: "16px"
-            }}
+            style={{ width: "30%", padding: 10, marginTop: 8, fontSize: 16 }}
           />
         </div>
 
-        {/* File Upload */}
         <div style={{ marginTop: 20 }}>
           <strong>Select CSV / ZIP File:</strong>
           <input
@@ -115,54 +108,21 @@ const UploadInvoice = () => {
           />
         </div>
 
-        {/* Upload Button */}
-  <button onClick={handleFileUpload}
+        <button
+          onClick={handleFileUpload}
           disabled={loading}
           style={{
-            marginTop: 20,
-            width: "30%",
-            padding: "15px",
-            fontSize: "18px",
-            background: "#2d6a4f",
-            border: "none",
-            borderRadius: "10px",
-            color: "white",
-            fontWeight: "bold"
+            marginTop: 20, width: "30%", padding: 15, fontSize: 18,
+            background: "#2d6a4f", border: "none", borderRadius: 10,
+            color: "white", fontWeight: "bold"
           }}
         >
           {loading ? "UPLOADING..." : "UPLOAD FILE"}
         </button>
       </div>
 
-      {/* Preview Section */}
-      {preview && (
-        <pre
-          style={{
-            marginTop: 25,
-            background: "#222",
-            color: "#0f0",
-            padding: 20,
-            borderRadius: 10
-          }}
-        >
-{JSON.stringify(preview, null, 2)}
-        </pre>
-      )}
-
-      {/* Response Section */}
-      {response && (
-        <pre
-          style={{
-            marginTop: 25,
-            background: "#000",
-            color: "#4eff4e",
-            padding: 20,
-            borderRadius: 10
-          }}
-        >
-            {JSON.stringify(response, null, 2)}
-        </pre>
-      )}
+      {preview && <pre style={{ marginTop: 25, background: "#222", color: "#0f0", padding: 20, borderRadius: 10 }}>{JSON.stringify(preview, null, 2)}</pre>}
+      {response && <pre style={{ marginTop: 25, background: "#000", color: "#4eff4e", padding: 20, borderRadius: 10 }}>{JSON.stringify(response, null, 2)}</pre>}
     </div>
   );
 };
