@@ -5,7 +5,6 @@ import React, { useEffect, useState } from "react";
 ---------------------------- */
 const STORAGE_KEY = "iris_einvoice_response";
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
-const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 
 const ListEInvoices = () => {
   /* -------------------------
@@ -21,10 +20,10 @@ const ListEInvoices = () => {
 
   /* -------------------------
      Payload
+     *** CHANGE: Removed 'gstin' field ***
   ------------------------- */
   const [payload, setPayload] = useState({
-    gstin: "",
-    CompanyUniqueCode: "",
+    companyUniqueCode: "", 
     docNo: ["12369"],
     fromDt: "19/02/2020",
     toDt: "19/02/2020",
@@ -46,6 +45,7 @@ const ListEInvoices = () => {
 
   /* -------------------------
      Auto-load headers and payload
+     *** CHANGE: Removed setting of 'gstin' ***
   ------------------------- */
   useEffect(() => {
     const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
@@ -53,19 +53,19 @@ const ListEInvoices = () => {
 
     setHeaders((prev) => ({
       ...prev,
-      companyId: savedConfig.companyUniqueCode || "24",
+      companyId: savedConfig.companyId || "24",
       "X-Auth-Token": savedResponse.token || "",
     }));
 
     setPayload((prev) => ({
       ...prev,
-      gstin: savedConfig.companyUniqueCode || "01AAACI9260R002",
-      CompanyUniqueCode: savedConfig.companyUniqueCode || "01AAACI9260R002",
+      // Removed gstin initialization
+      companyUniqueCode: savedConfig.companyUniqueCode || "01AAACI9260R002",
     }));
   }, []);
 
   /* -------------------------
-     Helpers
+     Helpers (Unchanged)
   ------------------------- */
   const updateHeader = (k, v) => setHeaders((p) => ({ ...p, [k]: v }));
   const updatePayload = (k, v) => setPayload((p) => ({ ...p, [k]: v }));
@@ -73,10 +73,11 @@ const ListEInvoices = () => {
     setPayload((p) => ({ ...p, [k]: v.split(",").map((i) => i.trim()) }));
 
   /* -------------------------
-     API Call
+     API Call (Unchanged logic)
   ------------------------- */
   const fetchInvoices = async () => {
-    if (!payload.CompanyUniqueCode) {
+    // This check is the most critical for preventing the previous error
+    if (!payload.companyUniqueCode) { 
       return alert("Company Unique Code is mandatory");
     }
 
@@ -101,6 +102,7 @@ const ListEInvoices = () => {
 
   /* -------------------------
      UI
+     *** CHANGE: Removed GSTIN input field ***
   ------------------------- */
   return (
     <div style={{ padding: 30, background: "#f1f8e9", minHeight: "100vh" }}>
@@ -120,15 +122,13 @@ https://stage-api.irisgst.com/irisgst/onyx/einvoice/view
         ))}
 
         <h4 style={{ marginTop: 25 }}>Payload</h4>
-
-        <Row label="GSTIN">
-          <input value={payload.gstin} onChange={(e) => updatePayload("gstin", e.target.value)} />
-        </Row>
+        
+        {/* Removed GSTIN input */}
 
         <Row label="Company Unique Code">
           <input
-            value={payload.CompanyUniqueCode}
-            onChange={(e) => updatePayload("CompanyUniqueCode", e.target.value)}
+            value={payload.companyUniqueCode}
+            onChange={(e) => updatePayload("companyUniqueCode", e.target.value)}
           />
         </Row>
 
@@ -205,7 +205,7 @@ https://stage-api.irisgst.com/irisgst/onyx/einvoice/view
 };
 
 /* -------------------------
-   Row Component
+   Row Component and Styles (Unchanged)
 ------------------------- */
 const Row = ({ label, children }) => (
   <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", marginBottom: 12 }}>
@@ -214,9 +214,6 @@ const Row = ({ label, children }) => (
   </div>
 );
 
-/* -------------------------
-   Styles
-------------------------- */
 const card = {
   background: "#fff",
   padding: 25,
