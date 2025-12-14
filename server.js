@@ -615,7 +615,7 @@ app.put('/proxy/irn/cancelEwb', async (req, res) => {
   try {
     const { ewbNo, cnlRsn, cnlRem, userGstin } = req.body;
 
-    if (!ewbNo || !cnlRsn || !userGstin) {
+    if (!ewbNo || !cnlRsn || !userGstin||!cnlRem) {
       return res.status(400).json({
         status: 'FAILURE',
         message: 'Missing required fields: ewbNo, cnlRsn, userGstin'

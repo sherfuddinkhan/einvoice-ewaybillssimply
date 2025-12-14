@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const LOGIN_RESPONSE_KEY = "iris_login_data";
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
 const EWB_HISTORY_KEY = "ewbHistory";
 
@@ -24,12 +24,15 @@ const GetEwbDetails = () => {
   // --------------------------------------------------
   useEffect(() => {
     // Load login data
-    const login = JSON.parse(localStorage.getItem(LOGIN_RESPONSE_KEY) || "{}");
+    const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
+    const latestEwb = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
+        console.log("login",login )
+    console.log("latestEwb",latestEwb)
 
     setAuthData({
-      companyId: login.companyId || "",
-      token: login.token || "",
-      userGstin: login.userGstin || "",
+      companyId: login.fullResponse?.response?.companyid  || "",
+      token: login.fullResponse?.response?.token || "",
+      userGstin:latestEwb.fromGstin || "",
     });
 
     // Load last EWB auto-population

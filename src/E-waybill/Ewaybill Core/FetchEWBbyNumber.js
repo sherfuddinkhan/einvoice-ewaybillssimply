@@ -2,78 +2,59 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 // LocalStorage Keys
-const LOGIN_RESPONSE_KEY = "iris_login_data";
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
 const EWB_HISTORY_KEY = "ewbHistory";
 
 const FetchEWBbyNumber = () => {
   const [ewbNo, setEwbNo] = useState("");
-  const [userGstin, setUserGstin] = useState(""); // State for the User GSTIN input
-
-  const [authData, setAuthData] = useState({
-    companyId: "",
-    token: "",
-  });
-
+  const [userGstin, setUserGstin] = useState("");
   const [updateNeeded, setUpdateNeeded] = useState(true);
 
+  const [authData, setAuthData] = useState({ companyId: "", token: "" });
   const [requestHeaders, setRequestHeaders] = useState({});
   const [requestPayload, setRequestPayload] = useState({});
   const [responseData, setResponseData] = useState(null);
   const [autoFields, setAutoFields] = useState({});
 
-  // -----------------------------------------------------------
-  // 🔵 Load Auth + Last EWB Auto Populate (Reading from Local Storage)
-  // -----------------------------------------------------------
+  
+  // Load Auth + Last EWB Auto Populate
   useEffect(() => {
-  const login = JSON.parse(localStorage.getItem(LOGIN_RESPONSE_KEY) || "{}");
-  const latestEwb = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
+    const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
+    const latestEwb = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
+    console.log("login",login )
+    console.log("latestEwb",latestEwb)
 
-  setAuthData({
-    companyId: login.companyId || "",
-    token: login.token || "",
-  });
-
-  // Auto-populate EWB Number
-  if (latestEwb?.ewbNo) setEwbNo(latestEwb.ewbNo);
-
-  // Auto-populate User GSTIN
-  const gstin =
-    latestEwb?.fromGstin || // top-level
-    latestEwb?.response?.fromGstin || // nested response
-    latestEwb?.response?.userGstin || // sometimes called userGstin
-    login.userGstin || // fallback to login
-    "";
-
-  setUserGstin(gstin);
-
-  // Auto-populate table fields
-  if (latestEwb?.response) setAutoFields(latestEwb.response);
-}, []);
-
-
-  // -----------------------------------------------------------
-  // 🔴 Save History (last 10 entries)
-  // -----------------------------------------------------------
-  const saveHistory = (entry) => {
-    let history = JSON.parse(localStorage.getItem(EWB_HISTORY_KEY) || "[]");
-
-    history.unshift({
-      time: new Date().toLocaleString(),
-      ...entry,
+    setAuthData({
+      companyId:login.fullResponse?.response?.companyid || latestEwb?.companyId || "",
+      token: login.fullResponse?.response?.token|| latestEwb?.token || "",
     });
 
-    if (history.length > 10) history = history.slice(0, 10);
+    if (latestEwb?.ewbNo) setEwbNo(latestEwb.ewbNo);
 
+    const gstin =
+      latestEwb?.fromGstin ||
+      latestEwb?.response?.fromGstin ||
+      latestEwb?.response?.userGstin ||
+      login.userGstin ||
+      "";
+
+    setUserGstin(gstin);
+
+    if (latestEwb?.response) setAutoFields(latestEwb.response);
+  }, []);
+
+  // Save History
+  const saveHistory = (entry) => {
+    let history = JSON.parse(localStorage.getItem(EWB_HISTORY_KEY) || "[]");
+    history.unshift({ time: new Date().toLocaleString(), ...entry });
+    if (history.length > 10) history = history.slice(0, 10);
     localStorage.setItem(EWB_HISTORY_KEY, JSON.stringify(history));
   };
 
-  // -----------------------------------------------------------
-  // 🔵 API Call (Writing to State and Local Storage)
-  // -----------------------------------------------------------
+  // Fetch EWB API
   const fetchEWB = async () => {
     const url = "http://localhost:3001/proxy/topaz/ewb/byNumber";
-
     const headers = {
       accept: "application/json",
       product: "TOPAZ",
@@ -81,94 +62,61 @@ const FetchEWBbyNumber = () => {
       "x-auth-token": authData.token,
     };
 
-    // Payload uses the current state values
-    const payload = {
-      ewbNo,
-      userGstin, 
-      updateNeeded,
-    };
+    const payload = { ewbNo, userGstin, updateNeeded };
 
     setRequestHeaders(headers);
     setRequestPayload(payload);
 
     try {
-      const res = await axios.get(url, {
-        headers,
-        params: payload,
-      });
-
+      const res = await axios.get(url, { headers, params: payload });
       setResponseData(res.data);
 
-      // 'extractedEwbData' holds the full EWB response (res.data.response)
-      const extractedEwbData = res.data?.response || {};
-      setAutoFields(extractedEwbData);
+      const extracted = res.data?.response || {};
+      setAutoFields(extracted);
 
-      // 1. Find the GSTIN from the successful response (e.g., 'fromGstin' or 'userGstin')
-      const gstinFromResponse = extractedEwbData?.fromGstin || extractedEwbData?.userGstin;
+      // Save latest for auto-fill next time
+      const latestDataToSave = { ewbNo, fromGstin: extracted?.fromGstin || userGstin, response: extracted };
+      localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(latestDataToSave));
 
-      if (gstinFromResponse) {
-        // 2. CRITICAL FIX: Update the component state for immediate reflection
-        setUserGstin(gstinFromResponse); 
-
-        // 3. Save the latest data for next auto-fill
-        const latestDataToSave = {
-          ewbNo,
-          // Save the acquired GSTIN at the top level for 'useEffect' to read next time
-          fromGstin: gstinFromResponse, 
-          response: extractedEwbData,
-        };
-        localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(latestDataToSave));
-      }
-
-      saveHistory({
-        requestHeaders: headers,
-        requestPayload: payload,
-        response: res.data,
-      });
-
-    } catch (error) {
-      const err = error.response?.data || { error: error.message };
-      setResponseData(err);
-      saveHistory({
-        requestHeaders: headers,
-        requestPayload: payload,
-        response: err,
-      });
+      saveHistory({ requestHeaders: headers, requestPayload: payload, response: res.data });
+    } catch (err) {
+      const errorData = err.response?.data || { error: err.message };
+      setResponseData(errorData);
+      saveHistory({ requestHeaders: headers, requestPayload: payload, response: errorData });
     }
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "900px", margin: "auto" }}>
-      <h2>🔍 Fetch E-Waybill By Number</h2>
+    <div style={{ padding: 20, maxWidth: 1000, margin: "auto", fontFamily: "Arial, sans-serif" }}>
+      <h1 style={{ textAlign: "center" }}>🔍 Fetch E-Waybill By Number</h1>
 
       {/* INPUTS */}
-      <div style={{ marginBottom: "10px" }}>
-        <label>EWB Number :</label>
+      <div style={{ margin: "15px 0" }}>
+        <label>EWB Number:</label>
         <input
           type="text"
           value={ewbNo}
           onChange={(e) => setEwbNo(e.target.value)}
-          placeholder="Enter EWB Number"
-          style={{ width: "100%", padding: "8px" }}
+          style={{ width: "100%", padding: 8, marginTop: 5 }}
         />
       </div>
 
-      <div style={{ marginBottom: "10px" }}>
-        <label>User GSTIN :</label>
+      <div style={{ margin: "15px 0" }}>
+        <label>User GSTIN:</label>
         <input
           type="text"
           value={userGstin}
           onChange={(e) => setUserGstin(e.target.value)}
-          style={{ width: "100%", padding: "8px" }}
+          style={{ width: "100%", padding: 8, marginTop: 5 }}
         />
       </div>
 
-      <div style={{ marginBottom: "10px" }}>
-        <label>Update Needed :</label>
+      <div style={{ margin: "15px 0" }}>
+        <label>Update Needed:</label>
         <select
           value={updateNeeded}
           onChange={(e) => setUpdateNeeded(e.target.value === "true")}
-          style={{ width: "100%", padding: "8px" }}
+          style={{ width: "100%", padding: 8, marginTop: 5 }}
         >
           <option value="true">true</option>
           <option value="false">false</option>
@@ -177,56 +125,46 @@ const FetchEWBbyNumber = () => {
 
       <button
         onClick={fetchEWB}
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "black",
-          color: "white",
-          border: "none",
-          borderRadius: 6,
-          cursor: "pointer",
-        }}
+        style={{ padding: "10px 20px", backgroundColor: "#1A73E8", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}
       >
         Fetch EWB
       </button>
 
-      <hr />
+      <hr style={{ margin: "25px 0" }} />
 
-      {/* REQUEST PREVIEW */}
-      <h3>📌 Request Headers</h3>
-      <pre style={{ background: "#f4f4f4", padding: "10px" }}>
-        {JSON.stringify(requestHeaders, null, 2)}
-      </pre>
+      {/* HEADERS */}
+      <div style={{ background: "#f1f2f6", padding: 15, borderRadius: 8, marginBottom: 20 }}>
+        <h3>🔐 Request Headers</h3>
+        <pre>{JSON.stringify(requestHeaders, null, 2)}</pre>
+      </div>
 
-      <h3>📌 Request Payload</h3>
-      <pre style={{ background: "#f4f4f4", padding: "10px" }}>
-        {JSON.stringify(requestPayload, null, 2)}
-      </pre>
-
-      <hr />
+      {/* PAYLOAD */}
+      <div style={{ background: "#f1f2f6", padding: 15, borderRadius: 8, marginBottom: 20 }}>
+        <h3>📦 Request Payload</h3>
+        <pre>{JSON.stringify(requestPayload, null, 2)}</pre>
+      </div>
 
       {/* RESPONSE */}
-      <h3>📌 Response</h3>
-      <pre style={{ background: "#e8ffe8", padding: "10px" }}>
-        {JSON.stringify(responseData, null, 2)}
-      </pre>
+      <div style={{ background: "#e8ffe8", padding: 15, borderRadius: 8, marginBottom: 20 }}>
+        <h3>📌 Response</h3>
+        <pre>{JSON.stringify(responseData, null, 2)}</pre>
+      </div>
 
-      <hr />
-
-      {/* AUTO FIELDS */}
+      {/* AUTO-POPULATED DATA */}
       {autoFields && Object.keys(autoFields).length > 0 && (
-        <>
+        <div style={{ background: "#fff3cd", padding: 15, borderRadius: 8, marginBottom: 20 }}>
           <h3>📌 Auto-Populated Data (From Previous EWB)</h3>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               {Object.entries(autoFields).map(([key, value]) => (
                 <tr key={key}>
-                  <td style={{ padding: 6, fontWeight: "bold" }}>{key}</td>
-                  <td style={{ padding: 6 }}>{String(value)}</td>
+                  <td style={{ padding: 6, fontWeight: "bold", border: "1px solid #ccc" }}>{key}</td>
+                  <td style={{ padding: 6, border: "1px solid #ccc" }}>{String(value)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </>
+        </div>
       )}
     </div>
   );

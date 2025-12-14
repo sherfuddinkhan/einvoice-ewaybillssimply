@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../components/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const STORAGE_KEY = "iris_ewaybill_shared_config";
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 
 const EWayBillLoginPage = () => {
   const [email, setEmail] = useState("eway@gmail.com");
@@ -48,7 +48,7 @@ useEffect(() => {
         };
 
         // Save in localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+        localStorage.setItem(STORAGE_KEY00, JSON.stringify(store));
 
         // Update AuthProvider state
         login(store, "EWAY");

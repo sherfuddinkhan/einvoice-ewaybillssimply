@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 // LocalStorage keys
-const LOGIN_RESPONSE_KEY = "iris_login_data";
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
+const EWB_HISTORY_KEY = "ewbHistory";
 
 // Safe localStorage reader
 const load = (key) => {
@@ -28,6 +29,8 @@ const EwaybillActions = () => {
 
   // ---------------- FORM DATA ----------------
   const [form, setForm] = useState({
+    userGstin:"",
+    companyId:" ",
     ewbNo: "",
     vehicleNo: "",
     fromPlace: "",
@@ -57,29 +60,33 @@ const EwaybillActions = () => {
 
   // ---------------- LOAD LOCALSTORAGE ----------------
   useEffect(() => {
-    const login = load(LOGIN_RESPONSE_KEY);
-    const last = load(LATEST_EWB_KEY)?.response || {};
+     const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
+    const latestEwb = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
+    const gstin = latestEwb.fromGstin || "";
+        console.log("login",login )
+    console.log("latestEwb",latestEwb)
 
-    const gstin = login.userGstin || last.fromGstin || "";
 
     setAuth({
-      token: login.token || "",
-      headerCompanyId: login.companyId || "",
-      userGstin: gstin,
-      payloadCompanyId: login.companyId || "",
+      token: login.fullResponse?.response?.token || "" || "",
+      headerCompanyId: login.fullResponse?.response?.companyid || "",
+      userGstin: latestEwb?.response?.fromGstin || "",
+      payloadCompanyId: latestEwb?.response?.companyId || "",
     });
 
     setForm((prev) => ({
       ...prev,
-      ewbNo: last.ewbNo || "",
-      vehicleNo: last.vehicleNo || "",
-      fromPlace: last.fromPlace || "",
-      fromState: last.fromStateCode || "",
-      transDocNo: last.transDocNo || "",
-      transDocDate: last.transDocDate || "",
-      transMode: last.transMode || 1,
-      vehicleType: last.vehicleType || "R",
-      fromPincode: last.fromPincode || "",
+       ewbNo: latestEwb?.ewbNo || "",
+      vehicleNo: latestEwb ?.response?.vehicleNo || "",
+      fromPlace: latestEwb ?.response?.fromPlace || "",
+      fromState: latestEwb ?.response?.fromStateCode || "",
+      transDocNo: latestEwb?.response?.transDocNo || "",
+      transDocDate: latestEwb?.response?.transDocDate || "",
+      transMode: latestEwb?.response?.transMode || 1,
+      vehicleType: latestEwb?.response?.vehicleType || "R",
+      fromPincode: latestEwb?.response?.fromPincode || "",
+      userGstin: latestEwb?.response?.fromGstin || "",                    
+      companyId: latestEwb?.response?.companyId || "",
     }));
   }, []);
 

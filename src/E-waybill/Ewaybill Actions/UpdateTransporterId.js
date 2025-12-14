@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-// LocalStorage Keys
-const LOGIN_RESPONSE_KEY = "iris_login_data";
+
+// LocalStorage keys
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
 const EWB_HISTORY_KEY = "ewbHistory";
 
@@ -35,22 +36,20 @@ const UpdateTransporterId = () => {
 
   // ---------------- LOAD FROM LOCALSTORAGE ----------------
   useEffect(() => {
-    const login = JSON.parse(localStorage.getItem(LOGIN_RESPONSE_KEY) || "{}");
+    const login = JSON.parse(localStorage.getItem(STORAGE_KEY00 ) || "{}");
     const last = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
     const hist = JSON.parse(localStorage.getItem(EWB_HISTORY_KEY) || "{}");
 
     // Auto pick data from last or history
-    const gstin = last.fromGstin || hist.fromGstin || "";
+    const gstin = last?.response?.fromGstin || "";
     const ewbNo = last.ewbNo || hist.ewbNo || "";
-    const tId =
-      last.response?.transporterId || hist.response?.transporterId || "";
-    const tName =
-      last.response?.transporterName || hist.response?.transporterName || "";
+    const tId = last.response?.transporterId || hist.response?.transporterId || "";
+    const tName = last.response?.transporterName || hist.response?.transporterName || "";
 
     setHeaders((prev) => ({
       ...prev,
-      "X-Auth-Token": login.token || "",
-      companyId: login.companyId || "",
+      "X-Auth-Token": login.fullResponse?.response?.token || "" || "",
+      companyId: login.fullResponse?.response?.companyid || "",
     }));
 
     const initialForm = {

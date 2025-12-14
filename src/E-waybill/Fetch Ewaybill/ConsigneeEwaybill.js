@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const LOGIN_RESPONSE_KEY = "iris_login_data";
+// LocalStorage keys
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
+const EWB_HISTORY_KEY = "ewbHistory";
 
 const ConsigneeEwaybill = () => {
   const [authData, setAuthData] = useState({
@@ -41,19 +43,19 @@ const ConsigneeEwaybill = () => {
 
   // Auto-fill data
   useEffect(() => {
-    const login = JSON.parse(localStorage.getItem(LOGIN_RESPONSE_KEY) || "{}");
+    const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
     const lastEwb = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
     const lastResponse = lastEwb?.response || {};
 
     setAuthData({
-      companyId: login.companyId || "",
-      token: login.token || "",
+      companyId: login.fullResponse?.response?.companyid || "" ,
+      token: login.fullResponse?.response?.token || "",
     });
 
     setHeaders((prev) => ({
       ...prev,
-      companyId: login.companyId || "",
-      "X-Auth-Token": login.token || "",
+      companyId: login.fullResponse?.response?.companyid || "",
+      "X-Auth-Token": login.fullResponse?.response?.token || "",
     }));
 
     setPayload({

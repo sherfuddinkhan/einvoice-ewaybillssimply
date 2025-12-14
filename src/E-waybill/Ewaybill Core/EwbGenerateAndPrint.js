@@ -1,47 +1,29 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
 
 /* ---------------------------
-   LocalStorage keys & utils
+   LocalStorage keys
 --------------------------- */
-const STORAGE_KEY = 'iris_ewaybill_shared_config';
-const LATEST_EWB_KEY = 'latestEwbData';
-const EWB_HISTORY_KEY = 'ewbHistory';
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
+const LATEST_EWB_KEY = "latestEwbData";
+const EWB_HISTORY_KEY = "ewbHistory";
 
+/* ---------------------------
+   Utils
+--------------------------- */
 const safeParse = (v, fallback = {}) => {
   try {
-    return JSON.parse(v || 'null') ?? fallback;
+    return JSON.parse(v ?? "null") ?? fallback;
   } catch {
     return fallback;
   }
 };
 
-/* ---------------------------
-   Styling constants
---------------------------- */
-const COLORS = {
-  primary: '#1A73E8',
-  success: '#34A853',
-  danger: '#EA4335',
-  background: '#F5F5F7',
-};
-
-const containerStyle = {
-  maxWidth: '1200px',
-  margin: '20px auto',
-  padding: '20px',
-  fontFamily: 'Arial, sans-serif',
-};
-
-const previewBox = {
-  margin: '30px 0',
-  padding: '20px',
-  background: '#f1f2f6',
-  borderRadius: '10px',
-};
+const getLS = (k, fb = {}) => safeParse(localStorage.getItem(k), fb);
+const setLS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
 /* ---------------------------
-   Default EWB form payload
+   Default payload (UNCHANGED)
 --------------------------- */
 const DEFAULT_FORM = {
   supplyType: "O",
@@ -49,8 +31,9 @@ const DEFAULT_FORM = {
   docType: "INV",
   docNo: "Topaz340290",
   invType: "B2B",
-  docDate: "15/11/2025",
+  docDate: new Date().toLocaleDateString("en-GB").split("/").join("/"),
   transactionType: 1,
+
   fromGstin: "05AAAAU1183B5ZW",
   fromTrdName: "ABC",
   dispatchFromGstin: "05AAAAU1183B5ZW",
@@ -60,6 +43,7 @@ const DEFAULT_FORM = {
   fromPlace: "Akodiya",
   fromPincode: 248001,
   fromStateCode: 5,
+
   toGstin: "05AAAAU1183B1Z0",
   toTrdName: "RJ-Rawat Foods",
   toAddr1: "S531, SSB Towers",
@@ -67,24 +51,28 @@ const DEFAULT_FORM = {
   toPlace: "Dehradun",
   toPincode: 248002,
   toStateCode: 5,
-  totInvValue: 21000.00,
-  totalValue: 20000.00,
-  cgstValue: 500.00,
-  sgstValue: 500.00,
-  igstValue: 0.00,
-  cessValue: 0.00,
-  cessNonAdvolValue: 0.00,
-  otherValue: 0.00,
+
+  totInvValue: 21000,
+  totalValue: 20000,
+  cgstValue: 500,
+  sgstValue: 500,
+  igstValue: 0,
+  cessValue: 0,
+  cessNonAdvolValue: 0,
+  otherValue: 0,
+
   transMode: 1,
   transDistance: 10,
-  transDocDate: "15/11/2025",
   transDocNo: "1212",
+  transDocDate: new Date().toLocaleDateString("en-GB").split("/").join("/"),
   transporterId: "05AAAAU1183B1Z0",
   transporterName: "ACVDF",
   vehicleNo: "RJ14CA9999",
   vehicleType: "R",
+
   actFromStateCode: "5",
   actToStateCode: "5",
+
   itemList: [
     {
       productName: "Sugar",
@@ -92,329 +80,303 @@ const DEFAULT_FORM = {
       hsnCode: "8517",
       quantity: 10,
       qtyUnit: "KGS",
-      taxableAmount: 20000.00,
-      sgstRate: 2.50,
-      cgstRate: 2.50,
-      igstRate: 0.00,
-      cessRate: 0.00,
-      cessNonAdvol: 0.00,
-      iamt: 0.00,
-      camt: 500.00,
-      samt: 500.00,
-      csamt: 0.00,
+      taxableAmount: 20000,
+      sgstRate: 2.5,
+      cgstRate: 2.5,
+      igstRate: 0,
+      cessRate: 0,
+      cessNonAdvol: 0,
+      iamt: 0,
+      camt: 500,
+      samt: 500,
+      csamt: 0,
       txp: "T"
     }
   ],
+
   companyId: "",
   userGstin: "05AAAAU1183B5ZW",
   forceDuplicateCheck: true
 };
 
 /* ---------------------------
-   Main Component
+   Component
 --------------------------- */
 const EwbGenerateAndPrint = () => {
   const [formData, setFormData] = useState(DEFAULT_FORM);
-  const [authData, setAuthData] = useState({ companyId: '', token: '', userGstin: '' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [apiResponse, setApiResponse] = useState(null);
   const [ewbNos, setEwbNos] = useState([]);
 
   /* ---------------------------
-     Load auth data from localStorage
+     Auth from localStorage
   --------------------------- */
-  useEffect(() => {
-    const login = safeParse(localStorage.getItem(STORAGE_KEY), {});
-    const token = login?.token || login?.fullResponse?.response?.token || '';
-    const companyId = login?.companyId || login?.fullResponse?.response?.companyId || '';
-    const userGstin =
-      login?.userGstin ||
-      login?.fullResponse?.response?.userGstin ||
-      login?.fullResponse?.response?.user?.gstin ||
-      '';
-
-    setAuthData({ token, companyId, userGstin });
-
-    setFormData(prev => ({
-      ...prev,
-      companyId,
-      userGstin,
-      fromGstin: userGstin,
-      dispatchFromGstin: userGstin,
-      transporterId: userGstin
-    }));
-
-    // Load latest EWB from localStorage
-    const latest = safeParse(localStorage.getItem(LATEST_EWB_KEY), {});
-    if (latest?.ewbNo) setEwbNos([latest.ewbNo]);
-
-    console.log("📌 Auth data loaded:", { token, companyId, userGstin });
-  }, []);
-
-  /* ---------------------------
-     Save EWB to localStorage
-  --------------------------- */
-  const saveToLocalStorage = useCallback((fullResponse) => {
-    const resp = fullResponse.response || {};
-    const ewbData = {
-      generatedAt: new Date().toISOString(),
-      ewbNo: resp.ewbNo || resp.ewb_number || null,
-      validUpto: resp.validUpto || null,
-      fullApiResponse: fullResponse,
-      payloadUsed: formData,
-      qrCode: resp.qrCode || resp.qr_code || null,
-      barcode: resp.barcode || null,
+  const getAuth = () => {
+    const cfg = getLS(STORAGE_KEY00);
+    return {
+      token: cfg?.fullResponse?.response?.token,
+      companyId: cfg?.fullResponse?.response?.companyid
     };
-
-    localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(ewbData));
-
-    const rawHistory = safeParse(localStorage.getItem(EWB_HISTORY_KEY), []);
-    const deduped = rawHistory.filter(h => h.ewbNo !== ewbData.ewbNo);
-    deduped.unshift(ewbData);
-    if (deduped.length > 20) deduped.pop();
-    localStorage.setItem(EWB_HISTORY_KEY, JSON.stringify(deduped));
-
-    console.log("📌 Latest EWB saved:", ewbData);
-    console.log("📌 Full EWB history:", deduped);
-  }, [formData]);
-
-  /* ---------------------------
-     Handlers
-  --------------------------- */
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleItemChange = (index, e) => {
-    const { name, value } = e.target;
-    setFormData(prev => {
-      const newItems = [...prev.itemList];
-      newItems[index] = { ...newItems[index], [name]: value };
-      return { ...prev, itemList: newItems };
-    });
-  };
-
-  const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      itemList: [...prev.itemList, {
-        productName: "", productDesc: "", hsnCode: "", quantity: 0, qtyUnit: "KGS",
-        taxableAmount: 0, sgstRate: 0, cgstRate: 0, igstRate: 0, cessRate: 0,
-        cessNonAdvol: 0, iamt: 0, camt: 0, samt: 0, csamt: 0, txp: "T"
-      }]
-    }));
-  };
-
-  const removeItem = (index) => {
-    setFormData(prev => ({ ...prev, itemList: prev.itemList.filter((_, i) => i !== index) }));
-  };
+  const auth = getAuth();
 
   /* ---------------------------
      Generate EWB
   --------------------------- */
-  const handleGenerate = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setApiResponse(null);
+ const handleGenerate = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    const headers = {
-      "X-Auth-Token": authData.token,
-      companyId: authData.companyId,
-      product: "TOPAZ",
-      "Content-Type": "application/json"
-    };
-
-    try {
-      const res = await axios.post(
-        'http://localhost:3001/proxy/topaz/ewb/generate',
-        formData,
-        { headers }
-      );
-
-      if (res.data?.status === "SUCCESS" && res.data?.response) {
-        setApiResponse(res.data);
-        saveToLocalStorage(res.data);
-        setEwbNos([res.data.response.ewbNo]);
-      } else {
-        throw new Error(res.data?.message || "E-Way Bill generation failed");
-      }
-    } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Unknown error';
-      setError(msg);
-      console.error("❌ EWB generation error:", msg);
-    } finally {
-      setLoading(false);
+  try {
+    if (!auth.token || !auth.companyId) {
+      throw new Error("Auth missing in localStorage");
     }
-  };
+
+    const res = await axios.post(
+      "http://localhost:3001/proxy/topaz/ewb/generate",
+      formData,
+      {
+        headers: {
+          "X-Auth-Token": auth.token,
+          companyId: auth.companyId,
+          product: "TOPAZ",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (res.data?.status !== "SUCCESS") {
+      throw new Error(res.data?.message || "Generation failed");
+    }
+
+    // ✅ Set API response and EWB number
+    setApiResponse(res.data);
+    setEwbNos([res.data.response.ewbNo]);
+
+    // ✅ Store the API response in LATEST_EWB_KEY for future auto-population
+    const latestDataToSave = {
+      ewbNo: res.data.response.ewbNo,
+      fromGstin: formData.fromGstin,
+      response: res.data.response,
+      companyId: auth.companyId,
+      token: auth.token,
+    };
+    localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(latestDataToSave));
+    console.log("Response data saved:", latestDataToSave);
+
+    // ✅ Update EWB history (last 10 entries)
+    const hist = getLS(EWB_HISTORY_KEY, []);
+    hist.unshift({ ewbNo: res.data.response.ewbNo, time: new Date().toLocaleString() });
+    setLS(EWB_HISTORY_KEY, hist.slice(0, 10));
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   /* ---------------------------
-     Print PDF
+     PRINT PDF
   --------------------------- */
   const handlePrint = async () => {
-    if (!ewbNos.length || !ewbNos[0]) {
-      setError('No EWB number available to print.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
     try {
-      const headers = {
-        "X-Auth-Token": authData.token,
-        companyId: authData.companyId,
-        product: "TOPAZ",
-        "Content-Type": "application/json",
-        Accept: "application/pdf"
-      };
+      if (!ewbNos.length) throw new Error("EWB No missing");
 
-      const payload = { ewbNo: ewbNos };
       const res = await axios.post(
-        'http://localhost:3001/proxy/topaz/ewb/printDetails',
-        payload,
-        { headers, responseType: 'blob' }
+        "http://localhost:3001/proxy/topaz/ewb/printDetails",
+        { ewbNo: ewbNos },
+        {
+          headers: {
+            "X-Auth-Token": auth.token,
+            companyId: auth.companyId,
+            product: "TOPAZ",
+            Accept: "application/pdf"
+          },
+          responseType: "blob"
+        }
       );
 
-      const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.setAttribute('download', `${ewbNos[0]}-details.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
 
-      setError('');
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${ewbNos[0]}_EWB.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.response?.data?.message || 'Print failed');
-      console.error("❌ Print error:", err);
-    } finally {
-      setLoading(false);
+      setError(err.message);
     }
   };
 
   /* ---------------------------
-     JSX Render
+     UI
   --------------------------- */
-  return (
-    <div style={containerStyle}>
-      <h1 style={{ textAlign: 'center', color: '#2c3e50' }}>Generate & Print E-Way Bill</h1>
+  /* ---------------------------
+   UI (BOXED STYLE – SAME AS PREVIOUS)
+--------------------------- */
+return (
+  <div style={{ maxWidth: 1200, margin: "20px auto", padding: 20, fontFamily: "Arial" }}>
+    <h1 style={{ textAlign: "center", color: "#2c3e50" }}>
+      Generate & Print E-Way Bill
+    </h1>
 
-      {/* Request Preview */}
-      <div style={previewBox}>
-        <h2>🔍 Request Preview</h2>
-        <h3>Headers</h3>
-        <pre style={{ background: '#dfe4ea', padding: 15, borderRadius: 8, overflowX: 'auto' }}>
-          {JSON.stringify({ token: authData.token, companyId: authData.companyId, product: 'TOPAZ' }, null, 2)}
-        </pre>
+    {/* HEADERS BOX */}
+    <div style={{ background: "#f1f2f6", padding: 20, borderRadius: 10, marginBottom: 25 }}>
+      <h2>🔐 Request Headers</h2>
+      <pre style={{ background: "#dfe4ea", padding: 15, borderRadius: 8 }}>
+{JSON.stringify({
+  "X-Auth-Token": auth.token ? auth.token.slice(0, 15) + "..." : "MISSING",
+  companyId: auth.companyId || "MISSING",
+  product: "TOPAZ"
+}, null, 2)}
+      </pre>
+    </div>
 
-        <h3>Payload</h3>
-        <pre style={{ background: '#dfe4ea', padding: 15, borderRadius: 8, overflowX: 'auto' }}>
-          {JSON.stringify(formData, null, 2)}
-        </pre>
+    {/* PAYLOAD PREVIEW BOX */}
+    <div style={{ background: "#f1f2f6", padding: 20, borderRadius: 10, marginBottom: 25 }}>
+      <h2>📦 Payload Preview</h2>
+      <pre style={{ background: "#dfe4ea", padding: 15, borderRadius: 8, overflowX: "auto" }}>
+        {JSON.stringify(formData, null, 2)}
+      </pre>
+    </div>
+
+    {/* FORM */}
+    <form onSubmit={handleGenerate}>
+      <div style={{ background: "#ffffff", padding: 20, borderRadius: 10, border: "1px solid #ccc" }}>
+        <h2>✏️ Editable Payload Fields</h2>
+
+        {Object.keys(formData)
+          .filter(k => k !== "itemList" && typeof formData[k] !== "object")
+          .map(key => (
+            <div key={key} style={{ display: "flex", marginBottom: 10 }}>
+              <label style={{ width: 220, fontWeight: "bold" }}>{key}</label>
+              <input
+                name={key}
+                value={formData[key]}
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, [key]: e.target.value }))
+                }
+                style={{ flex: 1, padding: 8 }}
+              />
+            </div>
+          ))}
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleGenerate}>
-        {Object.keys(formData).filter(k => k !== 'itemList').map(key => (
-          <div key={key} style={{ margin: '10px 0', display: 'flex', alignItems: 'center' }}>
-            <label style={{ width: '220px', fontWeight: 'bold' }}>{key}:</label>
-            <input
-              name={key}
-              value={formData[key] ?? ''}
-              onChange={handleChange}
-              style={{ flex: 1, padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-              disabled={loading}
-            />
-          </div>
-        ))}
+      {/* ITEM LIST */}
+      <h2 style={{ marginTop: 30 }}>📦 Item List</h2>
 
-        <h3 style={{ marginTop: 20 }}>Item List</h3>
-        {formData.itemList.map((item, idx) => (
-          <div key={idx} style={{ border: '2px dashed #95a5a6', padding: 15, margin: '15px 0', borderRadius: 8, background: '#ecf0f1' }}>
-            {Object.keys(item).map(attr => (
-              <div key={attr} style={{ margin: '8px 0', display: 'flex', alignItems: 'center' }}>
-                <label style={{ width: 200 }}>{attr}:</label>
-                <input
-                  name={attr}
-                  value={item[attr] ?? ''}
-                  onChange={(e) => handleItemChange(idx, e)}
-                  style={{ flex: 1, padding: 6, borderRadius: 4 }}
-                  disabled={loading}
-                />
-              </div>
-            ))}
-            <button type="button" onClick={() => removeItem(idx)} style={{ padding: '8px 16px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: 4 }}>
-              Remove Item
-            </button>
-          </div>
-        ))}
-
-        <button type="button" onClick={addItem} style={{ padding: '12px 24px', background: '#3498db', color: 'white', border: 'none', borderRadius: 6, margin: '15px 0' }}>
-          + Add New Item
-        </button>
-
-        <br /><br />
-
-        <button
-          type="submit"
-          disabled={loading}
+      {formData.itemList.map((item, idx) => (
+        <div
+          key={idx}
           style={{
-            width: '100%',
-            padding: '18px',
-            fontSize: 20,
-            background: loading ? '#95a5a6' : '#27ae60',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            cursor: loading ? 'not-allowed' : 'pointer'
+            border: "2px dashed #95a5a6",
+            padding: 20,
+            marginBottom: 20,
+            borderRadius: 10,
+            background: "#ecf0f1"
           }}
         >
-          {loading ? 'Generating E-Way Bill...' : 'Generate E-Way Bill'}
-        </button>
-      </form>
+          <h3>Item #{idx + 1}</h3>
 
+          {Object.keys(item).map(attr => (
+            <div key={attr} style={{ display: "flex", marginBottom: 8 }}>
+              <label style={{ width: 200 }}>{attr}</label>
+              <input
+                value={item[attr]}
+                onChange={e => {
+                  const v = e.target.value;
+                  setFormData(prev => {
+                    const items = [...prev.itemList];
+                    items[idx] = { ...items[idx], [attr]: v };
+                    return { ...prev, itemList: items };
+                  });
+                }}
+                style={{ flex: 1, padding: 6 }}
+              />
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {/* ACTION BUTTON */}
       <button
-        type="button"
-        onClick={handlePrint}
-        disabled={loading || !ewbNos.length}
+        type="submit"
+        disabled={loading}
         style={{
-          width: '100%',
-          padding: '16px',
+          width: "100%",
+          padding: 18,
           fontSize: 18,
-          marginTop: 20,
-          background: '#1A73E8',
-          color: 'white',
-          border: 'none',
+          background: loading ? "#95a5a6" : "#27ae60",
+          color: "#fff",
+          border: "none",
           borderRadius: 8,
-          cursor: loading || !ewbNos.length ? 'not-allowed' : 'pointer'
+          marginTop: 20
         }}
       >
-        {loading ? 'Processing...' : 'Print PDF'}
+        {loading ? "Generating..." : "Generate E-Way Bill"}
       </button>
+    </form>
 
-      {apiResponse && apiResponse.status === "SUCCESS" && (
-        <div style={{ marginTop: 50, padding: 30, background: '#f8f9fa', border: '3px solid #27ae60', borderRadius: 12 }}>
-          <h2 style={{ textAlign: 'center', color: '#27ae60' }}>E-Way Bill Generated Successfully!</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 15, marginTop: 20 }}>
-            <div><strong>EWB No:</strong> {apiResponse.response.ewbNo}</div>
-            <div><strong>Valid Upto:</strong> {apiResponse.response.validUpto}</div>
-            <div><strong>Invoice No:</strong> {apiResponse.response.docNo}</div>
-            <div><strong>Total Value:</strong> ₹{apiResponse.response.totInvValue?.toLocaleString()}</div>
-            <div><strong>Status:</strong> {apiResponse.response.status}</div>
-          </div>
+    {/* PRINT BUTTON */}
+    <button
+      onClick={handlePrint}
+      disabled={!ewbNos.length}
+      style={{
+        width: "100%",
+        padding: 16,
+        fontSize: 18,
+        marginTop: 15,
+        background: "#1A73E8",
+        color: "#fff",
+        border: "none",
+        borderRadius: 8
+      }}
+    >
+      Print PDF
+    </button>
 
-          <details style={{ padding: 15, background: '#fff', borderRadius: 8, marginTop: 15 }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Full API Response</summary>
-            <pre style={{ overflowX: 'auto', marginTop: 10 }}>{JSON.stringify(apiResponse, null, 2)}</pre>
-          </details>
+    {/* SUCCESS BOX */}
+    {apiResponse && (
+      <div
+        style={{
+          marginTop: 40,
+          padding: 30,
+          background: "#f8f9fa",
+          border: "3px solid #27ae60",
+          borderRadius: 12
+        }}
+      >
+        <h2 style={{ color: "#27ae60", textAlign: "center" }}>
+          ✅ E-Way Bill Generated Successfully
+        </h2>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 15 }}>
+          <div><b>EWB No:</b> {apiResponse.response.ewbNo}</div>
+          <div><b>Valid Upto:</b> {apiResponse.response.validUpto}</div>
+          <div><b>Invoice No:</b> {apiResponse.response.docNo}</div>
+          <div><b>Total Value:</b> ₹{apiResponse.response.totInvValue}</div>
         </div>
-      )}
 
-      {error && <p style={{ marginTop: 20, color: COLORS.danger, fontWeight: 'bold' }}>{error}</p>}
-    </div>
-  );
+        <details style={{ marginTop: 20 }}>
+          <summary style={{ cursor: "pointer", fontWeight: "bold" }}>
+            Full API Response
+          </summary>
+          <pre style={{ marginTop: 10 }}>
+            {JSON.stringify(apiResponse, null, 2)}
+          </pre>
+        </details>
+      </div>
+    )}
+
+    {error && <p style={{ color: "red", marginTop: 20 }}>❌ {error}</p>}
+  </div>
+);
+
 };
 
 export default EwbGenerateAndPrint;

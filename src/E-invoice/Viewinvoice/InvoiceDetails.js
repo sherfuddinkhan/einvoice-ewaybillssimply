@@ -61,7 +61,7 @@ const InvoiceDetails = () => {
         "",
     }));
 
-    const autoEinvId = savedConfig2?.response?.id|| savedResponse?.id || "";
+  const autoEinvId = savedConfig2?.response?.id|| savedConfig ?.lastGeneratedResponse?.id || "";
     if (autoEinvId) {
       setEinvId(String(autoEinvId));
     }

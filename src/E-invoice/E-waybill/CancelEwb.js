@@ -115,12 +115,11 @@ const CancelEwb = ({ previousResponse }) => {
       );
 
       const data = await res.json();
-
       setResponse({
         status: res.status,
         body: data,
         time: new Date().toLocaleString('en-IN', {
-          timeZone: 'Asia/Kolkata'
+        timeZone: 'Asia/Kolkata'
         })
       });
 
