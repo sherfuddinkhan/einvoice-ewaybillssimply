@@ -731,6 +731,29 @@ app.get("/proxy/onyx/download/status", (req, res) =>
   )
 );
 
+  // E-Invoice View Proxy
+
+app.post("/onyx/einvoice/view", async (req, res) => {
+  try {
+    const response = await fetch("https://stage-api.irisgst.com/irisgst/onyx/einvoice/view", {
+      method: "POST",
+      headers: {
+        accept: req.headers.accept || "application/json",
+        companyId: req.headers.companyid || "24",
+        "X-Auth-Token": req.headers["x-auth-token"] || "",
+        product: req.headers.product || "ONYX",
+        "Content-Type": req.headers["content-type"] || "application/json",
+      },
+      body: JSON.stringify(req.body),
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get("/proxy/onyx/einvoice/details", async (req, res) => {
   try {
     const { einvId } = req.query;
