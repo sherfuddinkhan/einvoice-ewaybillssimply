@@ -718,35 +718,52 @@ app.post("/proxy/onyx/upload/invoices", upload.single("file"), async (req, res) 
 /* =====================================================
    E-INVOICE → UPLOAD STATUS
    ===================================================== */
-app.get("/proxy/onyx/upload/status", async (req, res) => {
-  try {
-    const { uploadId } = req.query;
+app.get('/proxy/onyx/upload/status', async (req, res) => {
+    
+    // 1. Extract the uploadId from the local URL query parameters
+    const uploadId = req.query.uploadId;
 
     if (!uploadId) {
-      return res.status(400).json({ status: "FAILURE", message: "uploadId is required" });
+        return res.status(400).json({
+            status: "FAILURE",
+            message: "Missing Required Parameter",
+            response: ["uploadId is mandatory in query parameters."]
+        });
     }
 
-    const response = await axios.get(
-      `${BASE_URL}/irisgst/onyx/upload/status`,
-      {
-        params: { uploadId }, // → ?uploadId=429030
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          companyId: req.headers.companyid || "",
-          "X-Auth-Token": req.headers["x-auth-token"] || "",
-          product: req.headers.product || "ONYX",
-        },
-      }
-    );
+    // 2. Construct the target external API URL with the query parameter
+    const EXTERNAL_BASE_URL = 'https://stage-api.irisgst.com/irisgst/onyx/upload/status';
+    const targetUrl = `${EXTERNAL_BASE_URL}?uploadId=${uploadId}`;
 
-    res.json(response.data);
-  } catch (err) {
-    console.error("Upload Status Error:", err.response?.data || err.message);
-    res.status(err.response?.status || 500).json(
-      err.response?.data || { status: "FAILURE", message: err.message }
-    );
-  }
+    // 3. Extract necessary headers from the incoming request
+    const headers = {
+        'X-Auth-Token': req.headers['x-auth-token'], 
+        'companyId': req.headers['companyid'],
+        'accept': req.headers['accept'] || 'application/json',
+        'product': req.headers['product'],
+        // NOTE: GET requests typically don't need Content-Type: application/json
+    };
+
+    try {
+        // 4. Forward the GET request to the external API using axios
+        const apiResponse = await axios.get(targetUrl, { headers });
+
+        // 5. Send the external API's response back to the client
+        res.status(apiResponse.status).json(apiResponse.data);
+
+    } catch (error) {
+        // Handle errors from the external API call
+        console.error('External API Error:', error.response ? error.response.data : error.message);
+        
+        const status = error.response ? error.response.status : 500;
+        const data = error.response ? error.response.data : { 
+            status: "FAILURE", 
+            message: "Proxy or Network Error",
+            error: error.message 
+        };
+        
+        res.status(status).json(data);
+    }
 });
 
 

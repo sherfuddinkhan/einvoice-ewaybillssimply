@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from "react";
 
-const STORAGE_KEY = "iris_einvoice_shared_config"; // header info
-const STORAGE_KEY4 = "iris_einvoice_uploadfile";   // upload info
+const STORAGE_KEY = "iris_einvoice_response";  
+const STORAGE_KEY1 = "iris_einvoice_shared_config";
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
+ // header info (companyId, maybe token)
+const STORAGE_KEY4 = "iris_einvoice_uploadfile"; // upload info (uploadId)
 
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
+  const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
+  const savedConfig3 = JSON.parse(localStorage.getItem(STORAGE_KEY4) || "{}");
+    console.log("savedConfig",savedConfig)
+    console.log("savedResponse",savedResponse)
+    console.log("savedConfig2",savedConfig2)
+    console.log("savedConfig3",savedConfig3)
 const UploadStatus = () => {
   const [uploadId, setUploadId] = useState("");
 
@@ -18,7 +29,8 @@ const UploadStatus = () => {
   const [loading, setLoading] = useState(false);
 
   /* ----------------------------------------
-     Load headers + last uploadId
+      Load headers + last uploadId
+      *** FIX: Ensure 'X-Auth-Token' is loaded correctly. ***
   ---------------------------------------- */
   useEffect(() => {
     // Load header data
@@ -28,8 +40,9 @@ const UploadStatus = () => {
         const parsed = JSON.parse(saved);
         setHeaders((prev) => ({
           ...prev,
-          companyId: parsed.companyId || "",
-          "X-Auth-Token": parsed.token || "",
+          companyId: parsed.companyId || "24", // Use a default for companyId
+          // Assuming token is available on 'token' field in STORAGE_KEY
+          "X-Auth-Token": parsed.token || "", 
         }));
       }
     } catch (e) {
@@ -40,9 +53,9 @@ const UploadStatus = () => {
     try {
       const uploadSaved = localStorage.getItem(STORAGE_KEY4);
       if (uploadSaved) {
-        const parsedUpload = JSON.parse(uploadSaved);
-        if (parsedUpload?.uploadId) {
-          setUploadId(parsedUpload.uploadId);
+        const savedConfig3 = JSON.parse(uploadSaved);
+        if (savedConfig3.lastResponse.response.uploadId) {
+          setUploadId(savedConfig3.lastResponse.response.uploadId);
         }
       }
     } catch (e) {
@@ -51,7 +64,7 @@ const UploadStatus = () => {
   }, []);
 
   /* ----------------------------------------
-     Check upload status
+      Check upload status
   ---------------------------------------- */
   const checkStatus = async () => {
     if (!uploadId) {
@@ -62,9 +75,11 @@ const UploadStatus = () => {
     setLoading(true);
     setResponse(null);
 
-    const endpoint = `/proxy/onyx/upload/status?uploadId=${uploadId}`;
+    // The endpoint includes the uploadId as a query parameter
+    const endpoint = `http://localhost:3001/proxy/onyx/upload/status?uploadId=${uploadId}`;
 
     setPreview({
+      method: "GET",
       endpoint,
       headers,
     });
@@ -75,10 +90,12 @@ const UploadStatus = () => {
         headers,
       });
 
+      // Handle non-200 responses that might still return JSON (e.g., 401, 404)
       const data = await res.json();
       setResponse(data);
+
     } catch (err) {
-      setResponse({ error: err.message });
+      setResponse({ error: err.message || "Network Error" });
     } finally {
       setLoading(false);
     }
@@ -97,6 +114,12 @@ const UploadStatus = () => {
           maxWidth: 700,
         }}
       >
+        {/* Headers Preview */}
+        <h4 style={{ marginTop: 0 }}>Current Headers</h4>
+        <pre style={{ overflowX: 'auto', background: '#f0f0f0', padding: 10, borderRadius: 6, fontSize: '0.8em' }}>
+            {JSON.stringify(headers, null, 2)}
+        </pre>
+
         {/* Upload ID */}
         <div style={{ marginBottom: 20 }}>
           <label>
@@ -120,7 +143,7 @@ const UploadStatus = () => {
         {/* Button */}
         <button
           onClick={checkStatus}
-          disabled={loading}
+          disabled={loading || !uploadId} // Disable if no ID
           style={{
             width: "100%",
             padding: 15,
@@ -147,7 +170,7 @@ const UploadStatus = () => {
             borderRadius: 10,
           }}
         >
-{JSON.stringify(preview, null, 2)}
+          {JSON.stringify(preview, null, 2)}
         </pre>
       )}
 
@@ -162,7 +185,7 @@ const UploadStatus = () => {
             borderRadius: 10,
           }}
         >
-{JSON.stringify(response, null, 2)}
+          {JSON.stringify(response, null, 2)}
         </pre>
       )}
     </div>
