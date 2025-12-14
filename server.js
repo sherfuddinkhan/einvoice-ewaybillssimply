@@ -731,6 +731,35 @@ app.get("/proxy/onyx/download/status", (req, res) =>
   )
 );
 
+app.get("/proxy/onyx/einvoice/details", async (req, res) => {
+  try {
+    const { einvId } = req.query;
+
+    if (!einvId) {
+      return res.status(400).json({ error: "einvId is required" });
+    }
+
+    const response = await axios.get(
+      "https://stage-api.irisgst.com/irisgst/onyx/einvoice/details",
+      {
+        params: { einvId }, // → ?einvId=728761
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          companyId: req.headers.companyid,       // 24
+          "x-auth-token": req.headers["x-auth-token"],
+          product: "ONYX",
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    res.status(err.response?.status || 500).json(
+      err.response?.data || { error: "Failed to fetch e-invoice details" }
+    );
+  }
+});
 /* =====================================================
    START SERVER
    ===================================================== */

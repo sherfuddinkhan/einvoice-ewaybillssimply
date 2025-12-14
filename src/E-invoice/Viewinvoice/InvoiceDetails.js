@@ -1,85 +1,117 @@
-// InvoiceDetailsForm.js
-import React, { useState, useEffect } from "react";
+// InvoiceDetails.jsx
+import React, { useEffect, useState } from "react";
 
-const STORAGE_KEY = 'iris_einvoice_shared_config';
-const LAST_IRN_KEY = 'iris_last_used_irn';
-const LAST_EWB_KEY = 'iris_last_ewb_details';
+/* ----------------------------
+   LocalStorage Keys
+---------------------------- */
+const STORAGE_KEY = "iris_einvoice_response";  
+const STORAGE_KEY1 = "iris_einvoice_shared_config";
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
+
+    /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
+  const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
+    console.log("savedConfig",savedConfig)
+    console.log("savedResponse",savedResponse)
+    console.log("savedConfig2",savedConfig2)
+
+/* ----------------------------
+   Component
+---------------------------- */
 const InvoiceDetails = () => {
+  /* ----------------------------
+     State
+  ---------------------------- */
   const [einvId, setEinvId] = useState("");
-  const [config, setConfig] = useState({
-    proxyBase: "http://localhost:3001",
-    headers: {
-      Accept: "application/json",
-      companyId: "",
-      "X-Auth-Token": "",
-      product: "ONYX",
-    },
+
+  const [headers, setHeaders] = useState({
+    accept: "application/json",
+    companyId: "",
+    "X-Auth-Token": "",
+    product: "ONYX",
   });
 
-  const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState(null);
 
-  // ============================
-  // 🔥 AUTO POPULATE LOGIC
-  // ============================
+  /* ------------------------------------------------
+     useEffect – Auto populate headers & einvId
+  ------------------------------------------------ */
   useEffect(() => {
-    // -------- Load companyId + token ----------
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setConfig((prev) => ({
-          ...prev,
-          headers: {
-            ...prev.headers,
-            companyId: parsed.companyId || "",
-            "X-Auth-Token": parsed.token || "",
-          },
-        }));
-      }
-    } catch (err) {
-      console.warn("Invalid STORAGE_KEY data");
-    }
+    // ---- Load auth details ----
+   
+    /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
+  const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
+    console.log("savedConfig",savedConfig)
+    console.log("savedResponse",savedResponse)
+    console.log("savedConfig2",savedConfig2)
 
-    // -------- Load LAST_EWB_KEY : extract response.id --------
-    try {
-      const raw = localStorage.getItem(LAST_IRN_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
+    setHeaders((prev) => ({
+      ...prev,
+      companyId:
+        savedConfig.companyId ||
+        savedResponse .companyId ||
+        "",
+      "X-Auth-Token":
+        savedConfig.token ||
+        savedResponse.token ||
+        "",
+    }));
 
-        console.log("Loaded LAST_IRN_KEY:", parsed); // DEBUG
-
-        const id =
-          parsed?.response?.id || // MAIN VALUE YOU WANT
-          parsed?.response?.InvId || // fallback if some other API
-          "";
-
-        if (id) {
-          setEinvId(String(id));
-        }
-      }
-    } catch (err) {
-      console.warn("Invalid LAST_EWB_KEY JSON");
+    const autoEinvId = savedConfig2?.response?.id|| savedResponse?.id || "";
+    if (autoEinvId) {
+      setEinvId(String(autoEinvId));
     }
   }, []);
 
-  // ============================
-  // API: Fetch Invoice Details
-  // ============================
-  const fetchDetails = async () => {
-    if (!einvId) return alert("Enter einvId");
+  /* ----------------------------
+     Helpers
+  ---------------------------- */
+  const updateHeader = (key, value) => {
+    setHeaders((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const isReady =
+    headers.companyId &&
+    headers["X-Auth-Token"] &&
+    headers.product &&
+    einvId;
+
+  /* ------------------------------------------------
+     API – Fetch Invoice Details (ONYX)
+     Backend calls:
+     https://stage-api.irisgst.com/irisgst/onyx/einvoice/details
+  ------------------------------------------------ */
+  const fetchInvoiceDetails = async () => {
+    if (!isReady) {
+      alert("Missing required headers or einvId");
+      return;
+    }
 
     setLoading(true);
     setResponse(null);
 
     try {
       const res = await fetch(
-        `${config.proxyBase}/proxy/einvoice/details?einvId=${einvId}`,
-        { headers: config.headers }
+        `http://localhost:3001/proxy/onyx/einvoice/details?einvId=${einvId}`,
+        {
+          method: "GET",
+          headers,
+        }
       );
 
       const data = await res.json();
-      setResponse({ body: data });
+
+      setResponse({
+        status: res.status,
+        body: data,
+        time: new Date().toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        }),
+      });
     } catch (err) {
       setResponse({ error: err.message });
     } finally {
@@ -87,113 +119,117 @@ const InvoiceDetails = () => {
     }
   };
 
-  // ============================
-  // API: PRINT PDF
-  // ============================
-  const printEInvoice = async () => {
-    if (!einvId) return alert("Enter einvId");
-
-    try {
-      const res = await fetch(
-        `${config.proxyBase}/proxy/einvoice/print?template=STANDARD&id=${einvId}`,
-        {
-          headers: { ...config.headers, Accept: "*/*" },
-        }
-      );
-
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `einvoice_${einvId}.pdf`;
-      a.click();
-
-      setResponse({ message: "PDF downloaded!" });
-    } catch (err) {
-      setResponse({ error: "Print failed" });
-    }
-  };
-
+  /* ----------------------------
+     UI
+  ---------------------------- */
   return (
     <div
       style={{
         padding: "30px",
-        background: "#e8f5e8",
-        fontFamily: "Segoe UI",
+        background: "#e8f5e9",
         minHeight: "100vh",
+        fontFamily: "Segoe UI, Arial",
       }}
     >
+      <h1 style={{ color: "#1b5e20" }}>
+        E-Invoice Details (ONYX)
+      </h1>
+
       <div
         style={{
-          background: "white",
+          background: "#fff",
           padding: "30px",
           borderRadius: "16px",
-          boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+          maxWidth: "900px",
+          margin: "0 auto",
+          boxShadow: "0 10px 35px rgba(0,0,0,0.15)",
         }}
       >
-        <div style={{ margin: "20px 0" }}>
-          <strong>einvId:</strong>
-          <input
-            type="text"
-            value={einvId}
-            onChange={(e) => setEinvId(e.target.value)}
-            placeholder="Auto-filled from last EWB details"
-            style={{
-              width: "100%",
-              padding: "12px",
-              marginTop: "8px",
-              fontSize: "16px",
-            }}
-          />
-        </div>
+        {/* ---------------- Headers ---------------- */}
+        <h2 style={{ borderBottom: "3px solid #66bb6a" }}>
+          Request Headers
+        </h2>
 
-        <div style={{ display: "flex", gap: "15px" }}>
-          <button
-            onClick={fetchDetails}
-            disabled={loading || !einvId}
-            style={{
-              padding: "16px 40px",
-              background: "#43a047",
-              color: "white",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "18px",
-              fontWeight: "bold",
-            }}
-          >
-            {loading ? "Loading..." : "FETCH DETAILS"}
-          </button>
+        {Object.entries(headers).map(([key, value]) => (
+          <div key={key} style={{ marginBottom: "14px" }}>
+            <strong>{key}</strong>
+            <input
+              value={value}
+              onChange={(e) => updateHeader(key, e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px",
+                marginTop: "6px",
+                borderRadius: "6px",
+                border: "2px solid #66bb6a",
+                fontFamily: "monospace",
+              }}
+            />
+          </div>
+        ))}
 
-          <button
-            onClick={printEInvoice}
-            disabled={!einvId}
-            style={{
-              padding: "16px 40px",
-              background: "#1b5e20",
-              color: "white",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "18px",
-              fontWeight: "bold",
-            }}
-          >
-            PRINT PDF
-          </button>
-        </div>
-      </div>
-
-      {response && (
-        <pre
+        {/* ---------------- einvId ---------------- */}
+        <h2
           style={{
             marginTop: "30px",
-            background: "#333",
-            color: "#0f0",
-            padding: "25px",
-            borderRadius: "12px",
+            borderBottom: "3px solid #66bb6a",
           }}
         >
-          {JSON.stringify(response.body || response, null, 2)}
-        </pre>
+          Request Parameter
+        </h2>
+
+        <strong>einvId</strong>
+        <input
+          value={einvId}
+          onChange={(e) => setEinvId(e.target.value)}
+          placeholder="Enter or auto-filled einvId"
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginTop: "8px",
+            borderRadius: "6px",
+            border: "2px solid #66bb6a",
+            fontFamily: "monospace",
+          }}
+        />
+
+        <button
+          onClick={fetchInvoiceDetails}
+          disabled={!isReady || loading}
+          style={{
+            marginTop: "25px",
+            width: "100%",
+            padding: "18px",
+            background: loading ? "#999" : "#2e7d32",
+            color: "#fff",
+            fontSize: "20px",
+            fontWeight: "bold",
+            borderRadius: "12px",
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+        >
+          {loading ? "Fetching..." : "FETCH E-INVOICE DETAILS"}
+        </button>
+      </div>
+
+      {/* ---------------- Response ---------------- */}
+      {response && (
+        <div style={{ marginTop: "40px" }}>
+          <h2>
+            Response ({response.time})
+          </h2>
+          <pre
+            style={{
+              background: "#1e1e1e",
+              color: "#00e676",
+              padding: "25px",
+              borderRadius: "12px",
+              overflow: "auto",
+            }}
+          >
+{JSON.stringify(response.body || response, null, 2)}
+          </pre>
+        </div>
       )}
     </div>
   );
