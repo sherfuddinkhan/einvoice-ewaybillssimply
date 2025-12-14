@@ -25,7 +25,6 @@ const GetInvByIrn = ({ previousResponse }) => {
     "X-Auth-Token": "",
     companyId: "",
     product: "ONYX",
-    Current_IRN_State: "", // Initializing the display field
   });
 
   const [response, setResponse] = useState(null);
@@ -71,8 +70,6 @@ const GetInvByIrn = ({ previousResponse }) => {
       "X-Auth-Token": token,
       companyId,
       product: "ONYX",
-      // Added for display/debugging purposes:
-      Current_IRN_State: irn, 
     });
     // Header update depends on irn, which is why we must include it as a dependency
   }, [previousResponse, authToken, irn]); 

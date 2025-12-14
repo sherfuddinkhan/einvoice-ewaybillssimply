@@ -79,6 +79,7 @@ const STORAGE_KEY = "iris_einvoice_response";  
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 
+
 // Default values for EWB fields if not found in storage
 const FALLBACK_DEFAULTS = {
     irn: "5eb8ce1121003e0b0b44059d85b660d2f4f00e3587bac05e16fed14a791386cd",
@@ -89,11 +90,15 @@ const FALLBACK_DEFAULTS = {
 };
 
 const GenerateEwbByIrn = () => {
+
+
     /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
   const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
   const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
     const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
-   
+    console.log("savedConfig",savedConfig)
+    console.log("savedResponse",savedResponse)
+    console.log("savedConfig2",savedConfig2)
     // Derive Auth/ID values
     const initialAuthToken = savedResponse.token || savedConfig.token;
     const initialCompanyId = savedResponse.companyId || savedConfig.companyId;
@@ -105,15 +110,15 @@ const GenerateEwbByIrn = () => {
     const storageTransId = savedResponse.transId || savedConfig.transId;
 
 
-    /* -------------------- CONSOLIDATED REQUEST BODY DEFINITION -------------------- */
+ /* -------------------- CONSOLIDATED REQUEST BODY DEFINITION -------------------- */
     const INITIAL_REQUEST_BODY = {
-        // 1. Mandatory E-Invoice Reference
-        "irn": storageIrn || FALLBACK_DEFAULTS.irn, 
-        "userGstin": storageUserGstin || FALLBACK_DEFAULTS.userGstin,
-        
-        // 2. Transport Details
-        "transMode": "ROAD",
-        "vehTyp": "R",
+// 1. Mandatory E-Invoice Reference
+ "irn": storageIrn || FALLBACK_DEFAULTS.irn, 
+ "userGstin": storageUserGstin || FALLBACK_DEFAULTS.userGstin,
+
+// 2. Transport Details
+ "transMode": "ROAD",
+ "vehTyp": "R",
         "transDist": 0,
         "transName": "Safe and Secure",
         "transDocNo": "10294",
@@ -130,13 +135,13 @@ const GenerateEwbByIrn = () => {
         "paddr1": "Basket",
         "paddr2": "JVRoad",
         "ploc": "Nainital",
-        "pstcd": "18",      
+        "pstcd": "18", 
         "ppin": "781006",
         "dNm": "ANV",
         "daddr1": "MKJIO",
         "daddr2": "KLIOOPPP",
         "disloc": "Nainital",
-        "disstcd": "27",    
+        "disstcd": "27",
         "dispin": "400602"
     };
     // ---------------------------------------------------------------------------------
@@ -165,7 +170,7 @@ const GenerateEwbByIrn = () => {
         const sourceCompanyId = savedResponse?.companyId || savedConfig?.companyId || "";
         
         const sourceGstin = savedResponse?.companyUniqueCode || savedConfig?.companyUniqueCode || FALLBACK_DEFAULTS.userGstin;
-        const sourceIrn = savedResponse?.irn || savedConfig2?.irn || FALLBACK_DEFAULTS.irn;
+        const sourceIrn = savedResponse?.irn || savedConfig?.irn || FALLBACK_DEFAULTS.irn;
          console.log("sourceIrn",savedConfig2?.irn)
         setConfig(prev => ({
             ...prev,

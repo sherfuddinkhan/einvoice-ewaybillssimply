@@ -612,32 +612,45 @@ app.get('/proxy/irn/getEwbByIrn', async (req, res) => {
 
 // CANCEL E-WAY BILL (CancelEWB)
 app.put('/proxy/irn/cancelEwb', async (req, res) => {
-  try {
-    const { ewbNo, cnlRsn, cnlRem, userGstin } = req.body;
+  try {
+    const { ewbNo, cnlRsn, cnlRem, userGstin } = req.body;
 
-    if (!ewbNo || !cnlRsn || !userGstin) {
-      return res.status(400).json({
-        error: 'Missing required fields: ewbNo, cnlRsn, userGstin'
-      });
-    }
+    if (!ewbNo || !cnlRsn || !userGstin) {
+      return res.status(400).json({
+        status: 'FAILURE',
+        message: 'Missing required fields: ewbNo, cnlRsn, userGstin'
+      });
+    }
 
-    const response = await axios.put(
-      `${BASE_URL}/irisgst/onyx/irn/cancelEwb`,
-      req.body,
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          ...authHeaders(req),
-        },
-      }
-    );
-    res.json(response.data);
-  } catch (error) {
-    res.status(error.response ? error.response.status : 500).json(
-      error.response ? error.response.data : { error: 'Failed to cancel E-Way Bill' }
-    );
-  }
+    const irisResponse = await axios.put(
+      'https://stage-api.irisgst.com/irisgst/onyx/irn/cancelEwb',
+      {
+        ewbNo,
+        cnlRsn,
+        cnlRem,
+        userGstin
+      },
+      {
+        headers: {
+          /* EXACT HEADER CONTRACT */
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+          companyId: req.headers.companyid,          // ← forwarded
+          'X-Auth-Token': req.headers['x-auth-token'], // ← forwarded
+          product: 'ONYX'
+        }
+      }
+    );
+
+    return res.json(irisResponse.data);
+  } catch (err) {
+    return res.status(err.response?.status || 500).json(
+      err.response?.data || {
+        status: 'FAILURE',
+        message: 'IRIS Cancel EWB failed'
+      }
+    );
+  }
 });
 
 /* =====================================================
