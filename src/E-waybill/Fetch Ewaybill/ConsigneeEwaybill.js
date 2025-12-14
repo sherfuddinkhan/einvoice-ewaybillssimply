@@ -7,11 +7,10 @@ const LATEST_EWB_KEY = "latestEwbData";
 const EWB_HISTORY_KEY = "ewbHistory";
 
 const ConsigneeEwaybill = () => {
-  const [authData, setAuthData] = useState({
-    companyId: "",
-    token: "",
-  });
-
+  // ------------------------------
+  // 1️⃣ State Definitions
+  // ------------------------------
+  const [authData, setAuthData] = useState({ companyId: "", token: "" });
   const [headers, setHeaders] = useState({
     accept: "application/json",
     product: "TOPAZ",
@@ -19,7 +18,6 @@ const ConsigneeEwaybill = () => {
     "X-Auth-Token": "",
     "Content-Type": "application/json",
   });
-
   const [payload, setPayload] = useState({
     fromPlace: "",
     fromState: "",
@@ -31,33 +29,38 @@ const ConsigneeEwaybill = () => {
     companyId: null,
     userGstin: "",
   });
-
   const [requestPreview, setRequestPreview] = useState(null);
   const [responsePreview, setResponsePreview] = useState(null);
 
-  // 👇 Helper: Clear previews whenever user edits anything
-  const resetButton = () => {
+  // ------------------------------
+  // 2️⃣ Reset Previews when Inputs Change
+  // ------------------------------
+  const resetPreviews = () => {
     setRequestPreview(null);
     setResponsePreview(null);
   };
 
-  // Auto-fill data
+  // ------------------------------
+  // 3️⃣ Auto-Populate Data from LocalStorage
+  // ------------------------------
   useEffect(() => {
     const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
     const lastEwb = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
     const lastResponse = lastEwb?.response || {};
 
-    setAuthData({
-      companyId: login.fullResponse?.response?.companyid || "" ,
-      token: login.fullResponse?.response?.token || "",
-    });
+    const companyId = login.fullResponse?.response?.companyid || "";
+    const token = login.fullResponse?.response?.token || "";
 
+    setAuthData({ companyId, token });
+
+    // Set Headers
     setHeaders((prev) => ({
       ...prev,
-      companyId: login.fullResponse?.response?.companyid || "",
-      "X-Auth-Token": login.fullResponse?.response?.token || "",
+      companyId,
+      "X-Auth-Token": token,
     }));
 
+    // Set Payload with meaningful defaults
     setPayload({
       fromPlace: lastResponse.fromPlace || "",
       fromState: lastResponse.fromStateCode || "",
@@ -66,11 +69,14 @@ const ConsigneeEwaybill = () => {
       transDocNo: lastResponse.transDocNo || "",
       transDocDate: lastResponse.transDocDate || "",
       tripSheetEwbBills: lastResponse.ewbNo ? [lastResponse.ewbNo] : [],
-      companyId: lastResponse.companyId || login.companyId || null,
+      companyId: lastResponse.companyId || companyId || null,
       userGstin: lastResponse.userGstin || login.userGstin || "",
     });
   }, []);
 
+  // ------------------------------
+  // 4️⃣ Generate CEWB API Call
+  // ------------------------------
   const generateCEWB = async () => {
     const url = "https://stage-api.irisgst.com/irisgst/topaz/api/v0.3/cewb";
     setRequestPreview({ url, headers, body: payload });
@@ -78,15 +84,42 @@ const ConsigneeEwaybill = () => {
     try {
       const res = await axios.post(url, payload, { headers });
       setResponsePreview(res.data);
+
+      // Save the latest EWB in LocalStorage for auto-population next time
+      const latestEwbData = {
+        response: res.data.response || {},
+        fromPlace: payload.fromPlace,
+        fromStateCode: payload.fromState,
+        vehicleNo: payload.vehicleNo,
+        transMode: payload.transMode,
+        transDocNo: payload.transDocNo,
+        transDocDate: payload.transDocDate,
+        tripSheetEwbBills: payload.tripSheetEwbBills,
+        companyId: payload.companyId,
+        userGstin: payload.userGstin,
+      };
+      localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(latestEwbData));
+
+      // Save history (keep last 10)
+      const history = JSON.parse(localStorage.getItem(EWB_HISTORY_KEY) || "[]");
+      history.unshift({
+        time: new Date().toLocaleString(),
+        ...latestEwbData,
+      });
+      localStorage.setItem(EWB_HISTORY_KEY, JSON.stringify(history.slice(0, 10)));
     } catch (err) {
       setResponsePreview(err.response?.data || { error: err.message });
     }
   };
 
+  // ------------------------------
+  // 5️⃣ Render UI
+  // ------------------------------
   return (
-    <div style={{ padding: 20, maxWidth: 900, margin: "auto" }}>
+    <div style={{ padding: 20, maxWidth: 900, margin: "auto", fontFamily: "Arial" }}>
       <h2>📄 Generate Consolidated E-Waybill</h2>
 
+      {/* 🔹 Headers */}
       <h3>🔹 Edit Headers</h3>
       {Object.keys(headers).map((key) => (
         <div style={{ marginBottom: 10 }} key={key}>
@@ -95,7 +128,7 @@ const ConsigneeEwaybill = () => {
             type="text"
             value={headers[key]}
             onChange={(e) => {
-              resetButton(); // 🔥 Clears previews → button resets
+              resetPreviews();
               setHeaders((prev) => ({ ...prev, [key]: e.target.value }));
             }}
             style={{ width: "100%", padding: 8 }}
@@ -103,6 +136,7 @@ const ConsigneeEwaybill = () => {
         </div>
       ))}
 
+      {/* 🔹 Payload */}
       <h3>🔹 Edit Payload</h3>
       {Object.keys(payload).map((key) => {
         if (key === "tripSheetEwbBills") {
@@ -113,13 +147,13 @@ const ConsigneeEwaybill = () => {
                 type="text"
                 value={payload[key].join(", ")}
                 onChange={(e) => {
-                  resetButton();
+                  resetPreviews();
                   setPayload((prev) => ({
                     ...prev,
                     [key]: e.target.value
                       .split(",")
                       .map((v) => v.trim())
-                      .filter((v) => v),
+                      .filter(Boolean),
                   }));
                 }}
                 style={{ width: "100%", padding: 8 }}
@@ -135,11 +169,8 @@ const ConsigneeEwaybill = () => {
               type={key === "transMode" || key === "fromState" ? "number" : "text"}
               value={payload[key]}
               onChange={(e) => {
-                resetButton(); // 🔥 Button resets on ANY change
-                setPayload((prev) => ({
-                  ...prev,
-                  [key]: e.target.value,
-                }));
+                resetPreviews();
+                setPayload((prev) => ({ ...prev, [key]: e.target.value }));
               }}
               style={{ width: "100%", padding: 8 }}
             />
@@ -147,7 +178,7 @@ const ConsigneeEwaybill = () => {
         );
       })}
 
-      {/* 👇 Button automatically resets because previews are cleared */}
+      {/* Generate Button */}
       <button
         onClick={generateCEWB}
         style={{
@@ -163,11 +194,13 @@ const ConsigneeEwaybill = () => {
 
       <hr />
 
+      {/* Request Preview */}
       <h3>📌 Request Preview</h3>
       <pre style={{ background: "#f4f4f4", padding: 10 }}>
         {JSON.stringify(requestPreview, null, 2)}
       </pre>
 
+      {/* Response Preview */}
       <h3>📌 Response Preview</h3>
       <pre style={{ background: "#e8ffe8", padding: 10 }}>
         {JSON.stringify(responsePreview, null, 2)}
