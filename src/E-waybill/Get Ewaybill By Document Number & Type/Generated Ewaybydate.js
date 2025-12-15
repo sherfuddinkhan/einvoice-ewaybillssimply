@@ -37,16 +37,21 @@ const FetchEWBByDate = () => {
   useEffect(() => {
     const shared = readLS(STORAGE_KEY00);
     const latestEwb = readLS(LATEST_EWB_KEY);
+    console.log("latestEwb",latestEwb)
 
     const token = shared?.fullResponse?.response?.token || "";
     const companyId = shared?.fullResponse?.response?.companyid || "";
-    const gstinFromAuth = shared?.fullResponse?.response?.userGstin || "";
+    const gstinFromAuth = latestEwb?.userGstin || "";
 
     setAuth({ token, companyId });
 
-    // Auto-fill EWB No
-    if (latestEwb?.ewbNo) setEwbNo(latestEwb.ewbNo);
 
+
+
+    // Auto-fill EWB No
+    if (latestEwb?.response?.cEwbNo) setEwbNo(latestEwb.response.cEwbNo);
+      
+    
     // Auto-fill GSTIN
     const gstin =
       latestEwb?.fromGstin ||

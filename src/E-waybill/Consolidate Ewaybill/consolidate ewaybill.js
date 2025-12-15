@@ -47,6 +47,7 @@ const ByDocNumType = () => {
   useEffect(() => {
     const login = readStorage(STORAGE_KEY00);
     const lastEwb = readStorage(LATEST_EWB_KEY);
+    console.log("lastEwb ",lastEwb)
 
     const token = login.fullResponse?.response?.token || "";
     const companyId = login.fullResponse?.response?.companyid || "";
@@ -58,9 +59,9 @@ const ByDocNumType = () => {
 
     // Extract CEWB No from previous flows
     const cEwbNo =
-      lastEwb?.cewbResponse?.cEwbNo ||
+      lastEwb?.cewbResponse?.cEwbNo||
       lastEwb?.cEwbNo ||
-      lastEwb?.fullApiResponse?.response?.ewbNo ||
+      lastEwb?.response?.cEwbNo ||
       "";
 
     setHeaders((prev) => ({

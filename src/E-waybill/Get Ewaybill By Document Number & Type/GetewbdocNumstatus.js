@@ -35,6 +35,9 @@ const GetEwbDocNumStatus = () => {
   const shared = readLS(STORAGE_KEY00);
   const latestEwb = readLS(LATEST_EWB_KEY);
   const latestCewb = readLS(LATEST_CEWB_KEY);
+  console.log("shared  ",shared )
+  console.log("latestEwb ",latestEwb )
+  console.log("latestCewb ",latestCewb )
 
   const token =
     shared?.fullResponse?.response?.token || "";
@@ -50,11 +53,7 @@ const GetEwbDocNumStatus = () => {
     latestCewb?.response?.companyId ||
     "";
 
-  const userGstin =
-    latestEwb?.response?.fromGstin ||
-    latestCewb?.response?.fromGstin ||
-    shared?.fullResponse?.response?.gstin ||
-    "";
+ const gstinDefault = latestEwb?.fromGstin || shared?.fullResponse?.response?.userGstin || "";
 
   /* ---------------------------------
      State
@@ -67,7 +66,7 @@ const GetEwbDocNumStatus = () => {
 
   const [query, setQuery] = useState({
     companyId: queryCompanyId,
-    userGstin,
+    gstinDefault,
   });
 
   const [response, setResponse] = useState(null);

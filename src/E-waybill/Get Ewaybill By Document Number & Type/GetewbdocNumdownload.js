@@ -38,12 +38,7 @@ const BulkDownload = () => {
   const token =
     shared?.fullResponse?.response?.token || lastBulk?.token || "";
 
-  const companyId =
-    latestEwb?.response?.companyId ||
-    latestCewb?.response?.companyId ||
-    shared?.fullResponse?.response?.companyid ||
-    lastBulk?.companyId ||
-    "";
+const companyId = shared ?.fullResponse?.response?.companyid || "";
 
   const defaultId =
     latestEwb?.response?.id ||

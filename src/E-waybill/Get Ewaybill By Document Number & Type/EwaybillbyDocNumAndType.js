@@ -47,6 +47,7 @@ const FetchByDocNumType = () => {
   useEffect(() => {
     const login = readStorage(STORAGE_KEY);
     const lastEwb = readStorage(LATEST_EWB_KEY);
+    console.log("lastEwb",lastEwb)
 
     /* ---------- Auth ---------- */
     const companyId = login?.fullResponse?.response?.companyid || "";
@@ -59,12 +60,7 @@ const FetchByDocNumType = () => {
     });
 
     /* ---------- GSTIN ---------- */
-    const userGstin =
-      lastEwb?.fullApiResponse?.response?.fromGstin ||
-      lastEwb?.response?.fromGstin ||
-      lastEwb?.fromGstin ||
-      "";
-
+      const userGstin= lastEwb?.userGstin || "";
     /* ---------- Document Number ---------- */
     const docNum =
       lastEwb?.fullApiResponse?.response?.transDocNo ||

@@ -387,6 +387,22 @@ app.post("/proxy/topaz/ewb/docNum", async (req, res) => {
   }
 });
 
+app.get("/proxy/topaz/ewb/bulkDownload", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/irisgst/topaz/api/v0.3/getewb/docNum/download`,
+      {
+        params: req.query,
+        headers: { Accept: "application/json", product: "TOPAZ", ...authHeaders(req) },
+      }
+    );
+    res.status(response.status).send(response.data);
+  } catch (err) {
+    console.error(err);
+    res.status(err.response?.status || 500).send(err.response?.data || { error: err.message });
+  }
+});
+
 
 // GET /proxy/topaz/ewb/bulkStatus
 app.get("/proxy/topaz/ewb/bulkStatus", async (req, res) => {
