@@ -6,7 +6,7 @@ import axios from "axios";
 ---------------------------------- */
 const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
-const LATEST_CEWB_KEY = "latestCewbData"; // (not used here, kept for standard)
+const LATEST_CEWB_KEY = "latestCewbData"; // standard placeholder
 
 /* ---------------------------------
    Safe LocalStorage Reader
@@ -20,54 +20,59 @@ const readLS = (key, fallback = {}) => {
 };
 
 const FetchEWBByDate = () => {
+  /* --------------------------
+     State Definitions
+  --------------------------- */
   const [ewbNo, setEwbNo] = useState("");
   const [userGstin, setUserGstin] = useState("");
   const [updateNeeded, setUpdateNeeded] = useState(true);
 
   const [auth, setAuth] = useState({ companyId: "", token: "" });
-
   const [requestHeaders, setRequestHeaders] = useState({});
   const [requestPayload, setRequestPayload] = useState({});
   const [responseData, setResponseData] = useState(null);
   const [autoFields, setAutoFields] = useState({});
 
-  /* -------------------------------------------------------
-     🔵 Load Auth + Latest EWB (STANDARD FLOW)
-  ------------------------------------------------------- */
-  useEffect(() => {
-    const shared = readLS(STORAGE_KEY00);
-    const latestEwb = readLS(LATEST_EWB_KEY);
-    console.log("latestEwb",latestEwb)
+  /* --------------------------
+     Load Auth + Latest EWB
+  --------------------------- */
+useEffect(() => {
+  const shared = readLS(STORAGE_KEY00);
+  const latestEwb = readLS(LATEST_EWB_KEY);
+  const latestCEwb=  readLS(LATEST_CEWB_KEY) 
+  console.log("latestEwb",latestEwb)
+  console.log("latestCEwb",latestCEwb)
 
-    const token = shared?.fullResponse?.response?.token || "";
-    const companyId = shared?.fullResponse?.response?.companyid || "";
-    const gstinFromAuth = latestEwb?.userGstin || "";
+  const token = shared?.fullResponse?.response?.token || "";
+  const companyId = shared?.fullResponse?.response?.companyid || "";
+  const gstinFromAuth = shared?.fullResponse?.response?.userGstin || "";
 
-    setAuth({ token, companyId });
+  // Get GSTIN from latestEwb or auth
+  const latestFromGstin =
+    latestEwb?.fromGstin || latestEwb?.response?.fromGstin || gstinFromAuth || "";
+  setUserGstin(latestFromGstin);
+
+  // Get EWB number
+  // Sometimes it might be stored as `ewbNo` or `cEwbNo` in response
+  const latestEwbNo =
+    latestEwb?.ewbNo ||
+    latestEwb?.response?.cEwbNo ||
+    latestEwb?.response?.ewbNo ||
+    "";
+  setEwbNo(latestEwbNo);
+  console.log("latestEwbNo  ",latestEwbNo)
+
+  // Set auth
+  setAuth({ token, companyId });
+
+  // Populate autoFields for display
+  if (latestEwb?.response) setAutoFields(latestEwb.response);
+}, []);
 
 
-
-
-    // Auto-fill EWB No
-    if (latestEwb?.response?.cEwbNo) setEwbNo(latestEwb.response.cEwbNo);
-      
-    
-    // Auto-fill GSTIN
-    const gstin =
-      latestEwb?.fromGstin ||
-      latestEwb?.response?.fromGstin ||
-      gstinFromAuth ||
-      "";
-
-    setUserGstin(gstin);
-
-    // Auto-populate response table
-    if (latestEwb?.response) setAutoFields(latestEwb.response);
-  }, []);
-
-  /* -------------------------------------------------------
-     🔵 Fetch EWB By Number
-  ------------------------------------------------------- */
+  /* --------------------------
+     Fetch EWB by Number
+  --------------------------- */
   const fetchEWB = async () => {
     const url = "http://localhost:3001/proxy/topaz/ewb/byNumber";
 
@@ -78,12 +83,9 @@ const FetchEWBByDate = () => {
       "X-Auth-Token": auth.token,
     };
 
-    const payload = {
-      ewbNo,
-      userGstin,
-      updateNeeded,
-    };
+    const payload = { ewbNo, userGstin, updateNeeded };
 
+    // Save request preview
     setRequestHeaders(headers);
     setRequestPayload(payload);
 
@@ -94,19 +96,21 @@ const FetchEWBByDate = () => {
       const extracted = res.data?.response || {};
       setAutoFields(extracted);
 
-      // Save latest EWB (STANDARD FORMAT)
+      // Persist latest EWB for future autopopulation
       const latestToSave = {
         ewbNo,
         fromGstin: extracted?.fromGstin || userGstin,
         response: extracted,
       };
-
       localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(latestToSave));
     } catch (err) {
       setResponseData(err.response?.data || { error: err.message });
     }
   };
 
+  /* --------------------------
+     UI
+  --------------------------- */
   return (
     <div style={{ padding: 20, maxWidth: 900, margin: "auto" }}>
       <h2>🔍 Fetch E-Waybill By Number</h2>
@@ -144,12 +148,7 @@ const FetchEWBByDate = () => {
 
       <button
         onClick={fetchEWB}
-        style={{
-          padding: "10px 20px",
-          background: "black",
-          color: "white",
-          borderRadius: 6,
-        }}
+        style={{ padding: "10px 20px", background: "black", color: "white", borderRadius: 6 }}
       >
         Fetch EWB
       </button>
@@ -169,7 +168,7 @@ const FetchEWBByDate = () => {
       <h3>📌 Response</h3>
       <pre>{JSON.stringify(responseData, null, 2)}</pre>
 
-      {/* Auto Fields */}
+      {/* Auto-Populated EWB Fields */}
       {Object.keys(autoFields).length > 0 && (
         <>
           <h3>📌 Auto-Populated EWB Data</h3>
