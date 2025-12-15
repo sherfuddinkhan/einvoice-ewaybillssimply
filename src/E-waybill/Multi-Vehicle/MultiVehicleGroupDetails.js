@@ -1,140 +1,203 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const LOGIN_KEY = "iris_login_data";
-const LATEST_EWB_KEY = "latestEwbData";
+/* ---------------------------------
+   API
+---------------------------------- */
+const GROUP_DETAILS_API =
+  "http://localhost:3001/proxy/topaz/multiVehicle/groupDetails";
+
+/* ---------------------------------
+   LocalStorage Keys (STANDARD)
+---------------------------------- */
+const STORAGE_KEY00   = "iris_ewaybill_shared_config";
+const LATEST_EWB_KEY  = "latestEwbData";
+const LATEST_CEWB_KEY = "latestCewbData";
+const GROUP_QUERY_KEY = "mv_group_query";
+
+/* ---------------------------------
+   Safe LocalStorage Read
+---------------------------------- */
+const readLS = (key, fallback = {}) => {
+  try {
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 const MultiVehicleGroupDetails = () => {
-  // -----------------------------
-  // HEADERS STATE
-  // -----------------------------
+  /* ---------------------------------
+     Load Stored Context
+  ---------------------------------- */
+  const shared     = readLS(STORAGE_KEY00);
+  const latestEwb  = readLS(LATEST_EWB_KEY);
+  const latestCewb = readLS(LATEST_CEWB_KEY);
+  const draftQuery = readLS(GROUP_QUERY_KEY);
+
+  const token =
+    shared?.fullResponse?.response?.token || "";
+
+  const companyId =
+    shared?.fullResponse?.response?.companyid ||
+    latestEwb?.response?.companyId ||
+    latestCewb?.response?.companyId ||
+    "";
+
+  /* ---------------------------------
+     Headers
+  ---------------------------------- */
   const [headers, setHeaders] = useState({
-    "X-Auth-Token": "",
-    companyId: "",
-    product: "TOPAZ",
     Accept: "application/json",
+    product: "TOPAZ",
+    companyId,
+    "X-Auth-Token": token,
   });
 
-  // -----------------------------
-  // QUERY STATE
-  // -----------------------------
+  /* ---------------------------------
+     Query Params
+  ---------------------------------- */
   const [query, setQuery] = useState({
-    groupNo: "",
-    ewbNo: "",
+    groupNo:
+      draftQuery?.groupNo ||
+      latestCewb?.response?.groupNo ||
+      latestEwb?.response?.groupNo ||
+      "",
+    ewbNo:
+      draftQuery?.ewbNo ||
+      latestCewb?.response?.ewbNo ||
+      latestEwb?.response?.ewbNo ||
+      "",
   });
 
-  const [resp, setResp] = useState(null);
-  const [err, setErr] = useState(null);
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // -----------------------------
-  // AUTOPOPULATE HEADERS + QUERY FROM LOCALSTORAGE
-  // -----------------------------
+  /* ---------------------------------
+     Persist Query Draft
+  ---------------------------------- */
   useEffect(() => {
-    const login = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
-    const latest = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
-
-    setHeaders({
-      "X-Auth-Token": login?.token || "",
-      companyId: login?.companyId || "",
-      product: "TOPAZ",
-      Accept: "application/json",
-    });
-
-    setQuery({
-      groupNo: latest?.response?.groupNo || "",
-      ewbNo: latest?.response?.ewbNo || "",
-    });
-  }, []);
-
-  // Persist query to localStorage
-  useEffect(() => {
-    localStorage.setItem("mv_group_query", JSON.stringify(query));
+    localStorage.setItem(GROUP_QUERY_KEY, JSON.stringify(query));
   }, [query]);
 
-  // -----------------------------
-  // HANDLERS
-  // -----------------------------
-  const onHeaderChange = (key, value) => setHeaders((h) => ({ ...h, [key]: value }));
-  const onQueryChange = (key, value) => setQuery((q) => ({ ...q, [key]: value }));
+  /* ---------------------------------
+     Handlers
+  ---------------------------------- */
+  const updateHeader = (k, v) =>
+    setHeaders((h) => ({ ...h, [k]: v }));
 
-  // -----------------------------
-  // FETCH GROUP DETAILS
-  // -----------------------------
+  const updateQuery = (k, v) =>
+    setQuery((q) => ({ ...q, [k]: v }));
+
+  /* ---------------------------------
+     Fetch Group Details
+  ---------------------------------- */
   const fetchGroup = async () => {
     if (!query.groupNo || !query.ewbNo) {
-      alert("Both Group No and EWB No are required!");
+      alert("Both Group No and EWB No are required");
       return;
     }
 
     setLoading(true);
-    setErr(null);
-    setResp(null);
+    setError(null);
+    setResponse(null);
 
     try {
       const res = await axios.get(
-        "http://localhost:3001/proxy/topaz/multiVehicle/groupDetails",
+        GROUP_DETAILS_API,
         { params: query, headers }
       );
-      setResp(res.data);
+      setResponse(res.data);
     } catch (e) {
-      setErr(e.response?.data || e.message);
+      setError(e?.response?.data || e.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // -----------------------------
-  // UI
-  // -----------------------------
+  /* ---------------------------------
+     UI
+  ---------------------------------- */
   return (
     <div style={{ padding: 20, maxWidth: 900, margin: "auto" }}>
-      <h2>Multi-Vehicle — Group Details</h2>
+      <h2>📦 Multi-Vehicle — Group Details</h2>
 
       {/* HEADERS */}
-      <section>
-        <h3>Headers</h3>
-        {Object.entries(headers).map(([k, v]) => (
-          <div key={k} style={{ marginBottom: 6 }}>
-            <label style={{ width: 140, display: "inline-block" }}>{k}</label>
-            <input
-              style={{ width: 420 }}
-              value={v}
-              onChange={(e) => onHeaderChange(k, e.target.value)}
-            />
-          </div>
-        ))}
-      </section>
+      <h3>Headers</h3>
+      {Object.entries(headers).map(([k, v]) => (
+        <div key={k} style={rowStyle}>
+          <label style={labelStyle}>{k}</label>
+          <input
+            value={v}
+            onChange={(e) => updateHeader(k, e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+      ))}
 
       {/* QUERY */}
-      <section style={{ marginTop: 12 }}>
-        <h3>Query Parameters</h3>
-        {Object.entries(query).map(([k, v]) => (
-          <div key={k} style={{ marginBottom: 6 }}>
-            <label style={{ width: 140, display: "inline-block" }}>{k}</label>
-            <input
-              style={{ width: 420 }}
-              value={v}
-              onChange={(e) => onQueryChange(k, e.target.value)}
-            />
-          </div>
-        ))}
-      </section>
+      <h3 style={{ marginTop: 14 }}>Query Parameters</h3>
+      {Object.entries(query).map(([k, v]) => (
+        <div key={k} style={rowStyle}>
+          <label style={labelStyle}>{k}</label>
+          <input
+            value={v}
+            onChange={(e) => updateQuery(k, e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+      ))}
 
-      {/* BUTTON */}
-      <div style={{ marginTop: 12 }}>
-        <button onClick={fetchGroup} disabled={loading}>
-          {loading ? "Loading..." : "Fetch Group"}
-        </button>
-      </div>
+      <button
+        onClick={fetchGroup}
+        disabled={loading}
+        style={buttonStyle}
+      >
+        {loading ? "Loading..." : "Fetch Group"}
+      </button>
 
-      {/* RESPONSE */}
-      <div style={{ marginTop: 12 }}>
-        {err && <pre style={{ color: "red" }}>{JSON.stringify(err, null, 2)}</pre>}
-        {resp && <pre>{JSON.stringify(resp, null, 2)}</pre>}
-      </div>
+      {error && (
+        <pre style={{ color: "red", marginTop: 15 }}>
+          {JSON.stringify(error, null, 2)}
+        </pre>
+      )}
+      {response && (
+        <pre style={{ marginTop: 15 }}>
+          {JSON.stringify(response, null, 2)}
+        </pre>
+      )}
     </div>
   );
 };
 
 export default MultiVehicleGroupDetails;
+
+/* ---------------------------------
+   Styles
+---------------------------------- */
+const rowStyle = {
+  marginBottom: 8,
+};
+
+const labelStyle = {
+  width: 170,
+  display: "inline-block",
+  fontWeight: "bold",
+};
+
+const inputStyle = {
+  width: 460,
+  padding: 6,
+};
+
+const buttonStyle = {
+  marginTop: 18,
+  padding: "10px 22px",
+  fontSize: 16,
+  background: "#0078ff",
+  color: "#fff",
+  border: "none",
+  borderRadius: 6,
+  cursor: "pointer",
+};

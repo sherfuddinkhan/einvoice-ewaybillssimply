@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const LOGIN_KEY = 'iris_login_data';
-const LATEST_EWB_KEY = 'latestEwbData';
+/* ---------------------------------
+   LocalStorage Keys (STANDARD)
+---------------------------------- */
+const STORAGE_KEY00   = "iris_ewaybill_shared_config";
+const LATEST_EWB_KEY  = "latestEwbData";
+const LATEST_CEWB_KEY = "latestCewbData";
+const QUERY_KEY       = "mv_requests_query";
+const RESP_KEY        = "mv_requests_response";
 
 const Ewbprintsummary = () => {
   // ----------------------------
@@ -24,7 +29,7 @@ const Ewbprintsummary = () => {
   // Autopopulate headers and EWB numbers
   // ----------------------------
   useEffect(() => {
-    const login = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
+    const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
     const latest = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
 
     // Headers autopopulate
@@ -36,7 +41,6 @@ const Ewbprintsummary = () => {
 
     // EWB numbers autopopulate
     if (latest?.response?.ewbNo) {
-      // If vehicleDetails exists, map them all; else single EWB
       const ewbList = latest?.response?.vehicleDetails?.map(v => v.ewbNo) || [latest.response.ewbNo];
       setEwbNos(ewbList);
     }
@@ -89,6 +93,9 @@ const Ewbprintsummary = () => {
     }
   };
 
+  // ----------------------------
+  // UI
+  // ----------------------------
   return (
     <div style={{ maxWidth: '700px', margin: 'auto', padding: 20 }}>
       <h2>Print EWB Summary</h2>

@@ -1,252 +1,224 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-// LocalStorage keys
-const LOGIN_RESPONSE_KEY = "iris_login_data";
+/* ---------------------------
+   LocalStorage Keys (STANDARD)
+--------------------------- */
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
+const LATEST_CEWB_KEY = "latestCewbData";
 
-// Helper to read JSON safely
-const getLocalStorageData = (key) => {
+/* ---------------------------
+   Safe LocalStorage Reader
+--------------------------- */
+const readStorage = (key, fallback = {}) => {
   try {
-    const raw = localStorage.getItem(key);
-    console.log(`📥 Loaded ${key}:`, raw);
-    return JSON.parse(raw || "{}");
+    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
   } catch {
-    return {};
+    return fallback;
   }
 };
 
 const CEWBDetails = () => {
-  const [authData, setAuthData] = useState({ token: "", companyId: "", userGstin: "" });
-  const [headers, setHeaders] = useState({});
+  /* ---------------------------
+     State
+  --------------------------- */
+  const [headers, setHeaders] = useState({
+    Accept: "application/json",
+    product: "TOPAZ",
+    companyId: "",
+    "X-Auth-Token": "",
+    "Content-Type": "application/json",
+  });
+
   const [payload, setPayload] = useState({});
   const [payloadText, setPayloadText] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [response, setResponse] = useState(null);
 
+  /* ---------------------------
+     Auto-fill from LocalStorage
+  --------------------------- */
   useEffect(() => {
-    const login = getLocalStorageData(LOGIN_RESPONSE_KEY);
-    const savedEwbData = getLocalStorageData(LATEST_EWB_KEY);
+    const login = readStorage(STORAGE_KEY00);
+    const lastEwb = readStorage(LATEST_EWB_KEY);
+    console.log("lastEwb",lastEwb)
 
-    console.log("🔎 login:", login);
-    console.log("🔎 savedEwbData:", savedEwbData);
+    const token = login.fullResponse?.response?.token || "";
+    const companyId = login.fullResponse?.response?.companyid || "";
 
-    // --------------------------
-    // Extract authentication info
-    // --------------------------
-    const companyId = login.companyId || 7;
-    const token = login.token || "";
-    const gstin = savedEwbData?.response?.fromGstin || login.userGstin || "";
-
-    setAuthData({ token, companyId, userGstin: gstin });
-
-    // --------------------------
-    // Set headers
-    // --------------------------
-    const headerObj = {
-      "X-Auth-Token": token,
-      companyId,
-      product: "TOPAZ",
-      "Content-Type": "application/json",
-      accept: "application/json",
-    };
-    setHeaders(headerObj);
-
-    // --------------------------
-    // Extract fields from savedEwbData or vehicleDetails
-    // --------------------------
-    const vehicleDetail = savedEwbData?.vehicleDetails?.[0] || {};
-
-    const tripSheetEwbBills =
-      Array.isArray(savedEwbData?.allEwbs)
-        ? savedEwbData.allEwbs.map((x) => x.ewbNo).filter(Boolean)
-        : [savedEwbData?.response?.ewbNo || savedEwbData?.ewbNo || vehicleDetail.ewbNo].filter(Boolean);
-
-    const previousGstin =
-      savedEwbData?.fullApiResponse?.response?.fromGstin ||
-      savedEwbData?.fromGstin ||
-      vehicleDetail?.fromGstin ||
+    /* ---------- GSTIN ---------- */
+    const userGstin =
+      lastEwb?.response?.fromGstin ||
+      lastEwb?.fullApiResponse?.response?.fromGstin ||
+      login.userGstin ||
       "05AAAAU1183B5ZW";
 
-    const fromPlace =
-      savedEwbData?.fullApiResponse?.response?.fromPlace ||
-      savedEwbData?.fromPlace ||
-      vehicleDetail?.fromPlace ||
-      "Akhondiya";
+    /* ---------- Vehicle / EWB Details ---------- */
+    const vehicle = lastEwb?.vehicleDetails?.[0] || {};
 
-    const fromStateCode =
-      savedEwbData?.fullApiResponse?.response?.fromStateCode ||
-      savedEwbData?.fromStateCode ||
-      vehicleDetail?.fromState ||
-      "5";
+    const tripSheetEwbBills = Array.isArray(lastEwb?.allEwbs)
+      ? lastEwb.allEwbs.map((e) => e.ewbNo).filter(Boolean)
+      : [lastEwb?.response?.ewbNo || vehicle?.ewbNo].filter(Boolean);
 
-    const transDocNo =
-      savedEwbData?.fullApiResponse?.response?.transDocNo ||
-      savedEwbData?.transDocNo ||
-      vehicleDetail?.transDocNo ||
-      "1234";
-
-    const transDocDate =
-      savedEwbData?.fullApiResponse?.response?.transDocDate ||
-      savedEwbData?.transDocDate ||
-      vehicleDetail?.transDocDate ||
-      "12/11/2025";
-
-    const vehicleNo =
-      savedEwbData?.response?.vehicleNo ||
-      savedEwbData?.vehicleNo ||
-      vehicleDetail?.vehicleNo ||
-      "RJ14CA9999";
-
-    const vehicleType =
-      savedEwbData?.response?.vehicleType ||
-      savedEwbData?.vehicleType ||
-      vehicleDetail?.vehicleType ||
-      "R";
-
-    const transMode =
-      savedEwbData?.fullApiResponse?.response?.transMode ||
-      savedEwbData?.transMode ||
-      vehicleDetail?.transMode ||
-      "3";
-
-    console.log("📌 tripSheetEwbBills:", tripSheetEwbBills);
-    console.log("📌 userGstin:", previousGstin);
-    console.log("📌 fromPlace:", fromPlace);
-    console.log("📌 fromStateCode:", fromStateCode);
-    console.log("📌 transMode:", transMode);
-    console.log("📌 transDocDate:", transDocDate);
-    console.log("📌 transDocNo:", transDocNo);
-    console.log("📌 vehicleNo:", vehicleNo);
-    console.log("📌 vehicleType:", vehicleType);
-
-    // --------------------------
-    // Build initial payload
-    // --------------------------
     const initialPayload = {
-      fromPlace,
-      fromState: fromStateCode,
-      vehicleNo,
-      vehicleType,
-      transMode,
-      transDocNo,
-      transDocDate,
+      fromPlace:
+        lastEwb?.response?.fromPlace ||
+        vehicle?.fromPlace ||
+        "Akhondiya",
+
+      fromState:
+        lastEwb?.response?.fromStateCode ||
+        vehicle?.fromState ||
+        "5",
+
+      vehicleNo:
+        lastEwb?.response?.vehicleNo ||
+        vehicle?.vehicleNo ||
+        "RJ14CA9999",
+
+      vehicleType:
+        lastEwb?.response?.vehicleType ||
+        vehicle?.vehicleType ||
+        "R",
+
+      transMode:
+        lastEwb?.response?.transMode ||
+        vehicle?.transMode ||
+        "3",
+
+      transDocNo:
+        lastEwb?.response?.transDocNo ||
+        vehicle?.transDocNo ||
+        "1234",
+
+      transDocDate:
+        lastEwb?.response?.transDocDate ||
+        vehicle?.transDocDate ||
+        "12/11/2025",
+
       tripSheetEwbBills,
       companyId,
-      userGstin: previousGstin,
+      userGstin,
     };
+
+    setHeaders((prev) => ({
+      ...prev,
+      companyId,
+      "X-Auth-Token": token,
+    }));
 
     setPayload(initialPayload);
     setPayloadText(JSON.stringify(initialPayload, null, 2));
   }, []);
 
-  // --------------------------
-  // JSON Payload Edit
-  // --------------------------
+  /* ---------------------------
+     Payload JSON Editor
+  --------------------------- */
   const handlePayloadChange = (text) => {
     setPayloadText(text);
     try {
       setPayload(JSON.parse(text));
       setError("");
     } catch {
-      setError("Invalid JSON");
+      setError("Invalid JSON payload");
     }
   };
 
-  // --------------------------
-  // Header edit
-  // --------------------------
-  const handleHeaderChange = (key, value) => {
-    const updated = { ...headers, [key]: value };
-    setHeaders(updated);
-  };
+  /* ---------------------------
+     Header Editor
+  --------------------------- */
+  const updateHeader = (key, value) =>
+    setHeaders((prev) => ({ ...prev, [key]: value }));
 
-  // --------------------------
-  // SUBMIT CEWB
-  // --------------------------
+  /* ---------------------------
+     Generate CEWB
+  --------------------------- */
   const handleSubmit = async () => {
     setLoading(true);
     setError("");
     setResponse(null);
 
     try {
-      const res = await axios.post("http://localhost:3001/proxy/topaz/cewb/generate", payload, { headers });
-      console.log("🎉 CEWB Response:", res.data);
+      const res = await axios.post(
+        "http://localhost:3001/proxy/topaz/cewb/generate",
+        payload,
+        { headers }
+      );
+
       setResponse(res.data);
 
-      // Save updated CEWB locally
-      const saved = getLocalStorageData(LATEST_EWB_KEY);
-      const allEwbs = [...(saved.allEwbs || [])];
+      /* ✅ Persist latest CEWB response */
+      localStorage.setItem(LATEST_CEWB_KEY, JSON.stringify(res.data));
 
-      if (res.data.response?.cEwbNo) {
-        allEwbs.push({ ewbNo: res.data.response.cEwbNo });
-      }
-
-      const updated = { ...saved, cewbResponse: res.data.response, allEwbs };
-      localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(updated));
     } catch (err) {
-      console.error("❌ API Error:", err);
-      setError(err?.response?.data?.message || err.message || "API Error");
-      setResponse(err?.response?.data || null);
+      const msg = err.response?.data || err.message;
+      setError(typeof msg === "string" ? msg : JSON.stringify(msg, null, 2));
+      setResponse(err.response?.data || null);
     } finally {
       setLoading(false);
     }
   };
 
-  // --------------------------
-  // UI
-  // --------------------------
+  /* ---------------------------
+     UI
+  --------------------------- */
   return (
-    <div style={{ maxWidth: "900px", margin: "auto", padding: "20px", fontFamily: "Arial" }}>
+    <div style={{ maxWidth: 900, margin: "auto", padding: 20 }}>
       <h2>Generate Consolidated E-Way Bill (CEWB)</h2>
 
       {/* Headers */}
       <div style={{ marginBottom: 20 }}>
-        <h3>Headers</h3>
-        {Object.entries(headers).map(([key, value]) => (
-          <div key={key} style={{ marginBottom: 6 }}>
-            <strong>{key}:</strong>
+        <h3>Request Headers</h3>
+        {Object.entries(headers).map(([k, v]) => (
+          <div key={k} style={{ marginBottom: 8 }}>
+            <label style={{ width: 160, display: "inline-block" }}>{k}</label>
             <input
-              style={{ width: "80%", marginLeft: 10 }}
-              value={value}
-              onChange={(e) => handleHeaderChange(key, e.target.value)}
+              value={v}
+              onChange={(e) => updateHeader(k, e.target.value)}
+              style={{ width: "60%", padding: 6 }}
             />
           </div>
         ))}
       </div>
 
-      {/* Payload Editor */}
+      {/* Payload JSON */}
       <div style={{ marginBottom: 20 }}>
         <h3>Payload JSON</h3>
         <textarea
           rows={14}
           value={payloadText}
-          style={{ width: "100%", fontFamily: "monospace" }}
           onChange={(e) => handlePayloadChange(e.target.value)}
+          style={{ width: "100%", fontFamily: "monospace" }}
         />
         {error && <p style={{ color: "red" }}>{error}</p>}
       </div>
 
-      <button onClick={handleSubmit} disabled={loading} style={{ padding: "10px 20px" }}>
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        style={{ padding: "10px 24px" }}
+      >
         {loading ? "Generating..." : "Generate CEWB"}
       </button>
 
-      {/* API Response */}
+      {/* Response */}
       {response && (
-        <div style={{ marginTop: 20 }}>
-          <h3>API Response</h3>
-          <pre style={{ background: "#f5f5f5", padding: 10 }}>{JSON.stringify(response, null, 2)}</pre>
-        </div>
+        <pre
+          style={{
+            marginTop: 20,
+            background: "#1e272e",
+            color: "#1abc9c",
+            padding: 16,
+            borderRadius: 6,
+            overflowX: "auto",
+          }}
+        >
+          {JSON.stringify(response, null, 2)}
+        </pre>
       )}
-
-      {/* Final Payload & Headers */}
-      <div style={{ marginTop: 20, border: "1px solid #ddd", padding: 10, borderRadius: 4 }}>
-        <h3>Final Payload</h3>
-        <pre style={{ background: "#f5f5f5", padding: 10 }}>{JSON.stringify(payload, null, 2)}</pre>
-        <h3>Headers</h3>
-        <pre style={{ background: "#f5f5f5", padding: 10 }}>{JSON.stringify(headers, null, 2)}</pre>
-      </div>
     </div>
   );
 };

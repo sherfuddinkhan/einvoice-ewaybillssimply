@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const LOGIN_RESPONSE_KEY = "iris_login_data";
+const STORAGE_KEY00   = "iris_ewaybill_shared_config";
 
 const EwaybillChangePassword = () => {
-  const loginData = JSON.parse(localStorage.getItem(LOGIN_RESPONSE_KEY) || "{}");
+  const loginData = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
 
   const [formData, setFormData] = useState({
     email: loginData.email || "eway@gmail.com",

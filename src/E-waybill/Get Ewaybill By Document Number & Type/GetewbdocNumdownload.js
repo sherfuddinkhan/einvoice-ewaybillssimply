@@ -1,44 +1,88 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const LOGIN_KEY = "iris_login_data";
+/* ---------------------------------
+   LocalStorage Keys (STANDARD)
+---------------------------------- */
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
-const STORAGE_KEY = "EWB_PREVIOUS_DATA";
-const  Bulkstorage_key = "bulkStatusLatest"
-console.log("Bulkstorage_key",Bulkstorage_key)
-const DEFAULT_PROXY = "http://localhost:3001/proxy/topaz/ewb/bulkDownload";
+const LATEST_CEWB_KEY = "latestCewbData";
+const BULK_STATUS_KEY = "bulkStatusLatest";
+
+/* ---------------------------------
+   API
+---------------------------------- */
+const DEFAULT_PROXY =
+  "http://localhost:3001/proxy/topaz/ewb/bulkDownload";
+
+/* ---------------------------------
+   Safe LocalStorage Reader
+---------------------------------- */
+const readLS = (key, fallback = {}) => {
+  try {
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 const BulkDownload = () => {
+  /* ---------------------------------
+     Load Stored Context
+  ---------------------------------- */
+  const shared = readLS(STORAGE_KEY00);
+  const latestEwb = readLS(LATEST_EWB_KEY);
+  const latestCewb = readLS(LATEST_CEWB_KEY);
+  const lastBulk = readLS(BULK_STATUS_KEY);
+
+  const token =
+    shared?.fullResponse?.response?.token || lastBulk?.token || "";
+
+  const companyId =
+    latestEwb?.response?.companyId ||
+    latestCewb?.response?.companyId ||
+    shared?.fullResponse?.response?.companyid ||
+    lastBulk?.companyId ||
+    "";
+
+  const defaultId =
+    latestEwb?.response?.id ||
+    latestCewb?.response?.id ||
+    lastBulk?.id ||
+    "";
+
+  /* ---------------------------------
+     Headers State
+  ---------------------------------- */
   const [headers, setHeaders] = useState({
-    companyId: "",
-    token: "",
+    companyId,
+    token,
     product: "TOPAZ",
   });
 
-  const [payload, setPayload] = useState({ id: "" });
+  /* ---------------------------------
+     Payload State
+  ---------------------------------- */
+  const [payload, setPayload] = useState({
+    id: defaultId,
+  });
 
   const [downloadUrl, setDownloadUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
 
-  // Auto-populate from localStorage
-  useEffect(() => {
-    const login = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
-    const latest = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
-    const prev = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  /* ---------------------------------
+     Helpers
+  ---------------------------------- */
+  const updateHeader = (key, value) =>
+    setHeaders((h) => ({ ...h, [key]: value }));
 
-    setHeaders({
-      companyId: login.companyId || prev.companyId || "",
-      token: login.token || prev.token || "",
-      product: "TOPAZ",
-    });
+  const updatePayload = (key, value) =>
+    setPayload((p) => ({ ...p, [key]: value }));
 
-    setPayload({ id: latest?.response?.id || prev.id || "" });
-  }, []);
-
-  const updateHeader = (key, value) => setHeaders((prev) => ({ ...prev, [key]: value }));
-  const updatePayload = (key, value) => setPayload((prev) => ({ ...prev, [key]: value }));
-
+  /* ---------------------------------
+     Download Handler
+  ---------------------------------- */
   const download = async () => {
     try {
       setError("");
@@ -53,68 +97,129 @@ const BulkDownload = () => {
           "X-Auth-Token": headers.token,
           product: headers.product,
         },
-        responseType: "blob", // allows any file type
+        responseType: "blob",
       });
 
-      // Get file name from API response header or fallback
-      const contentDisposition = res.headers["content-disposition"];
-      const name = contentDisposition?.split("filename=")[1]?.replace(/"/g, "") || `EWB_${payload.id}`;
-      setFileName(name);
+      /* File name */
+      const disposition = res.headers["content-disposition"];
+      const name =
+        disposition?.split("filename=")[1]?.replace(/"/g, "") ||
+        `EWB_BULK_${payload.id}`;
 
       const url = window.URL.createObjectURL(res.data);
+
+      setFileName(name);
       setDownloadUrl(url);
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...headers, ...payload }));
+      /* Persist last successful bulk context */
+      localStorage.setItem(
+        BULK_STATUS_KEY,
+        JSON.stringify({
+          id: payload.id,
+          companyId: headers.companyId,
+          token: headers.token,
+          downloadedAt: new Date().toISOString(),
+        })
+      );
     } catch (err) {
-      setError(err?.response?.data || err.message || "Error while downloading file");
+      setError(
+        err?.response?.data ||
+          err.message ||
+          "Error while downloading file"
+      );
     }
   };
 
+  /* ---------------------------------
+     UI
+  ---------------------------------- */
   return (
-    <div style={{ padding: 20, maxWidth: 600, margin: "auto", fontFamily: "Arial" }}>
+    <div style={styles.container}>
       <h2>EWB Bulk Download</h2>
 
       {/* Headers */}
       <div style={styles.card}>
-        <h4>Headers</h4>
+        <h4>🧾 Headers</h4>
+
         <label>Company ID</label>
-        <input style={styles.input} value={headers.companyId} onChange={(e) => updateHeader("companyId", e.target.value)} />
+        <input
+          style={styles.input}
+          value={headers.companyId}
+          onChange={(e) =>
+            updateHeader("companyId", e.target.value)
+          }
+        />
 
         <label>X-Auth-Token</label>
-        <input style={styles.input} value={headers.token} onChange={(e) => updateHeader("token", e.target.value)} />
+        <input
+          style={styles.input}
+          value={headers.token}
+          onChange={(e) =>
+            updateHeader("token", e.target.value)
+          }
+        />
 
         <label>Product</label>
-        <input style={styles.input} value={headers.product} readOnly />
+        <input
+          style={styles.input}
+          value={headers.product}
+          readOnly
+        />
       </div>
 
       {/* Payload */}
       <div style={styles.card}>
-        <h4>Payload</h4>
-        <label>ID</label>
-        <input style={styles.input} value={payload.id} onChange={(e) => updatePayload("id", e.target.value)} />
+        <h4>📦 Payload</h4>
+
+        <label>Bulk Request ID</label>
+        <input
+          style={styles.input}
+          value={payload.id}
+          onChange={(e) =>
+            updatePayload("id", e.target.value)
+          }
+        />
       </div>
 
       <button onClick={download} style={styles.button}>
-        Download File
+        ⬇️ Download File
       </button>
 
       {/* Download Link */}
       {downloadUrl && (
         <div style={{ marginTop: 20 }}>
-          <a href={downloadUrl} download={fileName} target="_blank" rel="noreferrer">
-            Click here to download: {fileName}
+          <a
+            href={downloadUrl}
+            download={fileName}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Click here to download: <b>{fileName}</b>
           </a>
         </div>
       )}
 
-      {error && <p style={{ color: "red", marginTop: 10 }}>{JSON.stringify(error)}</p>}
+      {error && (
+        <pre style={styles.error}>
+          {JSON.stringify(error, null, 2)}
+        </pre>
+      )}
     </div>
   );
 };
 
 export default BulkDownload;
 
+/* ---------------------------------
+   Styles
+---------------------------------- */
 const styles = {
+  container: {
+    padding: 20,
+    maxWidth: 600,
+    margin: "auto",
+    fontFamily: "Arial",
+  },
   card: {
     background: "#f9f9f9",
     padding: 14,
@@ -138,5 +243,12 @@ const styles = {
     color: "#fff",
     cursor: "pointer",
     marginTop: 10,
+  },
+  error: {
+    background: "#ffe6e6",
+    padding: 10,
+    borderRadius: 6,
+    marginTop: 10,
+    color: "red",
   },
 };

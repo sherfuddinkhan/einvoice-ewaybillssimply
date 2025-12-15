@@ -1,109 +1,87 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const LOGIN_RESPONSE_KEY = "iris_login_data";
-const LATEST_CEWB_KEY = "latestCewbData";
+/* ---------------------------
+   LocalStorage Keys
+--------------------------- */
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
+const LATEST_CEWB_KEY = "latestCewbData";
 
-// Helper: Safely read from localStorage
+/* ---------------------------
+   Safe LocalStorage Reader
+--------------------------- */
 const readStorage = (key, fallback = {}) => {
   try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : fallback;
+    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
   } catch {
     return fallback;
   }
 };
 
-// Helper to read JSON safely
-const getLocalStorageData = (key) => {
-  try {
-    const raw = localStorage.getItem(key);
-    console.log(`📥 Loaded ${key}:`, raw);
-    return JSON.parse(raw || "{}");
-  } catch {
-    return {};
-  }
-};
 const ByDocNumType = () => {
-  const [authData, setAuthData] = useState({ token: "", companyId: "", userGstin: "" });
-
+  /* ---------------------------
+     State
+  --------------------------- */
   const [headers, setHeaders] = useState({
-    "X-Auth-Token": "",
-    companyId: "",
-    product: "TOPAZ",
     Accept: "application/json",
+    product: "TOPAZ",
+    companyId: "",
+    "X-Auth-Token": "",
   });
 
+  const [payload, setPayload] = useState({
+    cEwbNo: "",
+    companyId: "",
+    userGstin: "",
+  });
+
+  const [payloadText, setPayloadText] = useState("");
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-   const [payload, setPayload] = useState({});
-   const [payloadText, setPayloadText] = useState("");
-  // Auto-populate headers & payload on mount
+
+  /* ---------------------------
+     Auto-fill from LocalStorage
+  --------------------------- */
   useEffect(() => {
-    const loginData = readStorage(LOGIN_RESPONSE_KEY, {});
-    const lastCewbData = readStorage(LATEST_CEWB_KEY, {});
-      const login = getLocalStorageData(LOGIN_RESPONSE_KEY);
-    const savedEwbData = getLocalStorageData(LATEST_EWB_KEY);
+    const login = readStorage(STORAGE_KEY00);
+    const lastEwb = readStorage(LATEST_EWB_KEY);
 
-    console.log("🔎 login:", login);
-    console.log("🔎 savedEwbData:", savedEwbData);
+    const token = login.fullResponse?.response?.token || "";
+    const companyId = login.fullResponse?.response?.companyid || "";
+    const gstin =
+      lastEwb?.response?.fromGstin ||
+      lastEwb?.fullApiResponse?.response?.fromGstin ||
+      login.userGstin ||
+      "";
 
-    // --------------------------
-    // Extract
-    // --------------------------
-    const gstin = savedEwbData?.response?.fromGstin || login.userGstin || "";
-    const companyId = login.companyId || 7;
-    const token = login.token || "";
+    // Extract CEWB No from previous flows
+    const cEwbNo =
+      lastEwb?.cewbResponse?.cEwbNo ||
+      lastEwb?.cEwbNo ||
+      lastEwb?.fullApiResponse?.response?.ewbNo ||
+      "";
 
-    // Extract CEWB Number
-    let cEwbNo = "";
-    if (savedEwbData?.cewbResponse?.cEwbNo) {
-      cEwbNo = savedEwbData.cewbResponse.cEwbNo;
-    } else if (savedEwbData?.cEwbNo) {
-      cEwbNo = savedEwbData.cEwbNo;
-    } else if (savedEwbData?.fullApiResponse?.response?.ewbNo) {
-      cEwbNo = savedEwbData.fullApiResponse.response.ewbNo;
-    }
-
-     let previousGstin    = " ";  // → userGstin (sender's GSTIN)
-  // ───── Extract fromGstin → userGstin (as array) ─────
-if (savedEwbData?.fullApiResponse?.response?.fromGstin) {
-  previousGstin = savedEwbData.fullApiResponse.response.fromGstin;
-}
-else if (savedEwbData?.fromGstin) {
-  previousGstin = savedEwbData.fromGstin;
-}
-
-// Fallback GSTIN if still empty
-if (previousGstin.length === 0) {
-  previousGstin = "05AAAAU1183B5ZW"; // or your default like "351010498047" if preferred
-}
-
-    // Update headers
     setHeaders((prev) => ({
       ...prev,
-      "X-Auth-Token": loginData.token || "",
-      companyId: loginData.companyId || 4,
+      companyId,
+      "X-Auth-Token": token,
     }));
 
-
-     const initialPayload = {
-      cEwbNo: cEwbNo,
+    const initialPayload = {
+      cEwbNo,
       companyId,
-      userGstin: previousGstin,
+      userGstin: gstin || "05AAAAU1183B5ZW",
     };
-
-    console.log("📦 Payload:", initialPayload);
 
     setPayload(initialPayload);
     setPayloadText(JSON.stringify(initialPayload, null, 2));
   }, []);
-    
-     // --------------------------
-  // JSON Payload Edit
-  // --------------------------
+
+  /* ---------------------------
+     Payload JSON Editor
+  --------------------------- */
   const handlePayloadChange = (text) => {
     setPayloadText(text);
     try {
@@ -111,21 +89,25 @@ if (previousGstin.length === 0) {
       setPayload(parsed);
       setError("");
     } catch {
-      setError("Invalid JSON");
+      setError("Invalid JSON payload");
     }
   };
 
-  const updateHeader = (key, value) => {
+  const updateHeader = (key, value) =>
     setHeaders((prev) => ({ ...prev, [key]: value }));
-  };
 
   const updatePayload = (key, value) => {
-    setPayload((prev) => ({ ...prev, [key]: value }));
+    const updated = { ...payload, [key]: value };
+    setPayload(updated);
+    setPayloadText(JSON.stringify(updated, null, 2));
   };
 
+  /* ---------------------------
+     Fetch CEWB Details
+  --------------------------- */
   const handleFetch = async () => {
-    if (!payload.userGstin.trim() || !payload.cEwbNo.trim()) {
-      setError("Both User GSTIN and CEWB Number are required.");
+    if (!payload.userGstin || !payload.cEwbNo) {
+      setError("User GSTIN and CEWB Number are mandatory.");
       return;
     }
 
@@ -134,195 +116,125 @@ if (previousGstin.length === 0) {
     setResponse(null);
 
     try {
-      const res = await axios.get("http://localhost:3001/proxy/topaz/cewb/details", {
-        params: payload,
-        headers: {
-          ...headers,
-          companyId: headers.companyId.toString(),
-        },
-      });
+      const res = await axios.get(
+        "http://localhost:3001/proxy/topaz/cewb/details",
+        {
+          params: payload,
+          headers: {
+            ...headers,
+            companyId: String(headers.companyId),
+          },
+          timeout: 30000,
+        }
+      );
 
-      const responseData = res.data;
-      setResponse(responseData);
+      setResponse(res.data);
 
-      // Save latest CEWB for future auto-fill
-      localStorage.setItem(LATEST_CEWB_KEY, JSON.stringify(responseData));
+      // ✅ Persist latest CEWB response
+      localStorage.setItem(LATEST_CEWB_KEY, JSON.stringify(res.data));
     } catch (err) {
-      const msg =
-        err.response?.data?.message || err.message || "Unknown error";
-      setError(msg);
+      const msg = err.response?.data || err.message;
+      setError(typeof msg === "string" ? msg : JSON.stringify(msg, null, 2));
       setResponse(err.response?.data || null);
     } finally {
       setLoading(false);
     }
   };
 
+  /* ---------------------------
+     UI
+  --------------------------- */
   return (
-    <div
-      style={{
-        maxWidth: 900,
-        margin: "40px auto",
-        padding: "20px",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <h2 style={{ color: "#2c3e50" }}>
-        Fetch Consolidated E-Way Bill (CEWB) Details
-      </h2>
-<h2 style={{ color: "#2c3e50", fontSize: "12px", lineHeight: "1.5" }}>
-  2️⃣ Consolidated EWB (CEWB) Flow
-  <br /><br />
-  <strong>NOTE:</strong> The Consolidated EWB (CEWB) can only be generated if there is no active Multi-Vehicle (MV) movement for the same consignments.
-  <br /><br />
-  <strong>Consolidated EWB Details</strong> (/ewaybill/consolidated-ewb-details): View details of already created CEWBs.
-  <br /><br />
-  <strong>Generate CEWB</strong> (/ewaybill/consolidate-ewb): Create a CEWB to consolidate multiple invoices/shipments under a single EWB.
-  <br /><br />
-  <strong>Important:</strong> CEWB generation is not allowed if a Multi-Vehicle movement is active. To generate a CEWB, you must either:
-  <ul style={{ margin: "2px 0", paddingLeft: "15px" }}>
-    <li>Cancel or complete the active Multi-Vehicle movement, or</li>
-    <li>Remove the consignments from the Multi-Vehicle movement.</li>
-  </ul>
-</h2>
+    <div style={{ maxWidth: 900, margin: "40px auto", padding: 20 }}>
+      <h2>Fetch Consolidated E-Way Bill (CEWB) Details</h2>
 
-      <p style={{ color: "#7f8c8d" }}>
-        Enter or auto-filled CEWB number to get full details.
-      </p>
-
-      <div
-        style={{
-          background: "#f8f9fa",
-          padding: 15,
-          borderRadius: 8,
-          marginBottom: 20,
-        }}
-      >
+      {/* Headers */}
+      <div style={{ background: "#f4f6f7", padding: 15, borderRadius: 6 }}>
         <h3>Request Headers</h3>
-        {Object.entries(headers).map(([key, value]) => (
-          <div
-            key={key}
-            style={{ marginBottom: 10, display: "flex", alignItems: "center" }}
-          >
-            <strong style={{ width: 160 }}>{key}:</strong>
+        {Object.entries(headers).map(([k, v]) => (
+          <div key={k} style={{ marginBottom: 10 }}>
+            <label style={{ width: 160, display: "inline-block" }}>{k}</label>
             <input
-              type="text"
-              value={value}
-              onChange={(e) => updateHeader(key, e.target.value)}
-              style={{
-                flex: 1,
-                padding: "8px",
-                marginLeft: 10,
-                borderRadius: 4,
-                border: "1px solid #ccc",
-              }}
+              value={v}
+              onChange={(e) => updateHeader(k, e.target.value)}
+              style={{ width: "60%", padding: 6 }}
             />
           </div>
         ))}
       </div>
 
-      <div
-        style={{
-          background: "#f8f9fa",
-          padding: 15,
-          borderRadius: 8,
-          marginBottom: 20,
-        }}
-      >
-        <h3>Payload Parameters</h3>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "inline-block", width: 140, fontWeight: "bold" }}>
-            User GSTIN:
-          </label>
+      {/* Payload */}
+      <div style={{ background: "#f4f6f7", padding: 15, borderRadius: 6, marginTop: 20 }}>
+        <h3>Payload</h3>
+
+        <div style={{ marginBottom: 10 }}>
+          <label>User GSTIN</label><br />
           <input
             value={payload.userGstin}
             onChange={(e) => updatePayload("userGstin", e.target.value)}
-            placeholder="e.g. 05AAAAA0000A1Z5"
-            style={{
-              width: "380px",
-              padding: "8px",
-              borderRadius: 4,
-              border: "1px solid #ccc",
-            }}
+            style={{ width: 380, padding: 6 }}
           />
         </div>
+
         <div>
-          <label style={{ display: "inline-block", width: 140, fontWeight: "bold" }}>
-            CEWB Number:
-          </label>
+          <label>CEWB Number</label><br />
           <input
             value={payload.cEwbNo}
             onChange={(e) => updatePayload("cEwbNo", e.target.value)}
-            placeholder="e.g. 3810034524"
-            style={{
-              width: "380px",
-              padding: "8px",
-              borderRadius: 4,
-              border: "1px solid #ccc",
-            }}
+            style={{ width: 380, padding: 6 }}
           />
         </div>
       </div>
 
+      {/* JSON Editor */}
+      <div style={{ marginTop: 20 }}>
+        <h3>Payload JSON</h3>
+        <textarea
+          rows={12}
+          value={payloadText}
+          onChange={(e) => handlePayloadChange(e.target.value)}
+          style={{ width: "100%", fontFamily: "monospace" }}
+        />
+      </div>
+
+      {/* Action */}
       <button
         onClick={handleFetch}
         disabled={loading}
         style={{
-          padding: "12px 28px",
-          fontSize: "16px",
-          backgroundColor: "#3498db",
-          color: "white",
+          marginTop: 20,
+          padding: "12px 26px",
+          background: "#3498db",
+          color: "#fff",
           border: "none",
           borderRadius: 6,
           cursor: loading ? "not-allowed" : "pointer",
-          opacity: loading ? 0.7 : 1,
         }}
       >
         {loading ? "Fetching..." : "Fetch CEWB Details"}
       </button>
-      {/* Payload Editor */}
-      <div style={{ marginBottom: 20 }}>
-        <h3>Payload JSON</h3>
-        <textarea
-          rows={14}
-          value={payloadText}
-          style={{ width: "100%", fontFamily: "monospace" }}
-          onChange={(e) => handlePayloadChange(e.target.value)}
-        />
-        {error && <p style={{ color: "red" }}>{error}</p>}
-      </div>
 
       {/* Error */}
       {error && (
-        <div
-          style={{
-            marginTop: 20,
-            padding: 15,
-            background: "#fadbd8",
-            color: "#c0392b",
-            borderRadius: 6,
-          }}
-        >
-          <strong>Error:</strong> {error}
-        </div>
+        <pre style={{ background: "#fdecea", color: "#c0392b", padding: 15, marginTop: 20 }}>
+          {error}
+        </pre>
       )}
 
       {/* Response */}
       {response && (
-        <div style={{ marginTop: 30 }}>
-          <h3>Response</h3>
-          <pre
-            style={{
-              background: "#2c3e50",
-              color: "#1abc9c",
-              padding: 20,
-              borderRadius: 8,
-              overflowX: "auto",
-              fontSize: "14px",
-            }}
-          >
-            {JSON.stringify(response, null, 2)}
-          </pre>
-        </div>
+        <pre
+          style={{
+            marginTop: 30,
+            background: "#1e272e",
+            color: "#1abc9c",
+            padding: 20,
+            borderRadius: 6,
+            overflowX: "auto",
+          }}
+        >
+          {JSON.stringify(response, null, 2)}
+        </pre>
       )}
     </div>
   );

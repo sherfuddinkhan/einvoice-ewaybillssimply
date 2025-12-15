@@ -1,150 +1,199 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const LOGIN_KEY = "iris_login_data";
-const MV_INITIATE_KEY = "mv_initiate_response"; // MultiVehicleInitiate response
-const LATEST_EWB_KEY = "latestEwbData";
+/* ---------------------------------
+   API
+---------------------------------- */
+const ADD_VEHICLE_API =
+  "http://localhost:3001/proxy/topaz/multiVehicle/add";
+
+/* ---------------------------------
+   LocalStorage Keys (STANDARD)
+---------------------------------- */
+const STORAGE_KEY00   = "iris_ewaybill_shared_config";
+const LATEST_EWB_KEY  = "latestEwbData";
+const LATEST_CEWB_KEY = "latestCewbData";
+
+/* ---------------------------------
+   Safe LS Reader
+---------------------------------- */
+const readLS = (key, fallback = {}) => {
+  try {
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 const MultiVehicleAdd = () => {
-  // ------------------------------------------
-  // HEADERS STATE
-  // ------------------------------------------
+  /* ---------------------------------
+     Load Stored Context
+  ---------------------------------- */
+  const shared     = readLS(STORAGE_KEY00);
+  const latestEwb  = readLS(LATEST_EWB_KEY);
+  const latestCewb = readLS(LATEST_CEWB_KEY);
+
+  const token =
+    shared?.fullResponse?.response?.token || "";
+
+  const companyId =
+    shared?.fullResponse?.response?.companyid ||
+    latestEwb?.response?.companyId ||
+    latestCewb?.response?.companyId ||
+    "";
+
+  /* ---------------------------------
+     Headers
+  ---------------------------------- */
   const [headers, setHeaders] = useState({
-    accept: "application/json",
+    Accept: "application/json",
     product: "TOPAZ",
-    companyid: "",
-    "x-auth-token": "",
+    companyid: companyId,
+    "X-Auth-Token": token,
   });
 
-  // ------------------------------------------
-  // PAYLOAD STATE
-  // ------------------------------------------
+  /* ---------------------------------
+     Payload
+  ---------------------------------- */
+  const vehicle = latestEwb?.response?.vehicleDetails?.[0] || {};
+  const item    = latestEwb?.response?.itemList?.[0] || {};
+
   const [payload, setPayload] = useState({
-    ewbNo: "",
-    groupNo: "1",
-    vehicleNo: "",
-    fromPlace: "",
-    fromState: "",
-    reasonCode: "1",
-    reasonDesc: "Multiple Vehicles",
-    transDocNo: "",
-    transDocDate: "",
-    transMode: "",
-    quantity: "",
-    userGstin: "",
-    validUpto: "",
+    ewbNo:       latestEwb?.response?.ewbNo || "",
+    groupNo:     "1",
+    vehicleNo:   vehicle.vehicleNo || "",
+    fromPlace:   vehicle.fromPlace || "",
+    fromState:   vehicle.fromState || "",
+    reasonCode:  "1",
+    reasonDesc:  "Multiple Vehicles",
+    transDocNo:  vehicle.transDocNo || "",
+    transDocDate:vehicle.transDocDate || "",
+    transMode:   vehicle.transMode || "",
+    quantity:    item.quantity || "",
+    userGstin:
+      latestEwb?.response?.fromGstin ||
+      latestEwb?.response?.userGstin ||
+      "",
+    validUpto:   latestEwb?.response?.validUpto || "",
   });
 
-  const [resp, setResp] = useState(null);
-  const [err, setErr] = useState(null);
+  const [response, setResponse] = useState(null);
+  const [error, setError] = useState(null);
 
-  // ========================================================================
-  // AUTO-POPULATE HEADERS + PAYLOAD FROM LOCALSTORAGE
-  // ========================================================================
-  useEffect(() => {
-    const login = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
-    const initResp = JSON.parse(localStorage.getItem(MV_INITIATE_KEY) || "{}");
-    const latest = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
+  /* ---------------------------------
+     Handlers
+  ---------------------------------- */
+  const updateHeader = (k, v) =>
+    setHeaders((h) => ({ ...h, [k]: v }));
 
-    // 1️⃣ Headers
-    setHeaders({
-      accept: "application/json",
-      product: "TOPAZ",
-      companyid: login?.companyId || initResp?.response?.companyId || "",
-      "x-auth-token": login?.token || "",
-    });
+  const updatePayload = (k, v) =>
+    setPayload((p) => ({ ...p, [k]: v }));
 
-    // 2️⃣ Auto-fill payload
-    const vehicleDetails = latest?.response?.vehicleDetails?.[0] || {};
-    const itemList = latest?.response?.itemList?.[0] || {};
-
-    setPayload({
-      ewbNo: initResp?.response?.ewbNo || latest?.response?.ewbNo || "",
-      groupNo: initResp?.response?.groupNo || "1",
-      vehicleNo: vehicleDetails.vehicleNo || "",
-      fromPlace: vehicleDetails.fromPlace || initResp?.response?.fromPlace || "",
-      fromState: vehicleDetails.fromState || initResp?.response?.fromState || "",
-      reasonCode: initResp?.response?.reasonCode || "1",
-      reasonDesc: initResp?.response?.reasonRem || "Multiple Vehicles",
-      transDocNo: vehicleDetails.transDocNo || latest?.response?.transDocNo || "",
-      transDocDate: vehicleDetails.transDocDate || latest?.response?.transDocDate || "",
-      transMode: vehicleDetails.transMode || latest?.response?.transMode || "",
-      quantity: initResp?.response?.totalQuantity || itemList.quantity || "",
-      userGstin: initResp?.response?.reqGstin || latest?.response?.userGstin || "",
-      validUpto: latest?.response?.validUpto || "",
-    });
-  }, []);
-
-  // ========================================================================
-  // PAYLOAD UPDATE HANDLER
-  // ========================================================================
-  const onP = (key, value) =>
-    setPayload((prev) => ({ ...prev, [key]: value }));
-
-  // ========================================================================
-  // SUBMIT REQUEST
-  // ========================================================================
+  /* ---------------------------------
+     Submit
+  ---------------------------------- */
   const submit = async () => {
-    setErr(null);
-    setResp(null);
+    setError(null);
+    setResponse(null);
 
     try {
       const res = await axios.post(
-        "http://localhost:3001/proxy/topaz/multiVehicle/add",
+        ADD_VEHICLE_API,
         payload,
         { headers }
       );
-      setResp(res.data);
+
+      setResponse(res.data);
+
+      /* Optional: persist last action */
+      localStorage.setItem(
+        LATEST_CEWB_KEY,
+        JSON.stringify(res.data)
+      );
     } catch (e) {
-      setErr(e.response?.data || e.message);
+      setError(e?.response?.data || e.message);
     }
   };
 
-  // ========================================================================
-  // UI
-  // ========================================================================
+  /* ---------------------------------
+     UI
+  ---------------------------------- */
   return (
-    <div style={{ padding: 20, maxWidth: 800, margin: "auto" }}>
-      <h2>Multi-Vehicle — Add Vehicle</h2>
+    <div style={{ padding: 20, maxWidth: 820, margin: "auto" }}>
+      <h2>🚚 Multi-Vehicle – Add Vehicle</h2>
 
       {/* HEADERS */}
       <h3>Headers</h3>
       {Object.entries(headers).map(([k, v]) => (
-        <div key={k} style={{ marginBottom: 6 }}>
-          <label style={{ width: 150, display: "inline-block" }}>{k}</label>
+        <div key={k} style={rowStyle}>
+          <label style={labelStyle}>{k}</label>
           <input
             value={v}
-            onChange={(e) =>
-              setHeaders((prev) => ({ ...prev, [k]: e.target.value }))
-            }
-            style={{ width: 430 }}
+            onChange={(e) => updateHeader(k, e.target.value)}
+            style={inputStyle}
           />
         </div>
       ))}
 
       {/* PAYLOAD */}
-      <h3 style={{ marginTop: 12 }}>Payload</h3>
+      <h3 style={{ marginTop: 15 }}>Payload</h3>
       {Object.entries(payload).map(([k, v]) => (
-        <div key={k} style={{ marginBottom: 6 }}>
-          <label style={{ width: 150, display: "inline-block" }}>{k}</label>
+        <div key={k} style={rowStyle}>
+          <label style={labelStyle}>{k}</label>
           <input
             value={v}
-            onChange={(e) => onP(k, e.target.value)}
-            style={{ width: 430 }}
+            onChange={(e) => updatePayload(k, e.target.value)}
+            style={inputStyle}
           />
         </div>
       ))}
 
-      {/* BUTTON */}
-      <button onClick={submit} style={{ marginTop: 15 }}>
+      <button onClick={submit} style={buttonStyle}>
         Submit Add Vehicle
       </button>
 
-      {/* RESPONSES */}
-      {err && <pre style={{ color: "red" }}>{JSON.stringify(err, null, 2)}</pre>}
-      {resp && <pre>{JSON.stringify(resp, null, 2)}</pre>}
+      {/* RESPONSE */}
+      {error && (
+        <pre style={{ color: "red", marginTop: 15 }}>
+          {JSON.stringify(error, null, 2)}
+        </pre>
+      )}
+      {response && (
+        <pre style={{ marginTop: 15 }}>
+          {JSON.stringify(response, null, 2)}
+        </pre>
+      )}
     </div>
   );
 };
 
 export default MultiVehicleAdd;
+
+/* ---------------------------------
+   Styles
+---------------------------------- */
+const rowStyle = {
+  marginBottom: 8,
+};
+
+const labelStyle = {
+  width: 160,
+  display: "inline-block",
+  fontWeight: "bold",
+};
+
+const inputStyle = {
+  width: 450,
+  padding: 6,
+};
+
+const buttonStyle = {
+  marginTop: 18,
+  padding: "10px 20px",
+  fontSize: 16,
+  background: "#0078ff",
+  color: "#fff",
+  border: "none",
+  borderRadius: 6,
+  cursor: "pointer",
+};

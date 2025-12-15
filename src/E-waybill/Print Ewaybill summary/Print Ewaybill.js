@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const LOGIN_KEY = 'iris_login_data';
-const LATEST_EWB_KEY = 'latestEwbData';
+/* ---------------------------------
+   LocalStorage Keys (STANDARD)
+---------------------------------- */
+const STORAGE_KEY00   = "iris_ewaybill_shared_config";
+const LATEST_EWB_KEY  = "latestEwbData";
+const LATEST_CEWB_KEY = "latestCewbData";
+const QUERY_KEY       = "mv_requests_query";
+const RESP_KEY        = "mv_requests_response";
 
 const PrintEwaybill = () => {
   // ----------------------------
@@ -21,22 +26,24 @@ const PrintEwaybill = () => {
   });
 
   // ----------------------------
-  // Auto-populate from localStorage
+  // Auto-populate headers and EWB numbers
   // ----------------------------
   useEffect(() => {
-    const login = JSON.parse(localStorage.getItem(LOGIN_KEY) || "{}");
+    const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
     const latest = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
 
-    // Headers autopopulation
-    setHeaders((prev) => ({
+    // Headers autopopulate
+    setHeaders(prev => ({
       ...prev,
       "X-Auth-Token": login?.token || "",
       companyId: login?.companyId || "",
     }));
 
-    // EWB number autopopulation
+    // EWB numbers autopopulate
     if (latest?.response?.ewbNo) {
-      setEwbNos([latest.response.ewbNo]);
+      // If vehicleDetails exists, use all ewbNos; else single
+      const ewbList = latest?.response?.vehicleDetails?.map(v => v.ewbNo) || [latest.response.ewbNo];
+      setEwbNos(ewbList);
     }
   }, []);
 
@@ -84,6 +91,9 @@ const PrintEwaybill = () => {
     }
   };
 
+  // ----------------------------
+  // UI
+  // ----------------------------
   return (
     <div style={{ maxWidth: '600px', margin: 'auto', padding: 20 }}>
       <h2>Print EWB Details</h2>
@@ -102,8 +112,9 @@ const PrintEwaybill = () => {
             setEwbNos(e.target.value.split(',').map((n) => n.trim()))
           }
           required
+          style={{ width: '100%', padding: '8px', marginTop: '5px', marginBottom: '10px' }}
         />
-        <button type="submit" disabled={loading} style={{ marginTop: 10 }}>
+        <button type="submit" disabled={loading}>
           {loading ? 'Printing...' : 'Print PDF'}
         </button>
       </form>

@@ -1,7 +1,7 @@
 // ChangePasswordForm.js - FULLY AUTO-POPULATED from Login Response
 import React, { useState, useEffect } from 'react';
 
-const STORAGE_KEY = 'iris_einvoice_shared_config';
+ const STORAGE_KEY = "iris_einvoice_response";
 
 const EinvoiceChangePassword = () => {
   const [oldPass, setOldPass] = useState('');
