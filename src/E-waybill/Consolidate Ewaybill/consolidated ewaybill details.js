@@ -59,9 +59,12 @@ const CEWBDetails = () => {
     /* ---------- Vehicle / EWB Details ---------- */
     const vehicle = lastEwb?.vehicleDetails?.[0] || {};
 
-    const tripSheetEwbBills = Array.isArray(lastEwb?.allEwbs)
-      ? lastEwb.allEwbs.map((e) => e.ewbNo).filter(Boolean)
-      : [lastEwb?.response?.ewbNo || vehicle?.ewbNo].filter(Boolean);
+   const tripSheetEwbBills = Array.isArray(lastEwb?.tripSheetEwbBills) && lastEwb.tripSheetEwbBills.length > 0
+  ? lastEwb.tripSheetEwbBills.filter(Boolean)
+  : [lastEwb?.response?.cEwbNo || vehicle?.ewbNo].filter(Boolean);
+
+console.log(tripSheetEwbBills);
+
 
     const initialPayload = {
       fromPlace:
@@ -85,7 +88,7 @@ const CEWBDetails = () => {
         "R",
 
       transMode:
-        lastEwb?.response?.transMode ||
+        lastEwb?.transMode ||
         vehicle?.transMode ||
         "3",
 
