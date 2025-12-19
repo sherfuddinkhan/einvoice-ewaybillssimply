@@ -2,15 +2,17 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+// ------------------------------
 // LocalStorage Keys
-const STORAGE_KEY00 = "iris_ewaybill_shared_config"; // login/auth info
-const LATEST_EWB_KEY = "latestEwbData";             // last EWB info
+// ------------------------------
+const STORAGE_KEY00 = "iris_ewaybill_shared_config";
+const LATEST_EWB_KEY = "latestEwbData";
 
 const FetchByDate = () => {
   const navigate = useNavigate();
 
   // ------------------------------
-  // 1️⃣ State Definitions
+  // State
   // ------------------------------
   const [date, setDate] = useState("");
   const [userGstin, setUserGstin] = useState("05AAAAU1183B5ZW");
@@ -20,16 +22,16 @@ const FetchByDate = () => {
   const [error, setError] = useState("");
 
   // ------------------------------
-  // 2️⃣ Load login/auth + latest EWB
+  // Load auth + latest EWB
   // ------------------------------
   useEffect(() => {
     try {
       const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
       const latestEwb = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
 
-      const token = login.fullResponse?.response?.token || "";
-      const companyId = login.fullResponse?.response?.companyid || "";
-      const lastGstin = latestEwb?.userGstin ;
+      const token = login?.fullResponse?.response?.token || "";
+      const companyId = login?.fullResponse?.response?.companyid || "";
+
       setHeaders({
         accept: "application/json",
         product: "TOPAZ",
@@ -37,72 +39,80 @@ const FetchByDate = () => {
         "x-auth-token": token,
       });
 
-      // Auto-populate date from last EWB
-      const lastEwbDate = latestEwb?.response?.ewbDate?.split(" ")[0] || "";
-      setDate(lastEwbDate);
+      // Always fallback to empty string
+      const lastDate =
+        latestEwb?.response?.ewbDate?.split(" ")[0] || "";
+      setDate(lastDate);
 
-      // Auto-populate GSTIN from last EWB
-      setUserGstin(latestEwb?.userGstin);
+      const lastGstin = latestEwb?.fromGstin || "";
+      setUserGstin(lastGstin);
     } catch (err) {
-      console.error("Error loading localStorage data", err);
+      console.error("LocalStorage parse error:", err);
     }
   }, []);
 
   // ------------------------------
-  // 3️⃣ Date formatting helper
+  // Fix date format
   // ------------------------------
   const fixDateFormat = (d) => {
-    if (!d) return d;
+    if (!d) return "";
     const parts = d.split("/");
     if (parts.length !== 3) return d;
-    if (parts[2].length === 2) parts[2] = "20" + parts[2];
+    if (parts[2].length === 2) parts[2] = `20${parts[2]}`;
     return parts.join("/");
   };
 
   // ------------------------------
-  // 4️⃣ Fetch EWB list
+  // Fetch EWB list
   // ------------------------------
   const fetchEwbs = async () => {
     setLoading(true);
     setError("");
     setResponse([]);
 
-    const finalDate = fixDateFormat(date);
-    const payload = { date: finalDate, userGstin };
+    const payload = {
+      date: fixDateFormat(date),
+      userGstin,
+    };
 
     try {
       const res = await axios.get(
         "http://localhost:3001/proxy/topaz/ewb/fetchByDate",
-        { params: payload, headers, timeout: 30000 }
+        {
+          params: payload,
+          headers,
+          timeout: 30000,
+        }
       );
 
-      setResponse(res.data.response || []);
+      setResponse(res?.data?.response || []);
     } catch (err) {
-      setResponse([]);
-      setError(JSON.stringify(err.response?.data || err.message, null, 2));
-      console.error("❌ ERROR:", err);
+      setError(
+        JSON.stringify(err?.response?.data || err.message, null, 2)
+      );
     } finally {
       setLoading(false);
     }
   };
 
   // ------------------------------
-  // 5️⃣ Navigate to EWB action
+  // Navigation
   // ------------------------------
-  const goToEwbAction = (ewbNo) => navigate(`/ewaybill/ewb-action/${ewbNo}`);
+  const goToEwbAction = (ewbNo) => {
+    navigate(`/ewaybill/ewb-action/${ewbNo}`);
+  };
 
   // ------------------------------
-  // 6️⃣ Render UI
+  // UI
   // ------------------------------
   return (
     <div style={{ padding: 20, fontFamily: "Arial" }}>
       <h2>Fetch Generated E-Way Bills by Date</h2>
 
-      {/* Input Fields */}
       <div style={{ marginBottom: 10 }}>
         <label>Date (DD/MM/YYYY)</label><br />
         <input
-          value={date}
+          value={date || ""}
           onChange={(e) => setDate(e.target.value)}
           style={{ padding: 6, width: 200 }}
         />
@@ -111,7 +121,7 @@ const FetchByDate = () => {
       <div style={{ marginBottom: 10 }}>
         <label>User GSTIN</label><br />
         <input
-          value={userGstin}
+          value={userGstin || ""}
           onChange={(e) => setUserGstin(e.target.value)}
           style={{ padding: 6, width: 200 }}
         />
@@ -123,30 +133,38 @@ const FetchByDate = () => {
         style={{
           marginTop: 10,
           padding: "8px 20px",
-          cursor: "pointer",
           background: "#1976d2",
-          color: "white",
+          color: "#fff",
           border: "none",
+          cursor: "pointer",
         }}
       >
         {loading ? "Fetching..." : "Fetch EWB"}
       </button>
 
-      {/* Error */}
       {error && (
-        <pre style={{ background: "#ffeeee", color: "darkred", padding: 15, borderRadius: 6 }}>
+        <pre style={{
+          background: "#ffeeee",
+          color: "darkred",
+          padding: 15,
+          borderRadius: 6,
+          marginTop: 15,
+        }}>
           {error}
         </pre>
       )}
 
-      {/* Response Table */}
       {response.length > 0 ? (
         <table
           border="1"
           cellPadding="8"
-          style={{ width: "100%", borderCollapse: "collapse", marginTop: 20 }}
+          style={{
+            width: "100%",
+            marginTop: 20,
+            borderCollapse: "collapse",
+          }}
         >
-          <thead style={{ background: "#1976d2", color: "white" }}>
+          <thead style={{ background: "#1976d2", color: "#fff" }}>
             <tr>
               <th>EWB No</th>
               <th>Document No</th>
@@ -174,10 +192,10 @@ const FetchByDate = () => {
                     style={{
                       padding: "5px 12px",
                       background: "#8e24aa",
-                      color: "white",
+                      color: "#fff",
                       border: "none",
-                      cursor: "pointer",
                       borderRadius: 5,
+                      cursor: "pointer",
                     }}
                   >
                     View / Action
@@ -188,7 +206,11 @@ const FetchByDate = () => {
           </tbody>
         </table>
       ) : (
-        !loading && <p style={{ color: "#888", fontStyle: "italic", marginTop: 15 }}>No records found.</p>
+        !loading && (
+          <p style={{ marginTop: 15, color: "#888", fontStyle: "italic" }}>
+            No records found.
+          </p>
+        )
       )}
     </div>
   );
