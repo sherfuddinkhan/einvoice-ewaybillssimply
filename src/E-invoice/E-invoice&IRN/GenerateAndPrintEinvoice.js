@@ -52,6 +52,7 @@ const tableStyles = {
 const STORAGE_KEY = "iris_einvoice_response";
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
+const EINV_DOC_KEY = "iris_einv_doc_map"; // New Storage Key added here!
 
 const LAST_GENERATED_ID_KEY = "iris_last_generated_id";
 const LAST_DOC_DETAILS_KEY = "iris_last_used_doc_details";
@@ -98,42 +99,40 @@ const GenerateAndPrintEinvoice = () => {
   // --- Core Calculation Logic to ensure consistency ---
   const recalculateTotals = (currentPayload, idx, fieldChanged, value) => {
     const items = [...currentPayload.itemList];
-    
+
     // Step 1: Update the specific item field if a change occurred
     if (idx !== undefined && fieldChanged) {
-        items[idx] = { ...items[idx], [fieldChanged]: value };
+      items[idx] = { ...items[idx], [fieldChanged]: value };
     }
-
     let totalTaxableValue = 0;
     let totalIGST = 0;
-    
+
     // Step 2: Recalculate Item-Level Tax & Total for ALL items
     const updatedItems = items.map(item => {
-        const qty = Number(item.qty) || 0;
-        const price = Number(item.unitPrice) || 0;
-        const rate = (Number(item.irt) || 0) / 100;
+      const qty = Number(item.qty) || 0;
+      const price = Number(item.unitPrice) || 0;
+      const rate = (Number(item.irt) || 0) / 100;
 
-        // Taxable Value (Quantity * Price), rounded to 2 decimals
-        const txval = Number((qty * price).toFixed(2));
-        
-        // IGST Amount (T-Value * Rate), rounded to 2 decimals
-        const iamt = Number((txval * rate).toFixed(2));
-        
-        // Item Value (T-Value + IGST)
-        const itmVal = Number((txval + iamt).toFixed(2));
+      // Taxable Value (Quantity * Price), rounded to 2 decimals
+      const txval = Number((qty * price).toFixed(2));
 
-        // Aggregate for invoice totals
-        totalTaxableValue += txval;
-        totalIGST += iamt;
-        
-        // Return the updated item object
-        return {
-            ...item,
-            txval: txval,
-            sval: txval, 
-            iamt: iamt,
-            itmVal: itmVal,
-        };
+      // IGST Amount (T-Value * Rate), rounded to 2 decimals
+      const iamt = Number((txval * rate).toFixed(2));
+
+      // Item Value (T-Value + IGST)
+      const itmVal = Number((txval + iamt).toFixed(2));
+      // Aggregate for invoice totals
+      totalTaxableValue += txval;
+      totalIGST += iamt;
+
+      // Return the updated item object
+      return {
+        ...item,
+        txval: txval,
+        sval: txval,
+        iamt: iamt,
+        itmVal: itmVal,
+      };
     });
 
     // Step 3: Calculate Invoice-Level Totals
@@ -142,23 +141,22 @@ const GenerateAndPrintEinvoice = () => {
 
     const totTxval = Number(totalTaxableValue.toFixed(2));
     const totIamt = Number(totalIGST.toFixed(2));
-
     // Calculate Total Invoice Value: T-Value + IGST + Other Charges - Discount
     const preRoundTotal = totTxval + totIamt + othchrg - disc;
     const totInvVal = Number(preRoundTotal.toFixed(2));
-    
+
     // Step 4: Update the payload state with new calculated values
-    return { 
-        ...currentPayload, 
-        itemList: updatedItems,
-        tottxval: totTxval,
-        totiamt: totIamt,
-        totinvval: totInvVal,
-        // Ensure other non-IGST tax totals are zeroed out if not used
-        totcamt: 0,
-        totsamt: 0,
-        totcsamt: 0,
-        totstcsamt: 0,
+    return {
+      ...currentPayload,
+      itemList: updatedItems,
+      tottxval: totTxval,
+      totiamt: totIamt,
+      totinvval: totInvVal,
+      // Ensure other non-IGST tax totals are zeroed out if not used
+      totcamt: 0,
+      totsamt: 0,
+      totcsamt: 0,
+      totstcsamt: 0,
     };
   };
   // --- End Core Calculation Logic ---
@@ -174,36 +172,35 @@ const GenerateAndPrintEinvoice = () => {
       "unitPrice": 3322.451, // Base price that drives all calculations
       "irt": 5, // IGST Rate in %
       "rt": 5, // CGST/SGST rate (same as irt if Inter, or half of Irt if Intra)
-      
+
       // Calculated fields (will be updated by recalculateTotals)
       "txval": 0,
       "sval": 0,
       "iamt": 0,
       "itmVal": 0,
-
       // Other default/placeholder fields
-      "disc": 0, 
-      "othchrg": 0, 
-      "camt": 0, 
-      "csamt": 0, 
-      "srt": 0, 
-      "crt": 0, 
-      "stcsamt": 0, 
-      "cesNonAdval": 0, 
-      "stCesNonAdvl": 0, 
-      "freeQty": 0, 
-      "preTaxVal": 0, 
+      "disc": 0,
+      "othchrg": 0,
+      "camt": 0,
+      "csamt": 0,
+      "srt": 0,
+      "crt": 0,
+      "stcsamt": 0,
+      "cesNonAdval": 0,
+      "stCesNonAdvl": 0,
+      "freeQty": 0,
+      "preTaxVal": 0,
       "isServc": null,
-      "barcde": null, 
-      "prdSlNo": null, 
-      "txp": null, 
-      "bchnm": null, 
-      "bchExpDt": null, 
-      "bchWrDt": null, 
-      "ordLineRef": null, 
-      "orgCntry": null, 
+      "barcde": null,
+      "prdSlNo": null,
+      "txp": null,
+      "bchnm": null,
+      "bchExpDt": null,
+      "bchWrDt": null,
+      "ordLineRef": null,
+      "orgCntry": null,
       // Generic item fields
-      "itmgen1": null, "itmgen2": null, "itmgen3": null, "itmgen4": null, "itmgen5": null, 
+      "itmgen1": null, "itmgen2": null, "itmgen3": null, "itmgen4": null, "itmgen5": null,
       "itmgen6": null, "itmgen7": null, "itmgen8": null, "itmgen9": null, "itmgen10": null,
       "invItmOtherDtls": [
         { "attNm": "aaa", "attVal": "aaa" },
@@ -211,7 +208,6 @@ const GenerateAndPrintEinvoice = () => {
       ]
     };
     const initialItems = [defaultItem];
-
     // Define the base payload structure
     const basePayload = {
       "userGstin": "01AAACI9260R002", "pobCode": null, "supplyType": "O", "ntr": "Inter", "docType": "RI", "catg": "B2B", "dst": "O", "trnTyp": "REG",
@@ -245,18 +241,15 @@ const GenerateAndPrintEinvoice = () => {
       "invRefPreDtls": [ { "oinum": null, "oidt": null, "othRefNo": null } ],
       "invRefContDtls": [ { "raref": null, "radt": null, "tendref": null, "contref": null, "extref": null, "projref": null, "poref": null, "porefdt": null } ]
     };
-    
+
     // Calculate initial totals right away to populate the UI with correct values
     return recalculateTotals(basePayload);
   });
-
   const setField = (field, value) => setPayload((prev) => ({ ...prev, [field]: value }));
-
   const updateItem = (idx, field, value) => {
     // Calls recalculateTotals with the updated field, which returns the new payload
     setPayload((prev) => recalculateTotals(prev, idx, field, value));
   };
-
   const addItem = () => {
     setPayload((prev) => {
       // Complete default item structure for new items
@@ -268,28 +261,27 @@ const GenerateAndPrintEinvoice = () => {
         "unit": "NOS",
         "unitPrice": 100,
         "irt": 18, // Default to 18%
-        "rt": 18, 
-        
+        "rt": 18,
+
         // Calculated fields (must be initialized to 0)
         "txval": 0, "sval": 0, "iamt": 0, "itmVal": 0,
-        
+
         // Other default/placeholder fields
-        "disc": 0, "othchrg": 0, "camt": 0, "csamt": 0, "srt": 0, "crt": 0, "stcsamt": 0, 
+        "disc": 0, "othchrg": 0, "camt": 0, "csamt": 0, "srt": 0, "crt": 0, "stcsamt": 0,
         "cesNonAdval": 0, "stCesNonAdvl": 0, "freeQty": 0, "preTaxVal": 0, "isServc": null,
-        "barcde": null, "prdSlNo": null, "txp": null, "bchnm": null, "bchExpDt": null, 
-        "bchWrDt": null, "ordLineRef": null, "orgCntry": null, 
+        "barcde": null, "prdSlNo": null, "txp": null, "bchnm": null, "bchExpDt": null,
+        "bchWrDt": null, "ordLineRef": null, "orgCntry": null,
         // Generic item fields
-        "itmgen1": null, "itmgen2": null, "itmgen3": null, "itmgen4": null, "itmgen5": null, 
+        "itmgen1": null, "itmgen2": null, "itmgen3": null, "itmgen4": null, "itmgen5": null,
         "itmgen6": null, "itmgen7": null, "itmgen8": null, "itmgen9": null, "itmgen10": null,
         "invItmOtherDtls": []
       };
-      
+
       const updatedPayload = { ...prev, itemList: [...prev.itemList, newItem] };
       // Recalculate all totals based on the new list (no specific field change needed)
       return recalculateTotals(updatedPayload);
     });
   };
-
   const removeItem = (idx) => {
     setPayload((prev) => {
       const items = prev.itemList.filter((_, i) => i !== idx);
@@ -300,10 +292,25 @@ const GenerateAndPrintEinvoice = () => {
   };
   // ---
 
+  // New function to store document number and einvId
+  const storeEinv = (apiResponse) => {
+    // Note: 'payload' is accessible here via closure, which is okay for this component scope.
+    // However, if we were aiming for a fully pure function, payload should be passed in.
+    if (!apiResponse?.id || !payload?.no) return;
+    const entry = {
+      docNo: payload.no?.trim(), // Document Number
+      einvId: String(apiResponse.id), // Einv ID
+      createdAt: new Date().toISOString(),
+    };
+    const existing = JSON.parse(localStorage.getItem(EINV_DOC_KEY)) || [];
+    // Remove duplicates based on docNo or einvId
+    const filtered = existing.filter(e => e.docNo !== entry.docNo && e.einvId !== entry.einvId);
+    localStorage.setItem(EINV_DOC_KEY, JSON.stringify([...filtered, entry]));
+  };
+
   const saveResponseForAutoPopulate = (data) => {
     if (!data?.response) return;
     const responseData = data.response;
-
     if (responseData.id) {
       try {
         localStorage.setItem(LAST_GENERATED_ID_KEY, String(responseData.id));
@@ -312,7 +319,6 @@ const GenerateAndPrintEinvoice = () => {
         console.warn('Could not save generated id to localStorage', e);
       }
     }
-
     const sharedData = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
     sharedData.companyId = '24';
     sharedData.token = token;
@@ -330,31 +336,25 @@ const GenerateAndPrintEinvoice = () => {
     }));
 
     localStorage.setItem(LAST_IRN_KEY, JSON.stringify({ irn: responseData.irn, timestamp: new Date().toISOString() }));
-
     if (responseData.signedQrCode) {
       localStorage.setItem(LAST_SIGNED_QR_JWT_KEY, responseData.signedQrCode);
     }
-
     localStorage.setItem(LAST_EWB_DETAILS_KEY, JSON.stringify({
       ewbNo: responseData.ewbNo || '',
       ewbDate: responseData.ewbDate || '',
       timestamp: new Date().toISOString()
     }));
-
     setLastInvoice?.(responseData.irn, payload.userGstin, payload.no, payload.dt, payload.docType);
   };
-
   const handleGenerate = async () => {
     if (!token) return alert("Login required!");
-
     setLoading(true);
     setResponse(null);
-
     try {
       // Ensure final totals are calculated one last time before sending
       // This is crucial if a global field (like discount) was changed just before clicking generate
-      setPayload(prev => recalculateTotals(prev)); 
-      
+      setPayload(prev => recalculateTotals(prev));
+
       const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
         method: "POST",
         headers: {
@@ -365,14 +365,16 @@ const GenerateAndPrintEinvoice = () => {
         },
         body: JSON.stringify(payload),
       });
-
       const data = await res.json();
       setResponse(data);
-
       if (data.status === "SUCCESS" && data.response?.irn) {
         saveResponseForAutoPopulate(data);
-          console.log("responsedata",data)
-             localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
+        console.log("responsedata",data)
+        // BEGIN NEW CODE ADDED BY USER
+        storeEinv(data.response);
+        // END NEW CODE ADDED BY USER
+
+        localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
         alert(`IRN Generated Successfully!\nIRN: ${data.response.irn}\nAck No: ${data.response.ackNo}`);
       } else if (data.status === "FAILURE") {
         const errorMsg = data.errors?.[0]?.msg || "Unknown error";
@@ -385,10 +387,8 @@ const GenerateAndPrintEinvoice = () => {
       setLoading(false);
     }
   };
-
   const downloadPDF = async () => {
     if (!payload.lastGeneratedId) return;
-
     try {
       const resp = await axios.get(
         `http://localhost:3001/proxy/einvoice/print?template=${template}&id=${payload.lastGeneratedId}`,
@@ -397,7 +397,6 @@ const GenerateAndPrintEinvoice = () => {
           responseType: "blob",
         }
       );
-
       const url = window.URL.createObjectURL(new Blob([resp.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -405,19 +404,16 @@ const GenerateAndPrintEinvoice = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-
       setPdfMessage("PDF downloaded successfully.");
     } catch (error) {
       setPdfMessage("Failed to download PDF.");
       console.error(error);
     }
   };
-
   return (
     <div style={tableStyles.container}>
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <h1 style={tableStyles.header}>Generate & Print E-Invoice</h1>
-
         {/* Invoice Header - 3 Columns */}
         <table style={tableStyles.table}>
           <thead>
@@ -450,7 +446,6 @@ const GenerateAndPrintEinvoice = () => {
             </tr>
           </tbody>
         </table>
-
         {/* Seller Details - 3 Columns */}
         <table style={tableStyles.table}>
           <thead>
@@ -473,7 +468,6 @@ const GenerateAndPrintEinvoice = () => {
             </tr>
           </tbody>
         </table>
-
         {/* Buyer Details - 3 Columns */}
         <table style={tableStyles.table}>
           <thead>
@@ -496,7 +490,6 @@ const GenerateAndPrintEinvoice = () => {
             </tr>
           </tbody>
         </table>
-
         {/* Item Details - Two-Column Cards */}
         <div style={{ marginBottom: "40px" }}>
           <table style={tableStyles.table}>
@@ -508,13 +501,11 @@ const GenerateAndPrintEinvoice = () => {
               </tr>
             </thead>
           </table>
-
           {payload.itemList.map((item, idx) => (
             <div key={idx} style={tableStyles.itemCard}>
               <div style={{ fontWeight: "bold", marginBottom: "16px", color: colors.primary, fontSize: "17px" }}>
                 Item {idx + 1} ({item.num})
               </div>
-
               <div style={tableStyles.twoColGrid}>
                 <div style={tableStyles.col}>
                   <LabeledInput label="Item Description" id={`prdNm-${idx}`} value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
@@ -527,7 +518,6 @@ const GenerateAndPrintEinvoice = () => {
                   <LabeledInput label="IGST Rate (%)" id={`irt-${idx}`} type="number" step="0.01" value={item.irt} onChange={(v) => updateItem(idx, "irt", v)} />
                 </div>
               </div>
-
               <div style={tableStyles.itemFooter}>
                 <div style={{ fontSize: "15px" }}>
                   <strong>Taxable:</strong> ₹{item.txval.toFixed(2)} &nbsp;|&nbsp;
@@ -538,12 +528,10 @@ const GenerateAndPrintEinvoice = () => {
               </div>
             </div>
           ))}
-
           <div style={{ textAlign: "right", marginTop: "30px" }}>
             <button style={tableStyles.btnGreen} onClick={addItem}>+ Add New Item</button>
           </div>
         </div>
-
         {/* Totals - 3 Columns */}
         <table style={tableStyles.table}>
           <thead>
@@ -552,16 +540,16 @@ const GenerateAndPrintEinvoice = () => {
             </tr>
           </thead>
           <tbody>
-             <tr>
+            <tr>
               <td style={{ ...tableStyles.td }}>Global Discount</td>
               <td style={{ ...tableStyles.td, textAlign: "right" }}>
-                <LabeledInput 
-                  label="Total Discount (₹)" 
-                  id="totdisc" 
-                  type="number" 
-                  step="0.01" 
-                  value={payload.totdisc} 
-                  onChange={(v) => setPayload(prev => recalculateTotals({...prev, totdisc: v}))} 
+                <LabeledInput
+                  label="Total Discount (₹)"
+                  id="totdisc"
+                  type="number"
+                  step="0.01"
+                  value={payload.totdisc}
+                  onChange={(v) => setPayload(prev => recalculateTotals({...prev, totdisc: v}))}
                 />
               </td>
               <td style={tableStyles.td}></td>
@@ -569,13 +557,13 @@ const GenerateAndPrintEinvoice = () => {
             <tr>
               <td style={{ ...tableStyles.td }}>Other Charges</td>
               <td style={{ ...tableStyles.td, textAlign: "right" }}>
-                <LabeledInput 
-                  label="Total Other Charges (₹)" 
-                  id="totothchrg" 
-                  type="number" 
-                  step="0.01" 
-                  value={payload.totothchrg} 
-                  onChange={(v) => setPayload(prev => recalculateTotals({...prev, totothchrg: v}))} 
+                <LabeledInput
+                  label="Total Other Charges (₹)"
+                  id="totothchrg"
+                  type="number"
+                  step="0.01"
+                  value={payload.totothchrg}
+                  onChange={(v) => setPayload(prev => recalculateTotals({...prev, totothchrg: v}))}
                 />
               </td>
               <td style={tableStyles.td}></td>
@@ -597,13 +585,11 @@ const GenerateAndPrintEinvoice = () => {
             </tr>
           </tbody>
         </table>
-
         {/* Actions */}
         <div style={{ textAlign: "center", margin: "50px 0" }}>
           <button style={tableStyles.btnGenerate(loading, token)} onClick={handleGenerate} disabled={loading || !token}>
             {loading ? "Generating IRN..." : "Generate IRN & E-Invoice"}
           </button>
-
           {payload.lastGeneratedId && (
             <div style={{ marginTop: "40px" }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "30px", flexWrap: "wrap", justifyContent: "center" }}>
@@ -626,7 +612,6 @@ const GenerateAndPrintEinvoice = () => {
             </div>
           )}
         </div>
-
         {/* API Response */}
         {response && (
           <div>
