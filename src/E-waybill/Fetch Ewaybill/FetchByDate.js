@@ -44,7 +44,9 @@ const FetchByDate = () => {
         latestEwb?.response?.ewbDate?.split(" ")[0] || "";
       setDate(lastDate);
 
-      const lastGstin = latestEwb?.fromGstin || "";
+      const lastGstin = latestEwb?.response
+?.fromGstin ||latestEwb ?.lastResponse?.response
+?.companyUniqueCode || "";
       setUserGstin(lastGstin);
     } catch (err) {
       console.error("LocalStorage parse error:", err);

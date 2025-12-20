@@ -71,7 +71,7 @@ const EwaybillActions = () => {
       token: login.fullResponse?.response?.token || "" || "",
       headerCompanyId: login.fullResponse?.response?.companyid || "",
       userGstin: latestEwb?.response?.fromGstin || "",
-      payloadCompanyId: latestEwb?.response?.companyId || "",
+      payloadCompanyId: latestEwb?.response?.companyId ||  "",
     });
 
     setForm((prev) => ({
@@ -87,6 +87,7 @@ const EwaybillActions = () => {
       fromPincode: latestEwb?.response?.fromPincode || "",
       userGstin: latestEwb?.response?.fromGstin || "",                    
       companyId: latestEwb?.response?.companyId || "",
+      payloadCompanyId: latestEwb?.response?.companyId ||  ""
     }));
   }, []);
 

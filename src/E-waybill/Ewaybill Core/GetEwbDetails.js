@@ -62,8 +62,14 @@ const GetEwbDetails = () => {
   // 🔵 Save Latest Auto-Population
   // --------------------------------------------------
   const saveLatest = (data) => {
-    localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(data));
-  };
+  if (!data || typeof data !== "object") {
+    console.warn("saveLatest: invalid data", data);
+    return;
+  }
+
+  localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(data));
+  console.log("saveLatest: saved data →", data);
+};
 
   const handleFetchDetails = async () => {
     // ------------------------
