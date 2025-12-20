@@ -7,7 +7,7 @@ const STORAGE_KEY = "iris_einvoice_response";
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
 const EINV_DOC_KEY = "iris_einv_doc_map";
 
-// Helper to convert DD/MM/YYYY to YYYY-MM-DD (ISO format)
+// Helper to convert DD/MM/YYYY to YYYY-MM-DD (ISO format for input[type="date"])
 const convertDMYToYMD = (dateStr) => {
     if (!dateStr || dateStr.includes('-')) return dateStr;
     const parts = dateStr.split('/');
@@ -23,7 +23,7 @@ const convertYMDToDMY = (dateStr) => {
     return dateStr;
 };
 
-// Helper to simulate storing IRN data (included for testing context)
+// Helper to simulate storing IRN data (for initial testing purposes)
 const updateLocalStorageDocMap = (docNo, ackDt) => {
     try {
         const existingMap = JSON.parse(localStorage.getItem(EINV_DOC_KEY) || "[]");
@@ -36,7 +36,6 @@ const updateLocalStorageDocMap = (docNo, ackDt) => {
         if (!exists) {
             existingMap.push(newEntry);
             localStorage.setItem(EINV_DOC_KEY, JSON.stringify(existingMap));
-            console.log(`Successfully stored DocNo ${docNo} in Local Storage.`);
         }
     } catch (e) {
         console.error("Failed to update Local Storage document map:", e);
@@ -47,9 +46,6 @@ const updateLocalStorageDocMap = (docNo, ackDt) => {
 const ListEInvoices = () => {
     const [docMap, setDocMap] = useState([]);
 
-    /* -------------------------
-        Headers
-    ------------------------- */
     const [headers, setHeaders] = useState({
         accept: "application/json",
         companyId: "",
@@ -58,14 +54,11 @@ const ListEInvoices = () => {
         "Content-Type": "application/json",
     });
 
-    /* -------------------------
-        Payload (Dates stored in YYYY-MM-DD for UI calendar compatibility)
-    ------------------------- */
     const [payload, setPayload] = useState({
         companyUniqueCode: "", 
         docNo: ["1s4345"], 
-        fromDt: convertDMYToYMD("20/12/2025"), // Stored as "2025-12-20"
-        toDt: convertDMYToYMD("20/12/2025"),   // Stored as "2025-12-20"
+        fromDt: convertDMYToYMD("20/12/2025"), 
+        toDt: convertDMYToYMD("20/12/2025"),   
         btrdNm: "Aamir Traders",
         catg: ["B2B"],
         docType: ["RI"],
@@ -82,37 +75,41 @@ const ListEInvoices = () => {
     const [loading, setLoading] = useState(false);
     const [response, setResponse] = useState(null);
 
-    /* -------------------------
-        Helper to get documents within a date range (Handles filtering)
-    ------------------------- */
+    /* ----------------------------------------------------
+        FIXED Helper to get documents within a date range 
+        Considers full datetime of documents
+    ---------------------------------------------------- */
     const getDocNumbersByDateRange = (map, fromDt, toDt) => {
-        // Since fromDt/toDt are now guaranteed to be YYYY-MM-DD, parsing is simpler
-        const parseDate = (dateStr) => {
-            if (!dateStr) return null;
-            return new Date(dateStr); // New Date handles YYYY-MM-DD natively
+        const parseInputDate = (dateInput) => {
+            if (!dateInput) return null;
+            if (dateInput.includes('-')) return new Date(dateInput);
+            if (dateInput.includes('/')) {
+                const parts = dateInput.split('/');
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            return null;
         };
 
-        const fromDate = parseDate(fromDt);
-        const toDate = parseDate(toDt);
+        const fromDateObj = parseInputDate(fromDt);
+        const toDateObj = parseInputDate(toDt);
 
-        if (isNaN(fromDate) || isNaN(toDate)) {
-            console.warn("Invalid date format detected. Cannot filter documents.");
-            return []; 
+        if (!fromDateObj || !toDateObj) {
+            console.warn("Invalid date range detected.");
+            return [];
         }
 
+        // Include full 'to' date
+        const startTimestamp = fromDateObj.getTime();
+        const endTimestamp = toDateObj.getTime() + 24*60*60*1000 - 1;
+
         const filteredDocs = map.filter(entry => {
-            const entryDate = new Date(entry.createdAt);
-            if (isNaN(entryDate)) return false;
-
-            // Normalize comparison dates to the start of the day
-            const entryDateOnly = new Date(entryDate.getFullYear(), entryDate.getMonth(), entryDate.getDate());
-            const startOfFromDate = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
-            const startOfToDate = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate());
-
-            return entryDateOnly >= startOfFromDate && entryDateOnly <= startOfToDate;
+            const entryDateObj = parseInputDate(entry.createdAt);
+            if (!entryDateObj) return false;
+            const entryTimestamp = entryDateObj.getTime();
+            return entryTimestamp >= startTimestamp && entryTimestamp <= endTimestamp;
         });
 
-        return filteredDocs.map(entry => entry.docNo); 
+        return filteredDocs.map(entry => entry.docNo);
     };
 
 
@@ -123,11 +120,11 @@ const ListEInvoices = () => {
         const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
         const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
         
-        // --- SIMULATE DATA POPULATION ---
         if (!localStorage.getItem(EINV_DOC_KEY)) {
             updateLocalStorageDocMap("1s4345", "2025-12-20 20:57:36");
+            updateLocalStorageDocMap("987654", "2024-12-20 10:00:00");
+            updateLocalStorageDocMap("111111", "2025-11-15 05:00:00");
         }
-        // --------------------------------
 
         try {
             const loadedDocMap = JSON.parse(localStorage.getItem(EINV_DOC_KEY) || "[]");
@@ -150,27 +147,31 @@ const ListEInvoices = () => {
     }, []);
 
     /* -------------------------
-        Helpers
+        Helpers (Update payload and constraints)
     ------------------------- */
     const updateHeader = (k, v) => setHeaders((p) => ({ ...p, [k]: v }));
     
     const updatePayload = (k, v) => {
         setPayload((p) => {
             let newPayload = { ...p, [k]: v };
+            let updatedFromDt = newPayload.fromDt;
+            let updatedToDt = newPayload.toDt;
 
-            // Logic to auto-populate docNo when dates change
+            const newDate = new Date(v);
+            
+            if (k === "fromDt" && newDate > new Date(p.toDt)) {
+                newPayload.toDt = v;
+                updatedToDt = v;
+            } else if (k === "toDt" && newDate < new Date(p.fromDt)) {
+                newPayload.fromDt = v;
+                updatedFromDt = v;
+            }
+
             if (k === "fromDt" || k === "toDt") {
-                const fromDt = k === "fromDt" ? v : p.fromDt;
-                const toDt = k === "toDt" ? v : p.toDt;
-
-                if (fromDt && toDt && docMap.length > 0) {
-                    const docsArray = getDocNumbersByDateRange(docMap, fromDt, toDt);
+                if (updatedFromDt && updatedToDt && docMap.length > 0) {
+                    const docsArray = getDocNumbersByDateRange(docMap, updatedFromDt, updatedToDt);
                     newPayload.docNo = docsArray; 
-                    
-                    console.log(`Dates changed to ${fromDt} - ${toDt}. Auto-populated Docs: ${docsArray.join(', ')}`);
-
-                } else if (docMap.length === 0) {
-                    console.log("Document map is empty. Cannot auto-populate docNo.");
+                    console.log(`Dates changed to ${updatedFromDt} - ${updatedToDt}. Auto-populated Docs: ${docsArray.join(', ')}`);
                 }
             }
 
@@ -179,10 +180,13 @@ const ListEInvoices = () => {
     };
 
     const updateArray = (k, v) =>
-        setPayload((p) => ({ ...p, [k]: v.split(",").map((i) => i.trim()).filter(i => i) }));
+        setPayload((p) => ({ 
+            ...p, 
+            [k]: v.split(",").map((i) => i.trim()).filter(i => i) 
+        }));
 
     /* -------------------------
-        API Call (MODIFIED: Convert dates to DD/MM/YYYY here)
+        API Call (Converts YYYY-MM-DD state to DD/MM/YYYY for API)
     ------------------------- */
     const fetchInvoices = async () => {
         if (!payload.companyUniqueCode) { 
@@ -192,20 +196,17 @@ const ListEInvoices = () => {
         setLoading(true);
         setResponse(null);
 
-        // 1. Create a temporary payload copy
         const finalPayload = { ...payload };
-
-        // 2. CONVERT DATES to DD/MM/YYYY for the API
         finalPayload.fromDt = convertYMDToDMY(payload.fromDt);
         finalPayload.toDt = convertYMDToDMY(payload.toDt);
 
-        console.log("Sending Payload:", finalPayload); // Check the format here
+        console.log("Sending Payload:", finalPayload); 
 
         try {
             const res = await fetch("http://localhost:3001/proxy/einvoice/view", {
                 method: "POST",
                 headers,
-                body: JSON.stringify(finalPayload), // Use the converted payload
+                body: JSON.stringify(finalPayload),
             });
 
             const data = await res.json();
@@ -218,7 +219,7 @@ const ListEInvoices = () => {
     };
 
     /* -------------------------
-        UI (Uses type="date")
+        UI (Unchanged)
     ------------------------- */
     return (
         <div style={{ padding: 30, background: "#f1f8e9", minHeight: "100vh" }}>
@@ -255,17 +256,27 @@ https://stage-api.irisgst.com/irisgst/onyx/einvoice/view
                 </Row>
 
                 <Row label="From Date">
-                    <input type="date" value={payload.fromDt} onChange={(e) => updatePayload("fromDt", e.target.value)} />
+                    <input 
+                        type="date" 
+                        value={payload.fromDt} 
+                        onChange={(e) => updatePayload("fromDt", e.target.value)} 
+                        max={payload.toDt} 
+                    />
                 </Row>
 
                 <Row label="To Date">
-                    <input type="date" value={payload.toDt} onChange={(e) => updatePayload("toDt", e.target.value)} />
+                    <input 
+                        type="date" 
+                        value={payload.toDt} 
+                        onChange={(e) => updatePayload("toDt", e.target.value)} 
+                        min={payload.fromDt} 
+                    />
                 </Row>
 
                 <Row label="Buyer Trade Name">
                     <input value={payload.btrdNm} onChange={(e) => updatePayload("btrdNm", e.target.value)} />
                 </Row>
-                {/* ... (other payload rows remain the same) */}
+                
                 <Row label="Category">
                     <input value={payload.catg.join(",")} onChange={(e) => updateArray("catg", e.target.value)} />
                 </Row>
