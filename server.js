@@ -17,30 +17,30 @@ const BASE_URL = "https://stage-api.irisgst.com";
 /* =======================
     DATABASE CONFIG & CONNECTION
 ======================= */
-const dbConfig = {
-    server: "DESKTOP-BUGKGO7",
-    database: "EWayBillDB",
-    user: "nodeuser",
-    password: "Node@123",
-    options: {
-        encrypt: false,
-        trustServerCertificate: true
-    }
-};
+//const dbConfig = {
+  //  server: "DESKTOP-BUGKGO7",
+    //database: "EWayBillDB",
+    //user: "nodeuser",
+    //password: "Node@123",
+    //options: {
+      //  encrypt: false,
+        //trustServerCertificate: true
+    //}
+//};
 
 // Global Connection Pool Promise
-const poolPromise = new sql.ConnectionPool(dbConfig)
-    .connect()
-    .then(pool => {
-        console.log("✅ Connected to SQL Server");
-        // Store the pool object on the app for access in route handlers
-        app.set("dbPool", pool);
-        return pool;
-    })
-    .catch(err => {
-        console.error("❌ DB connection failed:", err.message);
-        process.exit(1);
-    });
+//const poolPromise = new sql.ConnectionPool(dbConfig)
+  //  .connect()
+    //.then(pool => {
+      //  console.log("✅ Connected to SQL Server");
+        //// Store the pool object on the app for access in route handlers
+        //app.set("dbPool", pool);
+        //return pool;
+    //})
+    //.catch(err => {
+      //  console.error("❌ DB connection failed:", err.message);
+       // process.exit(1);
+    //});
 
 /* =======================
     CONTROLLERS (USER-PROVIDED DIRECT SQL)
@@ -52,31 +52,31 @@ const poolPromise = new sql.ConnectionPool(dbConfig)
 /**
  * 2️⃣ Get record BY ID (using Stored Procedure)
  */
-const getEwayBillById = async (req, res) => {
-    try {
-        const pool = await poolPromise;
-        const result = await pool
-            .request()
-            .input("Id", req.params.id) 
-            .execute("dbo.sp_GetEWayBillById");
+//const getEwayBillById = async (req, res) => {
+  //  try {
+    //    const pool = await poolPromise;
+      //  const result = await pool
+      //      .request()
+        //    .input("Id", req.params.id) 
+          //  .execute("dbo.sp_GetEWayBillById");
 
-        const ewayBillHeader = result.recordsets[0];
-        const ewayBillItems = result.recordsets[1];
+        //const ewayBillHeader = result.recordsets[0];
+        //const ewayBillItems = result.recordsets[1];
 
-        if (ewayBillHeader.length === 0) {
-            return res.status(404).json({ message: "Record not found" });
-        }
+        //if (ewayBillHeader.length === 0) {
+          //  return res.status(404).json({ message: "Record not found" });
+        //}
         
-        res.json({
-            ...ewayBillHeader[0], 
-            items: ewayBillItems 
-        });
+        //res.json({
+          //  ...ewayBillHeader[0], 
+           // items: ewayBillItems 
+        //});
         
-    } catch (err) {
-        console.error("DB Error in getEwayBillById:", err);
-        res.status(500).json({ message: "DB Error" });
-    }
-};
+   // } catch (err) {
+     //   console.error("DB Error in getEwayBillById:", err);
+       // res.status(500).json({ message: "DB Error" });
+    //}
+//};
 
 /* =======================
     MIDDLEWARE
@@ -109,7 +109,7 @@ const upload = multer();
 /**
  * 2️⃣ Get record BY ID (using new direct SQL controller)
  */
-app.get("/api/ewaybill/:id", getEwayBillById);
+//app.get("/api/ewaybill/:id", getEwayBillById);
 
 
 // ===============================
