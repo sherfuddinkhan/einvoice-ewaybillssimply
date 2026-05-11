@@ -6,7 +6,7 @@ const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 
 const EWayBillLoginPage = () => {
   const [email, setEmail] = useState("eway@gmail.com");
-  const [password, setPassword] = useState("Abcd@12345");
+  const [password, setPassword] = useState("Abcd@123khan");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 

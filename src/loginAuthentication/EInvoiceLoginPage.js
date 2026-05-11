@@ -7,7 +7,7 @@ const STORAGE_KEY = "iris_einvoice_response";
 const EInvoiceLoginPage = () => {
   const STORAGE_KEY = "iris_einvoice_response";
   const [email, setEmail] = useState("ateeq@calibrecue.com");
-  const [password, setPassword] = useState("Abcd@1234567");
+  const [password, setPassword] = useState("Abcd@123khan");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 
