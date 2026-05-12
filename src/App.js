@@ -27,7 +27,7 @@ import Dashboard from "./components/Dashboard";
 /* =======================
    E-INVOICE
 ======================= */
-import EinvEwayfeildsDisplay from "./E-invoice/Einv&EwayfeildsDisplay";
+import EinvfeildsDisplay from "./E-invoice/EinvfeildsDisplay";
 import GenerateAndPrintEinvoice from "./E-invoice/E-invoice&IRN/GenerateAndPrintEinvoice";
 import CancelIRN from "./E-invoice/E-invoice&IRN/CancelIRN";
 import GetInvByIrn from "./E-invoice/E-invoice&IRN/GetInvByIrn";
@@ -46,6 +46,7 @@ import ListEInvoices from "./E-invoice/Viewinvoice/ListEInvoices";
 /* =======================
    E-WAY BILL
 ======================= */
+import EwayfeildsDisplay from "./E-waybill/EwayfeildsDisplay";
 import EwbGenerateAndPrint from "./E-waybill/Ewaybill Core/EwbGenerateAndPrint";
 import FetchEWBbyNumber from "./E-waybill/Ewaybill Core/FetchEWBbyNumber";
 import GetEwbDetails from "./E-waybill/Ewaybill Core/GetEwbDetails";
@@ -98,8 +99,8 @@ const App = () => {
 
   if (!isAuthReady) return <div>Loading authentication...</div>;
 
-  const EWAY_DEFAULT = "/ewaybill/ewb-generate-print";
-  const EINVOICE_DEFAULT = "/einvoice/generate-print";
+  const EWAY_DEFAULT = "/ewaybill/eway-display";
+  const EINVOICE_DEFAULT = "/einvoice/einvoice-display";
 
   return (
     <Router>
@@ -129,14 +130,8 @@ const App = () => {
         />
 
         {/* ================= E-WAY BILL ================= */}
-        <Route
-          path="/ewaybill"
-          element={
-            <RequireAuth product="EWAY">
-              <Layout />
-            </RequireAuth>
-          }
-        >
+        <Route path="/ewaybill" element={<RequireAuth product="EWAY"> <Layout /> </RequireAuth> }>
+          <Route path="eway-display" element={<EwayfeildsDisplay/>} />
           <Route path="ewb-generate-print" element={<EwbGenerateAndPrint />} />
           <Route path="fetch-ewb" element={<FetchEWBbyNumber />} />
           <Route path="ewb-details" element={<GetEwbDetails />} />
@@ -171,16 +166,10 @@ const App = () => {
         </Route>
 
         {/* ================= E-INVOICE ================= */}
-        <Route
-          path="/einvoice"
-          element={
-            <RequireAuth product="EINVOICE">
-              <Layout />
-            </RequireAuth>
-          }
-        >
+        <Route path="/einvoice" element={<RequireAuth product="EINVOICE"> <Layout /> </RequireAuth>}>
 
-          <Route path="einvoice-eway-display" element={<EinvEwayfeildsDisplay />} />
+          
+          <Route path="einvoice-display" element={<EinvfeildsDisplay />} />
           <Route path="generate-print" element={<GenerateAndPrintEinvoice />} />
           <Route path="cancel-irn" element={<CancelIRN />} />
           <Route path="get-by-irn" element={<GetInvByIrn />} />

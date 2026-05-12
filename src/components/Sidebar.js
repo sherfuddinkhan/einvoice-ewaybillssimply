@@ -66,6 +66,7 @@ const Sidebar = () => {
       title: "E-Way Bill Core",
       product: "EWAY",
       items: [
+        { path: "/ewaybill/eway-display",label: "E-Waybill Fields" },
         { path: "/ewaybill/ewb-generate-print", label: "Generate & Print" },
         { path: "/ewaybill/fetch-ewb", label: "Fetch by EWB No" },
         { path: "/ewaybill/ewb-details", label: "Get EWB Details" },
@@ -134,23 +135,11 @@ const Sidebar = () => {
       product: "EINVOICE",
       items: [{ path: "/einvoice/change-password", label: "Change Password" }],
     },
-
-  {
-    title: "Display",
-    product: "EINVOICE",
-    items: [
-      {
-        path: "/einvoice/einvoice-eway-display",
-        label: "E-Invoice & E-Way Fields"
-      }
-    ]
-  },
-
     {
       title: "E-Invoice Core",
       product: "EINVOICE",
       items: [
-        
+        { path: "/einvoice/einvoice-display",label: "E-Invoice Fields" },
         { path: "/einvoice/generate-print", label: "Generate Invoice and print" },
         { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
         { path: "/einvoice/get-by-irn", label: "Get by IRN" },

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const EinvEwayfeildsDisplay = () => {
+const EinvfeildsDisplay = () => {
 
   const navigate = useNavigate();
 
@@ -45,13 +45,16 @@ const EinvEwayfeildsDisplay = () => {
   // NAVIGATION ACTIONS
   // =========================
 
-  const handleGenerateEway = (row) => {
-    navigate("/ewaybill", { state: row });
-  };
+const handleGenerateEinvoice = (row) => {
 
-  const handleGenerateEinvoice = (row) => {
-    navigate("/einvoice", { state: row });
-  };
+navigate("/einvoice/generate-print", {
+  state: {
+    invoiceData: row,
+    id: row.pid
+  }
+});
+
+};
 
   return (
     <div style={styles.container}>
@@ -121,14 +124,6 @@ const EinvEwayfeildsDisplay = () => {
                   <td style={styles.actionTd}>
 
                     <div style={styles.buttonContainer}>
-
-                      <button
-                        style={styles.ewayBtn}
-                        onClick={() => handleGenerateEway(row)}
-                      >
-                        Generate E-Way
-                      </button>
-
                       <button
                         style={styles.einvoiceBtn}
                         onClick={() => handleGenerateEinvoice(row)}
@@ -153,59 +148,6 @@ const EinvEwayfeildsDisplay = () => {
           </tbody>
         </table>
       </div>
-
-      {/* PRODUCT DETAILS */}
-      {invoiceData.map((invoice, index) => (
-        <div key={index} style={styles.productSection}>
-
-          <h3 style={styles.productHeading}>
-            Product Details - {invoice.clientCompanyName}
-          </h3>
-
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
-
-              <thead>
-                <tr>
-                  <th style={styles.th}>Item</th>
-                  <th style={styles.th}>Desc</th>
-                  <th style={styles.th}>HSN</th>
-                  <th style={styles.th}>Qty</th>
-                  <th style={styles.th}>GST%</th>
-                  <th style={styles.th}>Total</th>
-                  <th style={styles.th}>After GST</th>
-                </tr>
-              </thead>
-
-              <tbody>
-
-                {invoice.invoiceProductDetails?.length > 0 ? (
-                  invoice.invoiceProductDetails.map((p, i) => (
-                    <tr key={i}>
-                      <td style={styles.td}>{p.itemName}</td>
-                      <td style={styles.td}>{p.description}</td>
-                      <td style={styles.td}>{p.hsncode}</td>
-                      <td style={styles.td}>{p.quantity}</td>
-                      <td style={styles.td}>{p.gstPer}</td>
-                      <td style={styles.td}>{p.totalAmount}</td>
-                      <td style={styles.td}>{p.afterGSTAmount}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" style={styles.noData}>
-                      No Product Details
-                    </td>
-                  </tr>
-                )}
-
-              </tbody>
-
-            </table>
-          </div>
-        </div>
-      ))}
-
     </div>
   );
 };
@@ -311,4 +253,4 @@ const styles = {
   }
 };
 
-export default EinvEwayfeildsDisplay;
+export default EinvfeildsDisplay;

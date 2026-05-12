@@ -970,7 +970,7 @@ app.get("/api/invoices", async (req, res) => {
 
         const response = await axios.get(
 
-            "https://development.myschoolzone.in/api/Invoice/GetInvoicesListOfSalesOrderForBulkExport/10/11",
+            "https://development.myschoolzone.in/api/Invoice/GetInvoicesListOfSalesOrderForBulkExport/10/6",
 
             {
 
@@ -1046,7 +1046,61 @@ app.get("/api/invoices", async (req, res) => {
     }
 });
 
+// ======================================
+// GET E-INVOICE / E-WAY BY ID
+// ======================================
 
+// ===============================
+// FETCH INVOICE BY ID API
+// ===============================
+
+const axios = require("axios");
+
+const TOKEN =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6IjFiYTRjNGEwLWEwZDYtNGYxZC04YjE2LWVhODRjZDUzMGMwZSIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3Nzg2MDg1ODcsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.6vsB7mf09UPW29wFRkUco0ZOVruFwpej_0Zqq73R67I";
+
+app.get("/api/invoice/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    console.log("Fetching Invoice ID:", id);
+
+    const response = await axios.get(
+      `https://ams.calibrecue.com/api/Invoice/${id}/5/EMPTY`,
+      {
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Invoice Response Success");
+
+    res.status(200).json({
+      success: true,
+      data: response.data,
+    });
+  } catch (error) {
+    console.log("=========== API ERROR ===========");
+
+    console.log("MESSAGE:");
+    console.log(error.message);
+
+    console.log("STATUS:");
+    console.log(error.response?.status);
+
+    console.log("DATA:");
+    console.log(error.response?.data);
+
+    res.status(error.response?.status || 500).json({
+      success: false,
+      message: "Failed to fetch invoice",
+      error: error.message,
+      data: error.response?.data || null,
+    });
+  }
+});
 
 /* =====================================================
     SERVER START

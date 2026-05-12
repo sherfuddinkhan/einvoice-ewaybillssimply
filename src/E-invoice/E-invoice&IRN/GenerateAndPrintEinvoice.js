@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../../components/AuthContext";
+import { useLocation } from "react-router-dom";
 
 const colors = {
   primary: "#1A73E8",
@@ -95,6 +96,36 @@ const GenerateAndPrintEinvoice = () => {
   const [response, setResponse] = useState(null);
   const [template, setTemplate] = useState("STANDARD");
   const [pdfMessage, setPdfMessage] = useState("");
+  
+ const location = useLocation();
+
+
+
+// =========================
+// GET DATA FROM PREVIOUS PAGE
+// =========================
+
+const receivedData = location.state || {};
+
+console.log("Received Data:", receivedData);
+
+// =========================
+// EXTRACT VALUES
+// =========================
+
+const invoiceData = receivedData.invoiceData || {};
+
+const dynamicId = receivedData.id || invoiceData.pid;
+
+console.log("Dynamic ID:", dynamicId);
+
+console.log(
+  "Invoice Product Details:",
+  invoiceData?.invoiceProductDetails
+);
+
+
+  console.log("Received Data1:",location.state.invoiceData.invoiceProductDetails);
 
   // --- Core Calculation Logic to ensure consistency ---
   const recalculateTotals = (currentPayload, idx, fieldChanged, value) => {
@@ -209,38 +240,225 @@ const GenerateAndPrintEinvoice = () => {
     };
     const initialItems = [defaultItem];
     // Define the base payload structure
-    const basePayload = {
-      "userGstin": "01AAACI9260R002", "pobCode": null, "supplyType": "O", "ntr": "Inter", "docType": "RI", "catg": "B2B", "dst": "O", "trnTyp": "REG",
-      "no": "12345", "dt": "13-11-2025", "refinum": null, "refidt": null, "pos": "27", "diffprcnt": null, "etin": null, "rchrg": "N",
-      "sgstin": "01AAACI9260R002", "strdNm": "TEST Company", "slglNm": "TEST PROD", "sbnm": "Testing", "sflno": "ABC", "sloc": "BANGALOR32", "sdst": "BENGALURU", "sstcd": "01", "spin": "192233", "sph": "123456111111", "sem": "abc123@gmail.com",
-      "bgstin": "02AAACI9260R002", "btrdNm": "TEST ENTERPRISES", "blglNm": "TEST PRODUCT", "bbnm": "ABCD12345", "bflno": "abc", "bloc": "Jijamat", "bdst": "BANGALORE", "bstcd": "02", "bpin": "174001", "bph": "989898111111", "bem": "abc123@gmail.com",
-      "dgstin": null, "dtrdNm": null, "dlglNm": null, "dbnm": null, "dflno": null, "dloc": null, "ddst": null, "dstcd": null, "dpin": null, "dph": null, "dem": null,
-      "togstin": null, "totrdNm": null, "tolglNm": null, "tobnm": null, "toflno": null, "toloc": null, "todst": null, "tostcd": null, "topin": null, "toph": null, "toem": null,
-      "sbnum": null, "sbdt": null, "port": null, "expduty": 1234, "cntcd": null, "forCur": null, "invForCur": null,
-      "taxSch": "GST",
-      // Totals initialized to 0, or fixed non-item related charges
-      "totinvval": 0,
-      "totdisc": 10, // Hardcoded global discount
-      "totfrt": null, "totins": null, "totpkg": null,
-      "totothchrg": 20, // Hardcoded other charges
-      "tottxval": 0, "totiamt": 0, "totcamt": 0, "totsamt": 0, "totcsamt": 0, "totstcsamt": 0,
-      "rndOffAmt": 0, "sec7act": "N", "invStDt": null, "invEndDt": null, "invRmk": null, "omon": null, "odty": null,
-      "oinvtyp": "B2CL", "octin": null, "userIRN": null, "payNm": null, "acctdet": null, "pa": null, "mode": null, "ifsc": null,
-      "payTerm": null, "payInstr": null, "crTrn": null, "dirDr": null, "crDay": null, "balAmt": null, "paidAmt": null,
-      "payDueDt": null, "transId": null, "subSplyTyp": "Supply", "subSplyDes": null, "kdrefinum": null, "kdrefidt": null,
-      "transMode": null, "vehTyp": null, "transDist": "", "transName": null, "transDocNo": null, "transDocDate": null,
-      "vehNo": null, "clmrfnd": null, "rfndelg": null, "boef": null, "fy": null, "refnum": null, "pdt": null, "ivst": null,
-      "cptycde": null, "gen1": "abcd", "gen2": "abcd", "gen3": "abcd", "gen4": "abcd", "gen5": "abcd", "gen6": "abcd",
-      "gen7": "abcd", "gen8": "abcd", "gen9": "abcd", "gen10": "abcd", "gen11": "abcd", "gen12": "abcd", "gen13": "abcd",
-      "gen14": "PJTCG001", "gen15": "abcd", "gen16": "abcd", "gen17": "abcd", "gen18": "abcd", "gen19": "abcd", "gen20": "abcd",
-      "gen21": "abcd", "gen22": "abcd", "gen23": "abcd", "gen24": "abcd", "gen25": "abcd", "gen26": "abcd", "gen27": "abcd",
-      "gen28": "abcd", "gen29": "abcd", "gen30": "abcd", "pobewb": "Null", "pobret": "Null", "tcsrt": "null", "tcsamt": 0,
-      "pretcs": 0, "genIrn": true, "genewb": "N", "signedDataReq": true,
-      "itemList": initialItems,
-      "invOthDocDtls": [ { "url": "www.google.com", "docs": "This is the url", "infoDtls": "abcd" } ],
-      "invRefPreDtls": [ { "oinum": null, "oidt": null, "othRefNo": null } ],
-      "invRefContDtls": [ { "raref": null, "radt": null, "tendref": null, "contref": null, "extref": null, "projref": null, "poref": null, "porefdt": null } ]
-    };
+const basePayload = {
+  // =========================
+  // MAIN
+  // =========================
+
+  id: dynamicId,
+
+  userGstin:
+    invoiceData?.gstin &&
+    invoiceData.gstin.length === 15
+      ? invoiceData.gstin
+      : "01AAACI9260R002",
+
+  supplyType: "O",
+
+  ntr: "Inter",
+
+  docType: "RI",
+
+  catg: "B2B",
+
+  dst: "O",
+
+  trnTyp: "REG",
+
+  // =========================
+  // INVOICE DETAILS
+  // =========================
+
+  no: invoiceData?.purchaseOrder || "",
+
+  dt: invoiceData?.purchaseOrderDate
+    ? new Date(invoiceData.purchaseOrderDate)
+        .toLocaleDateString("en-GB")
+        .replace(/\//g, "-")
+    : "",
+
+  pos: "27",
+
+  rchrg: "N",
+
+  // =========================
+  // SELLER DETAILS
+  // =========================
+
+  sgstin: "01AAACI9260R002",
+
+  slglNm: "TEST PROD",
+
+  sbnm: "Testing",
+
+  sloc: "BANGALORE",
+
+  sstcd: "01",
+
+  spin: "192233",
+
+  // =========================
+  // BUYER DETAILS
+  // =========================
+
+  bgstin:
+    invoiceData?.gstin &&
+    invoiceData.gstin.length === 15
+      ? invoiceData.gstin
+      : "02AAACI9260R002",
+
+  blglNm:
+    invoiceData?.clientCompanyName || "",
+
+  bbnm:
+    invoiceData?.clientCompanyName || "",
+
+  bloc:
+    invoiceData?.officeAddress || "",
+
+  bdst:
+    invoiceData?.stateName || "",
+
+  bstcd: "02",
+
+  bpin:
+    invoiceData?.poBox || "500037",
+
+  bph:
+    invoiceData?.mobileNo || "",
+
+  bem:
+    invoiceData?.clientEmail || null,
+
+  // =========================
+  // VEHICLE
+  // =========================
+
+  vehNo:
+    invoiceData?.vehicleNo || null,
+
+  // =========================
+  // TOTALS
+  // =========================
+
+  totinvval:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) =>
+        sum + (item.afterGSTAmount || 0),
+      0
+    ) || 0,
+
+  totdisc: 0,
+
+  totothchrg: 0,
+
+  tottxval:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) =>
+        sum + (item.totalAmount || 0),
+      0
+    ) || 0,
+
+  totiamt:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) =>
+        sum + (item.igstAmount || 0),
+      0
+    ) || 0,
+
+  totcamt:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) =>
+        sum + (item.cgstAmount || 0),
+      0
+    ) || 0,
+
+  totsamt:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) =>
+        sum + (item.sgstAmount || 0),
+      0
+    ) || 0,
+
+  totcsamt: 0,
+
+  totstcsamt: 0,
+
+  taxSch: "GST",
+
+  genIrn: true,
+
+  genewb: "N",
+
+  signedDataReq: true,
+
+  // =========================
+  // ITEM LIST
+  // =========================
+
+  itemList:
+    invoiceData?.invoiceProductDetails?.map(
+      (item, index) => ({
+        num: String(index + 1).padStart(
+          5,
+          "0"
+        ),
+
+        hsnCd:
+          item?.hsncode &&
+          /^\d+$/.test(item.hsncode)
+            ? item.hsncode
+            : "1001",
+
+        prdNm:
+          item?.description ||
+          item?.itemName ||
+          "",
+
+        qty: item?.quantity || 0,
+
+        unit: item?.uom
+          ? item.uom.toUpperCase()
+          : "NOS",
+
+        unitPrice:
+          item?.quantityAmount || 0,
+
+        irt: item?.igstPer || 0,
+
+        rt: item?.gstPer || 0,
+
+        txval:
+          item?.totalAmount || 0,
+
+        sval:
+          item?.totalAmount || 0,
+
+        iamt:
+          item?.igstAmount || 0,
+
+        itmVal:
+          item?.afterGSTAmount || 0,
+
+        disc:
+          item?.invoiceDiscountAmount ||
+          0,
+
+        camt:
+          item?.cgstAmount || 0,
+
+        csamt:
+          item?.sgstAmount || 0,
+      })
+    ) || [],
+};
+
+
+
+
+
+
+console.log("Final Payload:", basePayload);
 
     // Calculate initial totals right away to populate the UI with correct values
     return recalculateTotals(basePayload);

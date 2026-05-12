@@ -18,7 +18,7 @@ useEffect(() => {
   if (isLoggedIn && product === "EWAY") {
     // Prevent redirect when already on /ewaybill-login
     if (window.location.pathname !== "/ewaybill-login") {
-      navigate("/ewb-generate-print", { replace: true });
+      navigate("/eway-display", { replace: true });
     }
   }
 }, [isLoggedIn, product, navigate]);
