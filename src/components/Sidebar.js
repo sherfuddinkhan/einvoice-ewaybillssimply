@@ -45,6 +45,9 @@ const Sidebar = () => {
       title: "Dashboard",
       items: [{ path: "/", label: "Dashboard" }],
     },
+
+      // ADD THIS SECTION
+
     {
       title: "Login / Switch",
       items: [
@@ -132,10 +135,22 @@ const Sidebar = () => {
       items: [{ path: "/einvoice/change-password", label: "Change Password" }],
     },
 
+  {
+    title: "Display",
+    product: "EINVOICE",
+    items: [
+      {
+        path: "/einvoice/einvoice-eway-display",
+        label: "E-Invoice & E-Way Fields"
+      }
+    ]
+  },
+
     {
       title: "E-Invoice Core",
       product: "EINVOICE",
       items: [
+        
         { path: "/einvoice/generate-print", label: "Generate Invoice and print" },
         { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
         { path: "/einvoice/get-by-irn", label: "Get by IRN" },

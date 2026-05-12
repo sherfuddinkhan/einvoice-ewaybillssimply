@@ -27,6 +27,7 @@ import Dashboard from "./components/Dashboard";
 /* =======================
    E-INVOICE
 ======================= */
+import EinvEwayfeildsDisplay from "./E-invoice/Einv&EwayfeildsDisplay";
 import GenerateAndPrintEinvoice from "./E-invoice/E-invoice&IRN/GenerateAndPrintEinvoice";
 import CancelIRN from "./E-invoice/E-invoice&IRN/CancelIRN";
 import GetInvByIrn from "./E-invoice/E-invoice&IRN/GetInvByIrn";
@@ -178,6 +179,8 @@ const App = () => {
             </RequireAuth>
           }
         >
+
+          <Route path="einvoice-eway-display" element={<EinvEwayfeildsDisplay />} />
           <Route path="generate-print" element={<GenerateAndPrintEinvoice />} />
           <Route path="cancel-irn" element={<CancelIRN />} />
           <Route path="get-by-irn" element={<GetInvByIrn />} />

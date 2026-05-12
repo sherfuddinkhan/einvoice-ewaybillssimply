@@ -948,6 +948,106 @@ app.get("/proxy/onyx/einvoice/details", async (req, res) => {
     }
 });
 
+// fetching the  external  APi  data
+
+// =========================
+// API
+// =========================
+
+const https = require("https");
+const agent = new https.Agent({
+
+    rejectUnauthorized: false
+
+});
+app.get("/api/invoices", async (req, res) => {
+
+    try {
+
+        console.log(
+            "Calling External API..."
+        );
+
+        const response = await axios.get(
+
+            "https://development.myschoolzone.in/api/Invoice/GetInvoicesListOfSalesOrderForBulkExport/10/11",
+
+            {
+
+                httpsAgent: agent,
+
+                headers: {
+
+                    accept: "text/plain"
+
+                }
+
+            }
+        );
+
+        console.log(
+            "SUCCESS RESPONSE:"
+        );
+
+        console.log(response.data);
+
+        res.status(200).json(
+            response.data
+        );
+
+    } catch (error) {
+
+        console.log(
+            "=========== ERROR ==========="
+        );
+
+        console.log(
+            "MESSAGE:"
+        );
+
+        console.log(error.message);
+
+        console.log(
+            "STATUS:"
+        );
+
+        console.log(
+            error.response?.status
+        );
+
+        console.log(
+            "DATA:"
+        );
+
+        console.log(
+            error.response?.data
+        );
+
+        console.log(
+            "FULL ERROR:"
+        );
+
+        console.log(error);
+
+        res.status(500).json({
+
+            success: false,
+
+            message:
+                error.message,
+
+            status:
+                error.response?.status,
+
+            data:
+                error.response?.data
+
+        });
+    }
+});
+
+
+
 /* =====================================================
     SERVER START
     ===================================================== */
