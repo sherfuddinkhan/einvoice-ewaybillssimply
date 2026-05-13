@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-
+import { useLocation } from "react-router-dom";
 /* ---------------------------
    LocalStorage keys
 --------------------------- */
@@ -21,40 +21,31 @@ const safeParse = (v, fallback = {}) => {
 
 const getLS = (k, fb = {}) => safeParse(localStorage.getItem(k), fb);
 const setLS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+/* ---------------------------
+   Component
+--------------------------- */
+const EwbGenerateAndPrint = () => {
 
-
+  
  const location = useLocation();
 
+  // ✅ received data
+  const receivedData = location.state || {};
 
+  console.log("Received Data:", receivedData);
 
-// =========================
-// GET DATA FROM PREVIOUS PAGE
-// =========================
+  // ✅ invoice data
+  const invoiceData = receivedData.invoiceData || {};
 
-const receivedData = location.state || {};
+  console.log("invoiceData",invoiceData)
 
-console.log("Received Data:", receivedData);
+  // ✅ dynamic id
+  const dynamicId = receivedData.id || invoiceData.pid;
+  console.log("toTrdName:",receivedData ?.clientCompanyName)
+  console.log("vehicleNo",receivedData?.vehicleNo);
+   console.log("hsncode",receivedData?.invoiceProductDetails?.hsncode);
 
-// =========================
-// EXTRACT VALUES
-// =========================
-
-const invoiceData = receivedData.invoiceData || {};
-
-const dynamicId = receivedData.id || invoiceData.pid;
-
-console.log("Dynamic ID:", dynamicId);
-
-console.log(
-  "Invoice Product Details:",
-  invoiceData?.invoiceProductDetails
-);
-
-  console.log("Received Data1:",location.state.invoiceData.invoiceProductDetails);
-/* ---------------------------
-   Default payload (UNCHANGED)
---------------------------- */
-const DEFAULT_FORM = {
+  const DEFAULT_FORM = {
   supplyType: "O",
   subSupplyType: "1",
   docType: "INV",
@@ -74,7 +65,7 @@ const DEFAULT_FORM = {
   fromStateCode: 5,
 
   toGstin: "05AAAAU1183B1Z0",
-  toTrdName: "RJ-Rawat Foods",
+  toTrdName: receivedData ?.clientCompanyName,
   toAddr1: "S531, SSB Towers",
   toAddr2: "MG Road",
   toPlace: "Dehradun",
@@ -127,16 +118,12 @@ const DEFAULT_FORM = {
   userGstin: "05AAAAU1183B5ZW",
   forceDuplicateCheck: true
 };
-
-/* ---------------------------
-   Component
---------------------------- */
-const EwbGenerateAndPrint = () => {
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [apiResponse, setApiResponse] = useState(null);
   const [ewbNos, setEwbNos] = useState([]);
+
 
   /* ---------------------------
      Auth from localStorage
@@ -150,6 +137,9 @@ const EwbGenerateAndPrint = () => {
   };
 
   const auth = getAuth();
+
+
+
 
   /* ---------------------------
      Generate EWB
