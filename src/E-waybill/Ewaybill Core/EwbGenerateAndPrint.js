@@ -22,6 +22,35 @@ const safeParse = (v, fallback = {}) => {
 const getLS = (k, fb = {}) => safeParse(localStorage.getItem(k), fb);
 const setLS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
+
+ const location = useLocation();
+
+
+
+// =========================
+// GET DATA FROM PREVIOUS PAGE
+// =========================
+
+const receivedData = location.state || {};
+
+console.log("Received Data:", receivedData);
+
+// =========================
+// EXTRACT VALUES
+// =========================
+
+const invoiceData = receivedData.invoiceData || {};
+
+const dynamicId = receivedData.id || invoiceData.pid;
+
+console.log("Dynamic ID:", dynamicId);
+
+console.log(
+  "Invoice Product Details:",
+  invoiceData?.invoiceProductDetails
+);
+
+  console.log("Received Data1:",location.state.invoiceData.invoiceProductDetails);
 /* ---------------------------
    Default payload (UNCHANGED)
 --------------------------- */
