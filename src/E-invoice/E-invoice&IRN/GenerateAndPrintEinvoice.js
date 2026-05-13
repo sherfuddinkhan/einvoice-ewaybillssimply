@@ -233,6 +233,8 @@ const dynamicId = receivedData.id || invoiceData.pid;
 
 console.log("Dynamic ID:", dynamicId);
 
+
+
 console.log(
   "Invoice Product Details:",
   invoiceData?.invoiceProductDetails
@@ -419,6 +421,7 @@ console.log(
   /* ====================================================
      FETCH INVOICE
   ==================================================== */
+
  const fetchInvoiceData = useCallback(async () => {
   try {
     setLoadingInvoice(true);
@@ -427,7 +430,8 @@ console.log(
     // res.data is the axios response
     // res.data.data is the { success, data } from your Express server
     const actualInvoiceData = res.data.data; 
-
+    // This gives you a clean, non-reactive snapshot of the data
+console.log("Actual Fetched Data Snapshot:", JSON.parse(JSON.stringify(actualInvoiceData)));
     setInvoiceApiData(actualInvoiceData);
 
     // Use createBasePayload to transform the raw API data into the 
