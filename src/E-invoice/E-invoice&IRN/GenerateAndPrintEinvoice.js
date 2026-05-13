@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useCallback  } from "react";
 import axios from "axios";
 import { useAuth } from "../../components/AuthContext";
 import { useLocation } from "react-router-dom";
@@ -90,13 +90,127 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
   </label>
 );
 
+const createBasePayload = (invoiceData, dynamicId) => ({
+  id: dynamicId,
+
+  userGstin:
+    invoiceData?.gstin && invoiceData.gstin.length === 15
+      ? invoiceData.gstin
+      : "01AAACI9260R002",
+
+  supplyType: "O",
+  ntr: "Inter",
+  docType: "RI",
+  catg: "B2B",
+  dst: "O",
+  trnTyp: "REG",
+
+  no: invoiceData?.purchaseOrder || "",
+
+  dt: invoiceData?.purchaseOrderDate
+    ? new Date(invoiceData.purchaseOrderDate)
+        .toLocaleDateString("en-GB")
+        .replace(/\//g, "-")
+    : "",
+
+  pos: "27",
+  rchrg: "N",
+
+  sgstin: "01AAACI9260R002",
+  slglNm: "TEST PROD",
+  sbnm: "Testing",
+  sloc: "BANGALORE",
+  sstcd: "01",
+  spin: "192233",
+
+  bgstin:
+    invoiceData?.gstin && invoiceData.gstin.length === 15
+      ? invoiceData.gstin
+      : "02AAACI9260R002",
+
+  blglNm: invoiceData?.clientCompanyName || "",
+  bbnm: invoiceData?.clientCompanyName || "",
+  bloc: invoiceData?.officeAddress || "",
+  bdst: invoiceData?.stateName || "",
+  bstcd: "02",
+
+  bpin:"500037",
+
+  bph: invoiceData?.mobileNo || "",
+  bem: invoiceData?.clientEmail || null,
+
+  vehNo: invoiceData?.vehicleNo || null,
+
+  totinvval:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) => sum + (item.afterGSTAmount || 0),
+      0
+    ) || 0,
+
+  totdisc: 0,
+  totothchrg: 0,
+
+  tottxval:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) => sum + (item.totalAmount || 0),
+      0
+    ) || 0,
+
+  totiamt:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) => sum + (item.igstAmount || 0),
+      0
+    ) || 0,
+
+  totcamt:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) => sum + (item.cgstAmount || 0),
+      0
+    ) || 0,
+
+  totsamt:
+    invoiceData?.invoiceProductDetails?.reduce(
+      (sum, item) => sum + (item.sgstAmount || 0),
+      0
+    ) || 0,
+
+  totcsamt: 0,
+  totstcsamt: 0,
+
+  taxSch: "GST",
+  genIrn: true,
+  genewb: "N",
+  signedDataReq: true,
+
+  itemList:
+    invoiceData?.invoiceProductDetails?.map((item, index) => ({
+      num: String(index + 1).padStart(5, "0"),
+      hsnCd: "1001",
+      prdNm: item?.description || item?.itemName || "",
+      qty: item?.quantity || 0,
+      unit: item?.uom ? item.uom.toUpperCase() : "NOS",
+      unitPrice: item?.quantityAmount || 0,
+      irt: item?.igstPer || 0,
+      rt: item?.gstPer || 0,
+      txval: item?.totalAmount || 0,
+      sval: item?.totalAmount || 0,
+      iamt: item?.igstAmount || 0,
+      itmVal: item?.afterGSTAmount || 0,
+      disc: item?.invoiceDiscountAmount || 0,
+      camt: item?.cgstAmount || 0,
+      csamt: item?.sgstAmount || 0,
+    })) || [],
+});
 const GenerateAndPrintEinvoice = () => {
   const { token, setLastInvoice } = useAuth();
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [template, setTemplate] = useState("STANDARD");
   const [pdfMessage, setPdfMessage] = useState("");
-  
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
+  const [invoiceApiData, setInvoiceApiData] = useState(null);
+  const [formData, setFormData] = useState({});
+  const [error, setError] = useState(null);
  const location = useLocation();
 
 
@@ -192,277 +306,13 @@ console.log(
   };
   // --- End Core Calculation Logic ---
 
-  const [payload, setPayload] = useState(() => {
-    // Define the initial default item structure with placeholder values
-    const defaultItem = {
-      "num": "00001",
-      "hsnCd": "73041190",
-      "prdNm": "SEAMLESS STEEL TUBE 10X2 -U71889903",
-      "qty": 1,
-      "unit": "NOS",
-      "unitPrice": 3322.451, // Base price that drives all calculations
-      "irt": 5, // IGST Rate in %
-      "rt": 5, // CGST/SGST rate (same as irt if Inter, or half of Irt if Intra)
+    const [payload, setPayload] = useState(() => {
+  const basePayload = createBasePayload(invoiceData, dynamicId);
+  return recalculateTotals(basePayload);
+});
 
-      // Calculated fields (will be updated by recalculateTotals)
-      "txval": 0,
-      "sval": 0,
-      "iamt": 0,
-      "itmVal": 0,
-      // Other default/placeholder fields
-      "disc": 0,
-      "othchrg": 0,
-      "camt": 0,
-      "csamt": 0,
-      "srt": 0,
-      "crt": 0,
-      "stcsamt": 0,
-      "cesNonAdval": 0,
-      "stCesNonAdvl": 0,
-      "freeQty": 0,
-      "preTaxVal": 0,
-      "isServc": null,
-      "barcde": null,
-      "prdSlNo": null,
-      "txp": null,
-      "bchnm": null,
-      "bchExpDt": null,
-      "bchWrDt": null,
-      "ordLineRef": null,
-      "orgCntry": null,
-      // Generic item fields
-      "itmgen1": null, "itmgen2": null, "itmgen3": null, "itmgen4": null, "itmgen5": null,
-      "itmgen6": null, "itmgen7": null, "itmgen8": null, "itmgen9": null, "itmgen10": null,
-      "invItmOtherDtls": [
-        { "attNm": "aaa", "attVal": "aaa" },
-        { "attNm": "xyz", "attVal": "2300" }
-      ]
-    };
-    const initialItems = [defaultItem];
-    // Define the base payload structure
-const basePayload = {
-  // =========================
-  // MAIN
-  // =========================
 
-  id: dynamicId,
-
-  userGstin:
-    invoiceData?.gstin &&
-    invoiceData.gstin.length === 15
-      ? invoiceData.gstin
-      : "01AAACI9260R002",
-
-  supplyType: "O",
-
-  ntr: "Inter",
-
-  docType: "RI",
-
-  catg: "B2B",
-
-  dst: "O",
-
-  trnTyp: "REG",
-
-  // =========================
-  // INVOICE DETAILS
-  // =========================
-
-  no: invoiceData?.purchaseOrder || "",
-
-  dt: invoiceData?.purchaseOrderDate
-    ? new Date(invoiceData.purchaseOrderDate)
-        .toLocaleDateString("en-GB")
-        .replace(/\//g, "-")
-    : "",
-
-  pos: "27",
-
-  rchrg: "N",
-
-  // =========================
-  // SELLER DETAILS
-  // =========================
-
-  sgstin: "01AAACI9260R002",
-
-  slglNm: "TEST PROD",
-
-  sbnm: "Testing",
-
-  sloc: "BANGALORE",
-
-  sstcd: "01",
-
-  spin: "192233",
-
-  // =========================
-  // BUYER DETAILS
-  // =========================
-
-  bgstin:
-    invoiceData?.gstin &&
-    invoiceData.gstin.length === 15
-      ? invoiceData.gstin
-      : "02AAACI9260R002",
-
-  blglNm:
-    invoiceData?.clientCompanyName || "",
-
-  bbnm:
-    invoiceData?.clientCompanyName || "",
-
-  bloc:
-    invoiceData?.officeAddress || "",
-
-  bdst:
-    invoiceData?.stateName || "",
-
-  bstcd: "02",
-
-  bpin:
-    invoiceData?.poBox || "500037",
-
-  bph:
-    invoiceData?.mobileNo || "",
-
-  bem:
-    invoiceData?.clientEmail || null,
-
-  // =========================
-  // VEHICLE
-  // =========================
-
-  vehNo:
-    invoiceData?.vehicleNo || null,
-
-  // =========================
-  // TOTALS
-  // =========================
-
-  totinvval:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) =>
-        sum + (item.afterGSTAmount || 0),
-      0
-    ) || 0,
-
-  totdisc: 0,
-
-  totothchrg: 0,
-
-  tottxval:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) =>
-        sum + (item.totalAmount || 0),
-      0
-    ) || 0,
-
-  totiamt:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) =>
-        sum + (item.igstAmount || 0),
-      0
-    ) || 0,
-
-  totcamt:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) =>
-        sum + (item.cgstAmount || 0),
-      0
-    ) || 0,
-
-  totsamt:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) =>
-        sum + (item.sgstAmount || 0),
-      0
-    ) || 0,
-
-  totcsamt: 0,
-
-  totstcsamt: 0,
-
-  taxSch: "GST",
-
-  genIrn: true,
-
-  genewb: "N",
-
-  signedDataReq: true,
-
-  // =========================
-  // ITEM LIST
-  // =========================
-
-  itemList:
-    invoiceData?.invoiceProductDetails?.map(
-      (item, index) => ({
-        num: String(index + 1).padStart(
-          5,
-          "0"
-        ),
-
-        hsnCd:
-          item?.hsncode &&
-          /^\d+$/.test(item.hsncode)
-            ? item.hsncode
-            : "1001",
-
-        prdNm:
-          item?.description ||
-          item?.itemName ||
-          "",
-
-        qty: item?.quantity || 0,
-
-        unit: item?.uom
-          ? item.uom.toUpperCase()
-          : "NOS",
-
-        unitPrice:
-          item?.quantityAmount || 0,
-
-        irt: item?.igstPer || 0,
-
-        rt: item?.gstPer || 0,
-
-        txval:
-          item?.totalAmount || 0,
-
-        sval:
-          item?.totalAmount || 0,
-
-        iamt:
-          item?.igstAmount || 0,
-
-        itmVal:
-          item?.afterGSTAmount || 0,
-
-        disc:
-          item?.invoiceDiscountAmount ||
-          0,
-
-        camt:
-          item?.cgstAmount || 0,
-
-        csamt:
-          item?.sgstAmount || 0,
-      })
-    ) || [],
-};
-
-
-
-
-
-
-console.log("Final Payload:", basePayload);
-
-    // Calculate initial totals right away to populate the UI with correct values
-    return recalculateTotals(basePayload);
-  });
+ 
   const setField = (field, value) => setPayload((prev) => ({ ...prev, [field]: value }));
   const updateItem = (idx, field, value) => {
     // Calls recalculateTotals with the updated field, which returns the new payload
@@ -564,6 +414,47 @@ console.log("Final Payload:", basePayload);
     }));
     setLastInvoice?.(responseData.irn, payload.userGstin, payload.no, payload.dt, payload.docType);
   };
+  //////////////////////
+ 
+  /* ====================================================
+     FETCH INVOICE
+  ==================================================== */
+ const fetchInvoiceData = useCallback(async () => {
+  try {
+    setLoadingInvoice(true);
+    const res = await axios.get(`http://localhost:3001/api/invoice/${dynamicId}`);
+
+    // res.data is the axios response
+    // res.data.data is the { success, data } from your Express server
+    const actualInvoiceData = res.data.data; 
+
+    setInvoiceApiData(actualInvoiceData);
+
+    // Use createBasePayload to transform the raw API data into the 
+    // E-Invoice schema before recalculating
+    const formattedPayload = createBasePayload(actualInvoiceData, dynamicId);
+    
+    setPayload(recalculateTotals(formattedPayload));
+
+  } catch (err) {
+    setError(err.message || "Error fetching invoice");
+  } finally {
+    setLoadingInvoice(false);
+  }
+}, [dynamicId]);
+
+useEffect(() => {
+  if (dynamicId) {
+    fetchInvoiceData();
+  }
+}, [dynamicId, fetchInvoiceData]);
+
+
+  ////////////////////
+
+
+
+
   const handleGenerate = async () => {
     if (!token) return alert("Login required!");
     setLoading(true);

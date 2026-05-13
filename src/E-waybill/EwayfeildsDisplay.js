@@ -46,7 +46,10 @@ const EwayfeildsDisplay = () => {
   // =========================
 
  const handleGenerateEinvoice = (row) => {
-    navigate("/ewaybill/ewb-generate-print", { state: row });
+    navigate("/ewaybill/ewb-generate-print", { state: { 
+      invoiceData: row, 
+      id: row.pid || row.id 
+    } });
   };
 
   return (

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState} from "react";
+import { useEffect } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 /* ---------------------------
@@ -43,86 +44,195 @@ const EwbGenerateAndPrint = () => {
   const dynamicId = receivedData.id || invoiceData.pid;
   console.log("toTrdName:",receivedData ?.clientCompanyName)
   console.log("vehicleNo",receivedData?.vehicleNo);
-   console.log("hsncode",receivedData?.invoiceProductDetails?.hsncode);
+   console.log("hsncode",receivedData?.invoiceProductDetails[0]?.hsncode);
 
-  const DEFAULT_FORM = {
-  supplyType: "O",
-  subSupplyType: "1",
-  docType: "INV",
-  docNo: "Topaz340290",
-  invType: "B2B",
-  docDate: new Date().toLocaleDateString("en-GB").split("/").join("/"),
-  transactionType: 1,
+    const DEFAULT_FORM = {
+        supplyType: "O",
+        subSupplyType: "1",
+        docType: "INV",
 
-  fromGstin: "05AAAAU1183B5ZW",
-  fromTrdName: "ABC",
-  dispatchFromGstin: "05AAAAU1183B5ZW",
-  dispatchFromTradeName: "PQR",
-  fromAddr1: "T231",
-  fromAddr2: "IIP",
-  fromPlace: "Akodiya",
-  fromPincode: 248001,
-  fromStateCode: 5,
+        docNo:
+          invoiceData?.invoiceNumber ||
+          invoiceData?.billNo ||
+          "Topaz340290",
 
-  toGstin: "05AAAAU1183B1Z0",
-  toTrdName: receivedData ?.clientCompanyName,
-  toAddr1: "S531, SSB Towers",
-  toAddr2: "MG Road",
-  toPlace: "Dehradun",
-  toPincode: 248002,
-  toStateCode: 5,
+        invType: "B2B",
 
-  totInvValue: 21000,
-  totalValue: 20000,
-  cgstValue: 500,
-  sgstValue: 500,
-  igstValue: 0,
-  cessValue: 0,
-  cessNonAdvolValue: 0,
-  otherValue: 0,
+        docDate: new Date()
+          .toLocaleDateString("en-GB")
+          .split("/")
+          .join("/"),
 
-  transMode: 1,
-  transDistance: 10,
-  transDocNo: "1212",
-  transDocDate: new Date().toLocaleDateString("en-GB").split("/").join("/"),
-  transporterId: "05AAAAU1183B1Z0",
-  transporterName: "ACVDF",
-  vehicleNo: "RJ14CA9999",
-  vehicleType: "R",
+        transactionType: 1,
 
-  actFromStateCode: "5",
-  actToStateCode: "5",
+        fromGstin:
+          invoiceData?.companyGstin ||
+          "05AAAAU1183B5ZW",
 
-  itemList: [
-    {
-      productName: "Sugar",
-      productDesc: "Sugar",
-      hsnCode: "8517",
-      quantity: 10,
-      qtyUnit: "KGS",
-      taxableAmount: 20000,
-      sgstRate: 2.5,
-      cgstRate: 2.5,
-      igstRate: 0,
-      cessRate: 0,
-      cessNonAdvol: 0,
-      iamt: 0,
-      camt: 500,
-      samt: 500,
-      csamt: 0,
-      txp: "T"
-    }
-  ],
+        fromTrdName:
+          invoiceData?.companyName || "ABC",
 
-  companyId: "",
-  userGstin: "05AAAAU1183B5ZW",
-  forceDuplicateCheck: true
-};
+        dispatchFromGstin:
+          invoiceData?.companyGstin ||
+          "05AAAAU1183B5ZW",
+
+        dispatchFromTradeName:
+          invoiceData?.companyName || "PQR",
+
+        fromAddr1:
+          invoiceData?.companyAddress || "T231",
+
+        fromAddr2:
+          invoiceData?.companyAddress2 || "IIP",
+
+        fromPlace:
+          invoiceData?.companyCity || "Akodiya",
+
+        fromPincode:
+          invoiceData?.companyPincode || 248001,
+
+        fromStateCode:
+          invoiceData?.companyStateCode || 5,
+
+        toGstin:
+          invoiceData?.clientGstin ||
+          "05AAAAU1183B1Z0",
+
+        toTrdName:
+          invoiceData?.clientCompanyName ||
+          receivedData?.clientCompanyName ||
+          "",
+
+        toAddr1:
+          invoiceData?.clientAddress1 ||
+          "S531, SSB Towers",
+
+        toAddr2:
+          invoiceData?.clientAddress2 ||
+          "MG Road",
+
+        toPlace:
+          invoiceData?.clientCity || "Dehradun",
+
+        toPincode:
+          invoiceData?.clientPincode || 248002,
+
+        toStateCode:
+          invoiceData?.clientStateCode || 5,
+
+        totInvValue:
+          invoiceData?.grandTotal || 21000,
+
+        totalValue:
+          invoiceData?.taxableAmount || 20000,
+
+        cgstValue:
+          invoiceData?.cgstAmount || 500,
+
+        sgstValue:
+          invoiceData?.sgstAmount || 500,
+
+        igstValue:
+          invoiceData?.igstAmount || 0,
+
+        cessValue: 0,
+        cessNonAdvolValue: 0,
+        otherValue: 0,
+
+        transMode: 1,
+        transDistance: 10,
+
+        transDocNo: "1212",
+
+        transDocDate: new Date()
+          .toLocaleDateString("en-GB")
+          .split("/")
+          .join("/"),
+
+        transporterId:
+          invoiceData?.transporterId ||
+          "05AAAAU1183B1Z0",
+
+        transporterName:
+          invoiceData?.transporterName ||
+          "ACVDF",
+
+        vehicleNo:
+          invoiceData?.vehicleNo ||
+          receivedData?.vehicleNo ||
+          "RJ14CA9999",
+
+        vehicleType: "R",
+
+        actFromStateCode:
+          invoiceData?.companyStateCode || "5",
+
+        actToStateCode:
+          invoiceData?.clientStateCode || "5",
+
+        itemList: [
+          {
+            productName:
+              receivedData?.itemName || "",
+
+            productDesc:
+              receivedData?.moreDescription ||
+              "",
+
+            hsnCode:
+              receivedData?.hsncode || "",
+
+            quantity:
+              receivedData?.quantity || 1,
+
+            qtyUnit:
+              receivedData?.uom || "",
+
+            taxableAmount:
+              receivedData?.taxableAmount ||
+              20000,
+
+            sgstRate:
+              receivedData?.sgstRate || 2.5,
+
+            cgstRate:
+              receivedData?.cgstRate || 2.5,
+
+            igstRate:
+              receivedData?.igstRate || 0,
+
+            cessRate: 0,
+            cessNonAdvol: 0,
+
+            iamt:
+              receivedData?.igstAmount || 0,
+
+            camt:
+              receivedData?.cgstAmount || 500,
+
+            samt:
+              receivedData?.sgstAmount || 500,
+
+            csamt: 0,
+
+            txp: "T",
+          },
+        ],
+
+        companyId: "",
+        userGstin:
+          invoiceData?.companyGstin ||
+          "05AAAAU1183B5ZW",
+
+        forceDuplicateCheck: true,
+      };
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [apiResponse, setApiResponse] = useState(null);
   const [ewbNos, setEwbNos] = useState([]);
+   const [invoiceApiData, setInvoiceApiData] =useState(null);
+  const [loadingInvoice, setLoadingInvoice] =useState(false);
 
 
   /* ---------------------------
@@ -139,6 +249,43 @@ const EwbGenerateAndPrint = () => {
   const auth = getAuth();
 
 
+  /* ====================================================
+     FETCH INVOICE
+  ==================================================== */
+  useEffect(() => {
+    if (dynamicId) fetchInvoiceData();
+  }, [dynamicId]);
+
+  const fetchInvoiceData = async () => {
+    try {
+      setLoadingInvoice(true);
+
+      const res = await axios.get(
+        `http://localhost:3001/api/invoice/${dynamicId}`
+      );
+
+      const apiData = res.data?.data;
+      setInvoiceApiData(apiData);
+
+      const invoice =
+        apiData?.response || apiData || {};
+
+      const firstItem =
+        invoice?.invoiceProductDetails?.[0] ||
+        {};
+
+      /* ====================================================
+         COMBINED DEFAULT + API FORM
+      ==================================================== */
+     
+
+      setFormData(DEFAULT_FORM);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingInvoice(false);
+    }
+  };
 
 
   /* ---------------------------
