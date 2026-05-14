@@ -2,6 +2,8 @@ import React, { useState, useEffect,useCallback  } from "react";
 import axios from "axios";
 import { useAuth } from "../../components/AuthContext";
 import { useLocation } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+import { jsPDF } from "jspdf";
 
 const colors = {
   primary: "#1A73E8",
@@ -89,118 +91,629 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
     </select>
   </label>
 );
+const createBasePayload = (invoiceData, dynamicId) => {
+  const sellerStateCode = "01";
 
-const createBasePayload = (invoiceData, dynamicId) => ({
-  id: dynamicId,
+  const buyerStateCode =
+    invoiceData?.gstin?.substring(0, 2) || "02";
 
-  userGstin:
-    invoiceData?.gstin && invoiceData.gstin.length === 15
-      ? invoiceData.gstin
-      : "01AAACI9260R002",
+  const isInterState =
+    sellerStateCode !== buyerStateCode;
 
-  supplyType: "O",
-  ntr: "Inter",
-  docType: "RI",
-  catg: "B2B",
-  dst: "O",
-  trnTyp: "REG",
+  const productList =
+    invoiceData?.invoiceProductDetails?.length > 0
+      ? invoiceData.invoiceProductDetails
+      : [
+          {
+            hsnCode: "73041190",
+            description: "SEAMLESS STEEL TUBE",
+            itemName: "SEAMLESS STEEL TUBE",
+            quantity: 1,
+            quantityAmount: 3322.45,
+            totalAmount: 3322.45,
+            afterGSTAmount: 4252.73,
+            gstPer: 28,
+            igstPer: 28,
+            igstAmount: 930.28,
+            cgstPer: 0,
+            sgstPer: 0,
+            cgstAmount: 0,
+            sgstAmount: 0,
+            invoiceDiscountAmount: 0,
+            uom: "NOS",
+          },
+        ];
 
-  no: invoiceData?.purchaseOrder || "",
+  const totalTaxableValue = Number(
+    productList
+      .reduce(
+        (sum, item) =>
+          sum + Number(item?.totalAmount || 0),
+        0
+      )
+      .toFixed(2)
+  );
 
-  dt: invoiceData?.purchaseOrderDate
-    ? new Date(invoiceData.purchaseOrderDate)
-        .toLocaleDateString("en-GB")
-        .replace(/\//g, "-")
-    : "",
+  const totalIGST = Number(
+    productList
+      .reduce(
+        (sum, item) =>
+          sum + Number(item?.igstAmount || 0),
+        0
+      )
+      .toFixed(2)
+  );
 
-  pos: "27",
-  rchrg: "N",
+  const totalCGST = Number(
+    productList
+      .reduce(
+        (sum, item) =>
+          sum + Number(item?.cgstAmount || 0),
+        0
+      )
+      .toFixed(2)
+  );
 
-  sgstin: "01AAACI9260R002",
-  slglNm: "TEST PROD",
-  sbnm: "Testing",
-  sloc: "BANGALORE",
-  sstcd: "01",
-  spin: "192233",
+  const totalSGST = Number(
+    productList
+      .reduce(
+        (sum, item) =>
+          sum + Number(item?.sgstAmount || 0),
+        0
+      )
+      .toFixed(2)
+  );
 
-  bgstin:
-    invoiceData?.gstin && invoiceData.gstin.length === 15
-      ? invoiceData.gstin
-      : "02AAACI9260R002",
+  const totalDiscount = Number(
+    productList
+      .reduce(
+        (sum, item) =>
+          sum +
+          Number(item?.invoiceDiscountAmount || 0),
+        0
+      )
+      .toFixed(2)
+  );
 
-  blglNm: invoiceData?.clientCompanyName || "",
-  bbnm: invoiceData?.clientCompanyName || "",
-  bloc: invoiceData?.officeAddress || "",
-  bdst: invoiceData?.stateName || "",
-  bstcd: "02",
+  const totalInvoiceValue = Number(
+    (
+      totalTaxableValue +
+      totalIGST +
+      totalCGST +
+      totalSGST
+    ).toFixed(2)
+  );
 
-  bpin:"500037",
+  return {
+    /* =======================================================
+       BASIC DETAILS
+    ======================================================= */
 
-  bph: invoiceData?.mobileNo || "",
-  bem: invoiceData?.clientEmail || null,
+    id: dynamicId || "1001",
 
-  vehNo: invoiceData?.vehicleNo || null,
+    userGstin:
+      invoiceData?.gstin?.length === 15
+        ? invoiceData.gstin
+        : "01AAACI9260R002",
 
-  totinvval:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) => sum + (item.afterGSTAmount || 0),
-      0
-    ) || 0,
+    pobCode: null,
 
-  totdisc: 0,
-  totothchrg: 0,
+    supplyType: "O",
 
-  tottxval:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) => sum + (item.totalAmount || 0),
-      0
-    ) || 0,
+    ntr: isInterState
+      ? "Inter"
+      : "Intra",
 
-  totiamt:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) => sum + (item.igstAmount || 0),
-      0
-    ) || 0,
+    docType: "RI",
 
-  totcamt:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) => sum + (item.cgstAmount || 0),
-      0
-    ) || 0,
+    catg: "B2B",
 
-  totsamt:
-    invoiceData?.invoiceProductDetails?.reduce(
-      (sum, item) => sum + (item.sgstAmount || 0),
-      0
-    ) || 0,
+    dst: "O",
 
-  totcsamt: 0,
-  totstcsamt: 0,
+    trnTyp: "REG",
 
-  taxSch: "GST",
-  genIrn: true,
-  genewb: "N",
-  signedDataReq: true,
+    no:
+      invoiceData?.purchaseOrder ||
+      "AG/03-09/4565",
 
-  itemList:
-    invoiceData?.invoiceProductDetails?.map((item, index) => ({
-      num: String(index + 1).padStart(5, "0"),
-      hsnCd: "1001",
-      prdNm: item?.description || item?.itemName || "",
-      qty: item?.quantity || 0,
-      unit: item?.uom ? item.uom.toUpperCase() : "NOS",
-      unitPrice: item?.quantityAmount || 0,
-      irt: item?.igstPer || 0,
-      rt: item?.gstPer || 0,
-      txval: item?.totalAmount || 0,
-      sval: item?.totalAmount || 0,
-      iamt: item?.igstAmount || 0,
-      itmVal: item?.afterGSTAmount || 0,
-      disc: item?.invoiceDiscountAmount || 0,
-      camt: item?.cgstAmount || 0,
-      csamt: item?.sgstAmount || 0,
-    })) || [],
-});
+    dt: invoiceData?.purchaseOrderDate
+      ? new Date(invoiceData.purchaseOrderDate)
+          .toLocaleDateString("en-GB")
+          .replace(/\//g, "-")
+      : "28-03-2021",
+
+    refinum: null,
+
+    refidt: null,
+
+    pos: buyerStateCode,
+
+    diffprcnt: null,
+
+    etin: null,
+
+    rchrg: "N",
+
+    /* =======================================================
+       SELLER DETAILS
+    ======================================================= */
+
+    sgstin: "01AAACI9260R002",
+
+    strdNm: "TEST COMPANY",
+
+    slglNm: "TEST PROD",
+
+    sbnm: "Testing",
+
+    sflno: "ABC",
+
+    sloc: "BANGALORE",
+
+    sdst: "BENGALURU",
+
+    sstcd: sellerStateCode,
+
+    spin: "171001",
+
+    sph: "9876543210",
+
+    sem: "test@gmail.com",
+
+    /* =======================================================
+       BUYER DETAILS
+    ======================================================= */
+
+    bgstin:
+      invoiceData?.gstin?.length === 15
+        ? invoiceData.gstin
+        : "02AAACI9260R002",
+
+    btrdNm:
+      invoiceData?.clientCompanyName ||
+      "TEST ENTERPRISES",
+
+    blglNm:
+      invoiceData?.clientCompanyName ||
+      "ABC Technologies Private Limited",
+
+    bbnm:
+      invoiceData?.clientCompanyName ||
+      "ABCD12345",
+
+    bflno:
+      invoiceData?.floorNo &&
+      invoiceData.floorNo.trim().length >= 1
+        ? invoiceData.floorNo
+            .trim()
+            .substring(0, 10)
+        : "BUILDING",
+
+    bloc:
+      invoiceData?.officeAddress ||
+      "Jijamat",
+
+    bdst:
+      invoiceData?.stateName ||
+      "BANGALORE",
+
+    bstcd: buyerStateCode || "02",
+
+    bpin:
+      String(
+        invoiceData?.pincode || "500037"
+      ).length >= 6
+        ? String(invoiceData?.pincode)
+        : "500037",
+
+    bph:
+      invoiceData?.mobileNo ||
+      "9876543210",
+
+    bem:
+      invoiceData?.clientEmail ||
+      "test@gmail.com",
+
+    /* =======================================================
+       DISPATCH DETAILS
+    ======================================================= */
+
+    dgstin: null,
+    dtrdNm: null,
+    dlglNm: null,
+    dbnm: null,
+    dflno: null,
+    dloc: null,
+    ddst: null,
+    dstcd: null,
+    dpin: null,
+    dph: null,
+    dem: null,
+
+    /* =======================================================
+       SHIP TO DETAILS
+    ======================================================= */
+
+    togstin: null,
+    totrdNm: null,
+    tolglNm: null,
+    tobnm: null,
+    toflno: null,
+    toloc: null,
+    todst: null,
+    tostcd: null,
+    topin: null,
+    toph: null,
+    toem: null,
+
+    /* =======================================================
+       EXPORT DETAILS
+    ======================================================= */
+
+    sbnum: null,
+
+    sbdt: null,
+
+    port: null,
+
+    expduty: 0,
+
+    cntcd: null,
+
+    forCur: null,
+
+    invForCur: null,
+
+    /* =======================================================
+       TAX & TOTALS
+    ======================================================= */
+
+    taxSch: "GST",
+
+    totinvval: totalInvoiceValue,
+
+    totdisc: totalDiscount,
+
+    totfrt: 0,
+
+    totins: 0,
+
+    totpkg: 0,
+
+    totothchrg: 0,
+
+    tottxval: totalTaxableValue,
+
+    totiamt: isInterState
+      ? totalIGST
+      : 0,
+
+    totcamt: isInterState
+      ? 0
+      : totalCGST,
+
+    totsamt: isInterState
+      ? 0
+      : totalSGST,
+
+    totcsamt: 0,
+
+    totstcsamt: 0,
+
+    rndOffAmt: 0,
+
+    /* =======================================================
+       INVOICE FLAGS
+    ======================================================= */
+
+    sec7act: "N",
+
+    invStDt: null,
+
+    invEndDt: null,
+
+    invRmk:
+      invoiceData?.remarks ||
+      "Invoice Generated Successfully",
+
+    /* =======================================================
+       PAYMENT DETAILS
+    ======================================================= */
+
+    payNm: null,
+    acctdet: null,
+    pa: null,
+    mode: null,
+    ifsc: null,
+    payTerm: null,
+    payInstr: null,
+    crTrn: null,
+    dirDr: null,
+    crDay: null,
+    balAmt: null,
+    paidAmt: null,
+    payDueDt: null,
+    transId: null,
+
+    /* =======================================================
+       TRANSPORT DETAILS
+    ======================================================= */
+
+    subSplyTyp: "Supply",
+
+    subSplyDes: null,
+
+    kdrefinum: null,
+
+    kdrefidt: null,
+
+    transMode:
+      invoiceData?.transportMode || "1",
+
+    vehTyp:
+      invoiceData?.vehicleType || "R",
+
+    transDist:
+      invoiceData?.transportDistance || "10",
+
+    transName:
+      invoiceData?.transporterName ||
+      "ABC TRANSPORT",
+
+    transDocNo:
+      invoiceData?.transportDocNo ||
+      "DOC001",
+
+    transDocDate:
+      invoiceData?.transportDocDate ||
+      "28-03-2021",
+
+    vehNo:
+      invoiceData?.vehicleNo ||
+      "KA01AB1234",
+
+    /* =======================================================
+       OTHER FLAGS
+    ======================================================= */
+
+    clmrfnd: null,
+
+    rfndelg: null,
+
+    boef: null,
+
+    fy: "2025-26",
+
+    refnum: null,
+
+    pdt: null,
+
+    ivst: null,
+
+    cptycde: null,
+
+    pobewb: "Null",
+
+    pobret: "Null",
+
+    tcsrt: "0",
+
+    tcsamt: 0,
+
+    pretcs: 0,
+
+    genIrn: true,
+
+    genewb: "N",
+
+    signedDataReq: true,
+
+    /* =======================================================
+       ITEM LIST
+    ======================================================= */
+
+    itemList: productList.map(
+      (item, index) => {
+        const qty = Number(item?.quantity || 1);
+
+        const taxableValue = Number(
+          Number(
+            item?.totalAmount || 0
+          ).toFixed(2)
+        );
+
+        const igstAmount = Number(
+          Number(
+            item?.igstAmount || 0
+          ).toFixed(2)
+        );
+
+        const cgstAmount = Number(
+          Number(
+            item?.cgstAmount || 0
+          ).toFixed(2)
+        );
+
+        const sgstAmount = Number(
+          Number(
+            item?.sgstAmount || 0
+          ).toFixed(2)
+        );
+
+        const itemTotal = Number(
+          (
+            taxableValue +
+            igstAmount +
+            cgstAmount +
+            sgstAmount
+          ).toFixed(2)
+        );
+
+        return {
+          barcde: null,
+
+          bchExpDt: null,
+
+          bchWrDt: null,
+
+          bchnm: null,
+
+          num: String(index + 1).padStart(
+            5,
+            "0"
+          ),
+
+          hsnCd:
+            item?.hsnCode || "73041190",
+
+          prdNm:
+            item?.description ||
+            item?.itemName ||
+            "SEAMLESS STEEL TUBE",
+
+          prdDesc:
+            item?.description ||
+            "SEAMLESS STEEL TUBE",
+
+          qty: qty,
+
+          freeQty: 0,
+
+          unit: item?.uom || "NOS",
+
+          unitPrice: Number(
+            Number(
+              item?.quantityAmount ||
+                taxableValue
+            ).toFixed(2)
+          ),
+
+          discount: Number(
+            Number(
+              item?.invoiceDiscountAmount ||
+                0
+            ).toFixed(2)
+          ),
+
+          disc: Number(
+            Number(
+              item?.invoiceDiscountAmount ||
+                0
+            ).toFixed(2)
+          ),
+
+          preTaxVal: 0,
+
+          othchrg: 0,
+
+          assAmt: taxableValue,
+
+          txval: taxableValue,
+
+          sval: taxableValue,
+
+          rt: Number(item?.gstPer || 18),
+
+          irt: isInterState
+            ? Number(item?.igstPer || 18)
+            : 0,
+
+          crt: isInterState
+            ? 0
+            : Number(item?.cgstPer || 9),
+
+          srt: isInterState
+            ? 0
+            : Number(item?.sgstPer || 9),
+
+          iamt: isInterState
+            ? igstAmount
+            : 0,
+
+          camt: isInterState
+            ? 0
+            : cgstAmount,
+
+          samt: isInterState
+            ? 0
+            : sgstAmount,
+
+          csrt: 0,
+
+          csamt: 0,
+
+          stcsrt: 0,
+
+          stcsamt: 0,
+
+          itmVal: itemTotal,
+
+          isServc: "N",
+
+          ordLineRef: null,
+
+          orgCntry: "IN",
+
+          txp: null,
+
+          prdSlNo: null,
+
+          itmgen1: null,
+          itmgen2: null,
+          itmgen3: null,
+          itmgen4: null,
+          itmgen5: null,
+
+          invItmOtherDtls: [],
+        };
+      }
+    ),
+
+    /* =======================================================
+       OTHER DOCUMENT DETAILS
+    ======================================================= */
+
+    invOthDocDtls: [
+      {
+        url:
+          "https://your-secure-storage.com/docs/inv-99.pdf",
+        docs: "Tax_Invoice",
+        infoDtls:
+          "Original signed copy for compliance",
+      },
+    ],
+
+    /* =======================================================
+       PREVIOUS REFERENCE DETAILS
+    ======================================================= */
+
+    invRefPreDtls: [
+      {
+        oinum: null,
+        oidt: null,
+        othRefNo: null,
+      },
+    ],
+
+    /* =======================================================
+       CONTRACT DETAILS
+    ======================================================= */
+
+    invRefContDtls: [
+      {
+        raref: null,
+        radt: null,
+        tendref: null,
+        contref: null,
+        extref: null,
+        projref: null,
+        poref: null,
+        porefdt: null,
+      },
+    ],
+  };
+};
+
 const GenerateAndPrintEinvoice = () => {
   const { token, setLastInvoice } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -211,8 +724,9 @@ const GenerateAndPrintEinvoice = () => {
   const [invoiceApiData, setInvoiceApiData] = useState(null);
   const [formData, setFormData] = useState({});
   const [error, setError] = useState(null);
+  const [apiResponse, setApiResponse] = useState(null);
+  const [pdfData, setPdfData] = useState(null);
  const location = useLocation();
-
 
 
 // =========================
@@ -234,12 +748,10 @@ const dynamicId = receivedData.id || invoiceData.pid;
 console.log("Dynamic ID:", dynamicId);
 
 
-
 console.log(
   "Invoice Product Details:",
   invoiceData?.invoiceProductDetails
 );
-
 
   console.log("Received Data1:",location.state.invoiceData.invoiceProductDetails);
 
@@ -312,7 +824,6 @@ console.log(
   const basePayload = createBasePayload(invoiceData, dynamicId);
   return recalculateTotals(basePayload);
 });
-
 
  
   const setField = (field, value) => setPayload((prev) => ({ ...prev, [field]: value }));
@@ -453,292 +964,636 @@ useEffect(() => {
   }
 }, [dynamicId, fetchInvoiceData]);
 
-
   ////////////////////
 
 
 
-
   const handleGenerate = async () => {
-    if (!token) return alert("Login required!");
-    setLoading(true);
-    setResponse(null);
-    try {
-      // Ensure final totals are calculated one last time before sending
-      // This is crucial if a global field (like discount) was changed just before clicking generate
-      setPayload(prev => recalculateTotals(prev));
+  if (!token) {
+    alert("Login required!");
+    return;
+  }
 
-      const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
-        method: "POST",
+  setLoading(true);
+  setResponse(null);
+
+  try {
+    // ✅ IMPORTANT: compute updated payload BEFORE API call
+    const updatedPayload = recalculateTotals(payload);
+
+    // optional UI sync
+    setPayload(updatedPayload);
+
+    const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Auth-Token": token,
+        companyId: "24",
+        product: "ONYX",
+      },
+      body: JSON.stringify(updatedPayload),
+    });
+
+    const data = await res.json();
+
+    // ✅ STORE RESPONSE FOR UI
+    setResponse(data);
+    setPdfData(data?.response || null);
+
+    console.log("API RESPONSE:", data);
+
+    // =========================
+    // SUCCESS FLOW
+    // =========================
+    if (data?.status === "SUCCESS" && data?.response?.irn) {
+      saveResponseForAutoPopulate(data);
+      storeEinv(data.response);
+
+      localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
+
+      alert(
+        `IRN Generated Successfully!\nIRN: ${data.response.irn}\nAck No: ${data.response.ackNo}`
+      );
+    }
+
+    // =========================
+    // FAILURE FLOW
+    // =========================
+    else if (data?.status === "FAILURE") {
+      const errorMsg = data?.errors?.[0]?.msg || "Unknown error";
+      alert(`Generation Failed: ${errorMsg}`);
+    }
+
+  } catch (err) {
+    console.error("Generate Error:", err);
+
+    setResponse({
+      status: "ERROR",
+      error: err.message,
+    });
+
+    alert("Network error: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+ 
+const downloadPDF = async () => {
+    console.log("CLICKED");
+  console.log("payload:", payload);
+  console.log("lastGeneratedId:", payload?.lastGeneratedId);
+  if (!payload?.lastGeneratedId) return;
+
+  try {
+    setPdfMessage("Generating PDF...");
+
+    const resp = await axios.get(
+      `http://localhost:3001/proxy/einvoice/print`,
+      {
+        params: {
+          template: template,
+          id: payload.lastGeneratedId,
+        },
         headers: {
-          "Content-Type": "application/json",
           "X-Auth-Token": token,
           companyId: "24",
           product: "ONYX",
         },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      setResponse(data);
-      if (data.status === "SUCCESS" && data.response?.irn) {
-        saveResponseForAutoPopulate(data);
-        console.log("responsedata",data)
-        // BEGIN NEW CODE ADDED BY USER
-        storeEinv(data.response);
-        // END NEW CODE ADDED BY USER
-
-        localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
-        alert(`IRN Generated Successfully!\nIRN: ${data.response.irn}\nAck No: ${data.response.ackNo}`);
-      } else if (data.status === "FAILURE") {
-        const errorMsg = data.errors?.[0]?.msg || "Unknown error";
-        alert(`Generation Failed: ${errorMsg}`);
+        responseType: "blob",
       }
-    } catch (err) {
-      setResponse({ status: "ERROR", error: err.message });
-      alert("Network error: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const downloadPDF = async () => {
-    if (!payload.lastGeneratedId) return;
-    try {
-      const resp = await axios.get(
-        `http://localhost:3001/proxy/einvoice/print?template=${template}&id=${payload.lastGeneratedId}`,
-        {
-          headers: { "X-Auth-Token": token, companyId: "24", product: "ONYX" },
-          responseType: "blob",
-        }
+    );
+
+    const blob = new Blob([resp.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `EInvoice_${payload.lastGeneratedId}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    setPdfMessage("PDF downloaded successfully.");
+  } catch (error) {
+    console.error("PDF Download Error:", error);
+    setPdfMessage("Failed to download PDF.");
+  }
+};
+
+
+
+const ApiResponseView = ({ apiResponse }) => {
+  if (!apiResponse) return null;
+
+  const data = apiResponse?.response || apiResponse;
+
+  // =========================
+  // DECODE JWTs
+  // =========================
+
+  const decodedSignedInvoice = data?.signedInvoice
+    ? jwtDecode(data.signedInvoice)
+    : null;
+
+  const decodedSignedQrCode = data?.signedQrCode
+    ? jwtDecode(data.signedQrCode)
+    : null;
+
+  // =========================
+  // DOWNLOAD PDF
+  // =========================
+  const downloadInvoicePDF = () => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text("E-INVOICE / E-WAY BILL", 60, 10);
+
+    // ================= BASIC API DATA =================
+    doc.setFontSize(10);
+
+    doc.text(`Status: ${apiResponse?.status || "-"}`, 10, 20);
+    doc.text(`Message: ${apiResponse?.message || "-"}`, 10, 26);
+
+    doc.text(`IRN: ${data?.irn || "-"}`, 10, 32);
+    doc.text(`Ack No: ${data?.ackNo || "-"}`, 10, 38);
+    doc.text(`Ack Date: ${data?.ackDt || "-"}`, 10, 44);
+
+    // ================= EWB DATA =================
+    doc.text(`EWB No: ${data?.EwbNo || "-"}`, 10, 50);
+    doc.text(`EWB Date: ${data?.EwbDt || "-"}`, 10, 56);
+    doc.text(`Valid Till: ${data?.EwbValidTill || "-"}`, 10, 62);
+
+    // ================= DECODED JWT (optional display) =================
+    if (decodedSignedInvoice) {
+      doc.text(
+        `Invoice Decoded IRN: ${decodedSignedInvoice?.Irn || "-"}`,
+        10,
+        70
       );
-      const url = window.URL.createObjectURL(new Blob([resp.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `EInvoice_${payload.lastGeneratedId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setPdfMessage("PDF downloaded successfully.");
-    } catch (error) {
-      setPdfMessage("Failed to download PDF.");
-      console.error(error);
     }
+
+    if (decodedSignedQrCode) {
+      doc.text(
+        `QR Decoded Ack: ${decodedSignedQrCode?.AckNo || "-"}`,
+        10,
+        76
+      );
+    }
+
+    // ================= QR IMAGE =================
+    if (data?.qrCode) {
+      doc.addImage(
+        `data:image/png;base64,${data.qrCode}`,
+        "PNG",
+        140,
+        20,
+        50,
+        50
+      );
+    }
+
+    doc.save(`EInvoice_${data?.ackNo || "download"}.pdf`);
   };
-  return (
-    <div style={tableStyles.container}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        <h1 style={tableStyles.header}>Generate & Print E-Invoice</h1>
-        {/* Invoice Header - 3 Columns */}
-        <table style={tableStyles.table}>
-          <thead>
-            <tr>
-              <th colSpan={3} style={{ background: colors.primary, color: "white", fontSize: "18px", padding: "18px" }}>
-                Invoice Header Details
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={tableStyles.td}><LabeledInput label="User GSTIN" id="userGstin" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="Invoice No" id="invoiceNo" value={payload.no} onChange={(v) => setField("no", v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="Invoice Date" id="invoiceDate" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
-            </tr>
-            <tr>
-              <td style={tableStyles.td}><LabeledSelect label="Doc Type" id="docType" value={payload.docType} options={["RI", "CR", "DB"]} onChange={(v) => setField("docType", v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="Place of Supply" id="pos" value={payload.pos} onChange={(v) => setField("pos", v)} /></td>
-              <td style={tableStyles.td}><LabeledSelect label="Category" id="catg" value={payload.catg} options={["B2B", "B2C", "SEZ", "DE"]} onChange={(v) => setField("catg", v)} /></td>
-            </tr>
-            <tr>
-              <td style={tableStyles.td}><LabeledSelect label="Nature" id="ntr" value={payload.ntr} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} /></td>
-              <td style={tableStyles.td}><LabeledSelect label="Reverse Charge" id="rchrg" value={payload.rchrg} options={["Y", "N"]} onChange={(v) => setField("rchrg", v)} /></td>
-              <td style={tableStyles.td}><LabeledSelect label="Supply Type" id="supplyType" value={payload.supplyType} options={["O", "I"]} onChange={(v) => setField("supplyType", v)} /></td>
-            </tr>
-            <tr>
-              <td colSpan={3} style={tableStyles.td}>
-                <LabeledSelect label="Transaction Type" id="trnTyp" value={payload.trnTyp} options={["REG", "B2C", "EXP", "SEZ", "DE"]} onChange={(v) => setField("trnTyp", v)} />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        {/* Seller Details - 3 Columns */}
-        <table style={tableStyles.table}>
-          <thead>
-            <tr>
-              <th colSpan={3} style={{ background: "#4CAF50", color: "white" }}>Seller Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={tableStyles.td}><LabeledInput label="GSTIN" id="sgstin" value={payload.sgstin} onChange={(v) => setField("sgstin", v)} /></td>
-              <td colSpan={2} style={tableStyles.td}><LabeledInput label="Legal Name" id="slglNm" value={payload.slglNm} onChange={(v) => setField("slglNm", v)} /></td>
-            </tr>
-            <tr>
-              <td style={tableStyles.td}><LabeledInput label="Branch" id="sbnm" value={payload.sbnm} onChange={(v) => setField("sbnm", v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="Location" id="sloc" value={payload.sloc} onChange={(v) => setField("sloc", v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="State Code" id="sstcd" value={payload.sstcd} onChange={(v) => setField("sstcd", v)} /></td>
-            </tr>
-            <tr>
-              <td colSpan={3} style={tableStyles.td}><LabeledInput label="PIN Code" id="spin" value={payload.spin} onChange={(v) => setField("spin", v)} /></td>
-            </tr>
-          </tbody>
-        </table>
-        {/* Buyer Details - 3 Columns */}
-        <table style={tableStyles.table}>
-          <thead>
-            <tr>
-              <th colSpan={3} style={{ background: "#FF9800", color: "white" }}>Buyer Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={tableStyles.td}><LabeledInput label="GSTIN" id="bgstin" value={payload.bgstin} onChange={(v) => setField("bgstin", v)} /></td>
-              <td colSpan={2} style={tableStyles.td}><LabeledInput label="Legal Name" id="blglNm" value={payload.blglNm} onChange={(v) => setField("blglNm", v)} /></td>
-            </tr>
-            <tr>
-              <td style={tableStyles.td}><LabeledInput label="Branch" id="bbnm" value={payload.bbnm} onChange={(v) => setField("bbnm", v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="Location" id="bloc" value={payload.bloc} onChange={(v) => setField("bloc", v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="State Code" id="bstcd" value={payload.bstcd} onChange={(v) => setField("bstcd", v)} /></td>
-            </tr>
-            <tr>
-              <td colSpan={3} style={tableStyles.td}><LabeledInput label="PIN Code" id="bpin" value={payload.bpin} onChange={(v) => setField("bpin", v)} /></td>
-            </tr>
-          </tbody>
-        </table>
-        {/* Item Details - Two-Column Cards */}
-        <div style={{ marginBottom: "40px" }}>
-          <table style={tableStyles.table}>
-            <thead>
-              <tr>
-                <th colSpan={2} style={{ background: colors.primary, color: "white", fontSize: "18px", padding: "18px" }}>
-                  Item Details
-                </th>
-              </tr>
-            </thead>
-          </table>
-          {payload.itemList.map((item, idx) => (
-            <div key={idx} style={tableStyles.itemCard}>
-              <div style={{ fontWeight: "bold", marginBottom: "16px", color: colors.primary, fontSize: "17px" }}>
-                Item {idx + 1} ({item.num})
-              </div>
-              <div style={tableStyles.twoColGrid}>
-                <div style={tableStyles.col}>
-                  <LabeledInput label="Item Description" id={`prdNm-${idx}`} value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
-                  <LabeledInput label="HSN Code" id={`hsnCd-${idx}`} value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
-                </div>
-                <div style={tableStyles.col}>
-                  <LabeledInput label="Quantity" id={`qty-${idx}`} type="number" step="0.01" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
-                  <LabeledInput label="Unit" id={`unit-${idx}`} value={item.unit} onChange={(v) => updateItem(idx, "unit", v)} />
-                  <LabeledInput label="Unit Price (₹)" id={`unitPrice-${idx}`} type="number" step="0.001" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
-                  <LabeledInput label="IGST Rate (%)" id={`irt-${idx}`} type="number" step="0.01" value={item.irt} onChange={(v) => updateItem(idx, "irt", v)} />
-                </div>
-              </div>
-              <div style={tableStyles.itemFooter}>
-                <div style={{ fontSize: "15px" }}>
-                  <strong>Taxable:</strong> ₹{item.txval.toFixed(2)} &nbsp;|&nbsp;
-                  <strong>IGST:</strong> ₹{item.iamt.toFixed(2)} &nbsp;|&nbsp;
-                  <strong>Total:</strong> ₹{item.itmVal.toFixed(2)}
-                </div>
-                <button style={tableStyles.btnRed} onClick={() => removeItem(idx)}>Remove Item</button>
-              </div>
-            </div>
-          ))}
-          <div style={{ textAlign: "right", marginTop: "30px" }}>
-            <button style={tableStyles.btnGreen} onClick={addItem}>+ Add New Item</button>
-          </div>
-        </div>
-        {/* Totals - 3 Columns */}
-        <table style={tableStyles.table}>
-          <thead>
-            <tr>
-              <th colSpan={3} style={{ background: "#2196F3", color: "white" }}>Invoice Totals</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{ ...tableStyles.td }}>Global Discount</td>
-              <td style={{ ...tableStyles.td, textAlign: "right" }}>
-                <LabeledInput
-                  label="Total Discount (₹)"
-                  id="totdisc"
-                  type="number"
-                  step="0.01"
-                  value={payload.totdisc}
-                  onChange={(v) => setPayload(prev => recalculateTotals({...prev, totdisc: v}))}
-                />
-              </td>
-              <td style={tableStyles.td}></td>
-            </tr>
-            <tr>
-              <td style={{ ...tableStyles.td }}>Other Charges</td>
-              <td style={{ ...tableStyles.td, textAlign: "right" }}>
-                <LabeledInput
-                  label="Total Other Charges (₹)"
-                  id="totothchrg"
-                  type="number"
-                  step="0.01"
-                  value={payload.totothchrg}
-                  onChange={(v) => setPayload(prev => recalculateTotals({...prev, totothchrg: v}))}
-                />
-              </td>
-              <td style={tableStyles.td}></td>
-            </tr>
-            <tr>
-              <td style={{ ...tableStyles.td, background: "#E8F5E9", fontWeight: "bold" }}>Total Taxable Value</td>
-              <td style={{ ...tableStyles.td, background: "#E8F5E9", textAlign: "right", fontWeight: "bold" }}>₹ {payload.tottxval.toFixed(2)}</td>
-              <td style={tableStyles.td}></td>
-            </tr>
-            <tr>
-              <td style={{ ...tableStyles.td, background: "#E3F2FD", fontWeight: "bold" }}>IGST Amount</td>
-              <td style={{ ...tableStyles.td, background: "#E3F2FD", textAlign: "right", fontWeight: "bold" }}>₹ {payload.totiamt.toFixed(2)}</td>
-              <td style={tableStyles.td}></td>
-            </tr>
-            <tr>
-              <td style={{ ...tableStyles.td, background: "#FFF3E0", fontWeight: "bold" }}>Total Invoice Value</td>
-              <td style={{ ...tableStyles.td, background: "#FFF3E0", textAlign: "right", fontWeight: "bold" }}>₹ {payload.totinvval.toFixed(2)}</td>
-              <td style={tableStyles.td}></td>
-            </tr>
-          </tbody>
-        </table>
-        {/* Actions */}
-        <div style={{ textAlign: "center", margin: "50px 0" }}>
-          <button style={tableStyles.btnGenerate(loading, token)} onClick={handleGenerate} disabled={loading || !token}>
-            {loading ? "Generating IRN..." : "Generate IRN & E-Invoice"}
-          </button>
-          {payload.lastGeneratedId && (
-            <div style={{ marginTop: "40px" }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "30px", flexWrap: "wrap", justifyContent: "center" }}>
-                <div>
-                  <label htmlFor="pdfTemplate" style={tableStyles.labelText}>PDF Template:</label>
-                  <select id="pdfTemplate" value={template} onChange={(e) => setTemplate(e.target.value)} style={{ ...tableStyles.select, width: "auto", marginLeft: "12px", padding: "12px" }}>
-                    <option>STANDARD</option>
-                    <option>DETAILED</option>
-                  </select>
-                </div>
-                <button style={tableStyles.btnGreen} onClick={downloadPDF}>
-                  Download PDF (ID: {payload.lastGeneratedId})
-                </button>
-              </div>
-              {pdfMessage && (
-                <div style={{ marginTop: "16px", color: colors.primary, fontWeight: "bold", fontSize: "16px" }}>
-                  {pdfMessage}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        {/* API Response */}
-        {response && (
-          <div>
-            <h3 style={{ color: colors.primary, marginBottom: "16px", fontSize: "18px" }}>
-              API Response ({response.status})
-            </h3>
-            <pre style={tableStyles.responseBox(response.status)}>
-              {JSON.stringify(response, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
+}
+
+
+
+const fieldDescriptions = {
+  // --- HEADER & INVOICE DETAILS ---
+  userGstin: "GST Identification Number of User",
+  no: "Unique Invoice Number (Max 16 chars)",
+  dt: "Invoice Date (DD-MM-YYYY)",
+  supplyType: "Type Of Supply (O-Outward, I-Inward)",
+  ntr: "Nature Of Transaction (Inter/Intra)",
+  docType: "Document Type (RI-Invoice, CR-Credit, DB-Debit)",
+  catg: "Invoice Category (B2B, B2C, SEZ, DE)",
+  trnTyp: "Transaction Type (Regular, Bill-To Ship-To, etc.)",
+  pos: "Place Of Supply State Code (2-digit code)",
+  rchrg: "Reverse Charge Applicable (Y/N)",
+  taxSch: "Tax Scheme (e.g., GST)",
+  expduty: "Export Duty Amount",
+
+  // --- SELLER DETAILS ---
+  sgstin: "Seller GSTIN",
+  slglNm: "Seller Legal Name",
+  strdNm: "Seller Trade Name",
+  sbnm: "Seller Building Name",
+  sflno: "Seller Floor Number",
+  sloc: "Seller Location",
+  sdst: "Seller District",
+  sstcd: "Seller State Code",
+  spin: "Seller PIN Code",
+  sph: "Seller Phone Number",
+  sem: "Seller Email Address",
+
+  // --- BUYER DETAILS ---
+  bgstin: "Buyer GSTIN",
+  blglNm: "Buyer Legal Name",
+  btrdNm: "Buyer Trade Name",
+  bbnm: "Buyer Building Name",
+  bflno: "Buyer Floor Number",
+  bloc: "Buyer Location",
+  bdst: "Buyer District",
+  bstcd: "Buyer State Code",
+  bpin: "Buyer PIN Code",
+  bph: "Buyer Phone Number",
+  bem: "Buyer Email Address",
+
+  // --- DISPATCH DETAILS (FROM) ---
+  dgstin: "Dispatch GSTIN",
+  dtrdNm: "Dispatch Trade Name",
+  dlglNm: "Dispatch Legal Name",
+  dbnm: "Dispatch Building Name",
+  dflno: "Dispatch Floor Number",
+  dloc: "Dispatch Location",
+  ddst: "Dispatch District",
+  dstcd: "Dispatch State Code",
+  dpin: "Dispatch PIN Code",
+  dph: "Dispatch Phone Number",
+  dem: "Dispatch Email Address",
+
+  // --- SHIP TO DETAILS (TO) ---
+  togstin: "Ship-to GSTIN",
+  totrdNm: "Ship-to Trade Name",
+  tolglNm: "Ship-to Legal Name",
+  tobnm: "Ship-to Building Name",
+  toflno: "Ship-to Floor Number",
+  toloc: "Ship-to Location",
+  todst: "Ship-to District",
+  tostcd: "Ship-to State Code",
+  topin: "Ship-to PIN Code",
+  toph: "Ship-to Phone Number",
+  toem: "Ship-to Email Address",
+
+  // --- TRANSPORT DETAILS ---
+  subSplyTyp: "Sub Supply Type Code",
+  transMode: "Transportation Mode (Road/Rail/Air/Ship)",
+  vehTyp: "Vehicle Type (Regular/ODC)",
+  transDist: "Transport Distance (KM)",
+  transName: "Transporter Name",
+  vehNo: "Vehicle Registration Number",
+
+  // --- OTHER FLAGS / COMPLIANCE ---
+  clmrfnd: "Claim Refund Flag (Y/N)",
+  rfndelg: "Refund Eligibility",
+  boef: "Bill of Entry Flag",
+  fy: "Financial Year (YYYY-YY)",
+  refnum: "Internal Reference Number",
+  pdt: "Preceding Document Date",
+  ivst: "Invoice Status",
+  cptycde: "Counterparty Code",
+  pobewb: "Place of Business E-Way Bill",
+  pobret: "Place of Business Return",
+  tcsrt: "TCS Rate Percentage",
+  tcsamt: "TCS Amount",
+  pretcs: "Pre-TCS Amount",
+  genewb: "Generate E-Way Bill (Y/N)",
+
+  // --- EXPORT DETAILS ---
+  sbnum: "Shipping Bill Number",
+  sbdt: "Shipping Bill Date",
+  port: "Port Code",
+  cntcd: "Country Code",
+  forCur: "Foreign Currency",
+  invForCur: "Invoice Value in Foreign Currency",
+
+  // --- ITEM DETAILS ---
+  prdNm: "Product Description",
+  hsnCd: "HSN Code",
+  qty: "Quantity",
+  unit: "Unit of Measurement (e.g., KGS, PCS)",
+  unitPrice: "Price Per Unit",
+  irt: "IGST Rate (%)",
+  crt: "CGST Rate (%)", // Added: Critical for Intra-state
+  srt: "SGST Rate (%)", // Added: Critical for Intra-state
+  txval: "Taxable Value of Item",
+  iamt: "IGST Amount",
+  camt: "CGST Amount",
+  samt: "SGST Amount",
+  itmVal: "Total Item Value",
+};
+const Row = ({ children }) => (
+  <div style={{ display: "flex", gap: "15px", marginBottom: "12px", flexWrap: "wrap" }}>
+    {children}
+  </div>
+);
+
+const Cell = ({ children }) => (
+  <div style={{ flex: 1, minWidth: "250px" }}>
+    {children}
+  </div>
+);
+
+const Section = ({ title, color, children }) => (
+  <div style={{ marginTop: "25px" }}>
+    <div style={{
+      background: color,
+      color: "white",
+      padding: "14px",
+      fontWeight: "bold",
+      borderRadius: "6px"
+    }}>
+      {title}
     </div>
-  );
+
+    <div style={{ padding: "15px", background: "#fff" }}>
+      {children}
+    </div>
+  </div>
+);
+return (
+  <div style={tableStyles.container}>
+    <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+
+      {/* ========================================================= */}
+      {/* HEADER */}
+      {/* ========================================================= */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "30px",
+        flexWrap: "wrap",
+        gap: "15px",
+      }}>
+        <h1 style={tableStyles.header}>Generate & Print E-Invoice</h1>
+       {/* BUTTONS */}
+      <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
+
+        <button
+          onClick={downloadPDF}
+          style={{
+            background: "#ff9800",
+            color: "#fff",
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: "5px"
+          }}
+        >
+          Download PDF (with QR)
+        </button>
+
+      </div>
+      
+      </div>
+
+      {/* ========================================================= */}
+      {/* INVOICE HEADER */}
+      {/* ========================================================= */}
+      <table style={tableStyles.table}>
+        <thead>
+          <tr>
+            <th colSpan={3} style={{ background: colors.primary, color: "#fff", padding: 18 }}>
+              Invoice Header Details
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td style={tableStyles.td}><LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Invoice No" value={payload.no} onChange={(v) => setField("no", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
+          </tr>
+
+          <tr>
+            <td style={tableStyles.td}><LabeledSelect label="Supply Type" value={payload.supplyType} options={["O", "I"]} onChange={(v) => setField("supplyType", v)} /></td>
+            <td style={tableStyles.td}><LabeledSelect label="Nature" value={payload.ntr} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} /></td>
+            <td style={tableStyles.td}><LabeledSelect label="Doc Type" value={payload.docType} options={["RI", "CR", "DB"]} onChange={(v) => setField("docType", v)} /></td>
+          </tr>
+
+          <tr>
+            <td style={tableStyles.td}><LabeledSelect label="Category" value={payload.catg} options={["B2B", "B2C", "EXP"]} onChange={(v) => setField("catg", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="POS" value={payload.pos} onChange={(v) => setField("pos", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Tax Scheme" value={payload.taxSch} onChange={(v) => setField("taxSch", v)} /></td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* ========================================================= */}
+      {/* SELLER */}
+      {/* ========================================================= */}
+      <Section title="Seller Details" color="#4CAF50">
+        <Row>
+          <Cell><LabeledInput label="GSTIN" value={payload.sgstin} onChange={(v) => setField("sgstin", v)} /></Cell>
+          <Cell><LabeledInput label="Trade Name" value={payload.strdNm} onChange={(v) => setField("strdNm", v)} /></Cell>
+          <Cell><LabeledInput label="Legal Name" value={payload.slglNm} onChange={(v) => setField("slglNm", v)} /></Cell>
+        </Row>
+
+        <Row>
+          <Cell><LabeledInput label="Location" value={payload.sloc} onChange={(v) => setField("sloc", v)} /></Cell>
+          <Cell><LabeledInput label="District" value={payload.sdst} onChange={(v) => setField("sdst", v)} /></Cell>
+          <Cell><LabeledInput label="State Code" value={payload.sstcd} onChange={(v) => setField("sstcd", v)} /></Cell>
+        </Row>
+         <Row>
+          <Cell><LabeledInput label="Location" value={payload.spin} onChange={(v) => setField("spin", v)} /></Cell>
+          <Cell><LabeledInput label="District" value={payload.sph} onChange={(v) => setField("sph", v)} /></Cell>
+          <Cell><LabeledInput label="State Code" value={payload.sem} onChange={(v) => setField("sem", v)} /></Cell>
+        </Row>
+      </Section>
+ 
+
+      {/* ========================================================= */}
+      {/* BUYER */}
+      {/* ========================================================= */}
+      <Section title="Buyer Details" color="#FF9800">
+
+  {/* BASIC DETAILS */}
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="GSTIN"
+        value={payload.bgstin}
+        onChange={(v) => setField("bgstin", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Trade Name"
+        value={payload.btrdNm}
+        onChange={(v) => setField("btrdNm", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Legal Name"
+        value={payload.blglNm}
+        onChange={(v) => setField("blglNm", v)}
+      />
+    </Cell>
+  </Row>
+
+  {/* ADDRESS LINE 1 */}
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Building Name / BBNM"
+        value={payload.bbnm}
+        onChange={(v) => setField("bbnm", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Floor / Block"
+        value={payload.bflno}
+        onChange={(v) => setField("bflno", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Location"
+        value={payload.bloc}
+        onChange={(v) => setField("bloc", v)}
+      />
+    </Cell>
+  </Row>
+
+  {/* ADDRESS LINE 2 */}
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="District"
+        value={payload.bdst}
+        onChange={(v) => setField("bdst", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="State Code"
+        value={payload.bstcd}
+        onChange={(v) => setField("bstcd", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="PIN Code (BPIN)"
+        value={payload.bpin}
+        onChange={(v) => setField("bpin", v)}
+      />
+    </Cell>
+  </Row>
+
+  {/* CONTACT DETAILS */}
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Phone"
+        value={payload.bph}
+        onChange={(v) => setField("bph", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Email"
+        value={payload.bem}
+        onChange={(v) => setField("bem", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Country (Optional)"
+        value={payload.bcountry || ""}
+        onChange={(v) => setField("bcountry", v)}
+      />
+    </Cell>
+  </Row>
+
+</Section>
+
+      {/* ========================================================= */}
+      {/* TRANSPORT */}
+      {/* ========================================================= */}
+      <Section title="Transport Details" color="#9C27B0">
+        <Row>
+          <Cell><LabeledInput label="Mode" value={payload.transMode} onChange={(v) => setField("transMode", v)} /></Cell>
+          <Cell><LabeledInput label="Vehicle No" value={payload.vehNo} onChange={(v) => setField("vehNo", v)} /></Cell>
+          <Cell><LabeledInput label="Distance" value={payload.transDist} onChange={(v) => setField("transDist", v)} /></Cell>
+        </Row>
+      </Section>
+
+      {/* ========================================================= */}
+      {/* ITEMS */}
+      {/* ========================================================= */}
+      <div style={{ marginTop: 30 }}>
+        <h2>Item Details</h2>
+
+        {payload.itemList.map((item, idx) => (
+          <div key={idx} style={tableStyles.itemCard}>
+            <b>Item {idx + 1}</b>
+
+            <Row>
+              <Cell>
+                <LabeledInput label="Product" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
+              </Cell>
+              <Cell>
+                <LabeledInput label="HSN" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
+              </Cell>
+              <Cell>
+                <LabeledInput label="Qty" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
+              </Cell>
+            </Row>
+
+            <Row>
+              <Cell>
+                <LabeledInput label="Unit Price" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
+              </Cell>
+              <Cell>
+                <LabeledInput label="Taxable" value={item.txval} onChange={(v) => updateItem(idx, "txval", v)} />
+              </Cell>
+              <Cell>
+                <LabeledInput label="IGST" value={item.iamt} onChange={(v) => updateItem(idx, "iamt", v)} />
+              </Cell>
+            </Row>
+          </div>
+        ))}
+
+        <button style={tableStyles.btnGreen} onClick={addItem}>+ Add Item</button>
+      </div>
+
+      {/* ========================================================= */}
+      {/* TOTALS */}
+      {/* ========================================================= */}
+      <Section title="Totals" color="#2196F3">
+        <Row>
+          <Cell>Total Taxable: {payload.tottxval}</Cell>
+          <Cell>Total IGST: {payload.totiamt}</Cell>
+          <Cell>Total Invoice: {payload.totinvval}</Cell>
+        </Row>
+      </Section>
+
+      {/* ========================================================= */}
+      {/* GENERATE */}
+      {/* ========================================================= */}
+      <div style={{ textAlign: "center", marginTop: 30 }}>
+        <button style={tableStyles.btnGreen} onClick={handleGenerate}>
+          Generate E-Invoice
+        </button>
+      </div>
+
+      {/* ========================================================= */}
+      {/* API RESPONSE VIEW */}
+      {/* ========================================================= */}
+       <ApiResponseView apiResponse={apiResponse}  pdfData={pdfData} />
+     
+
+    </div>
+
+    
+  </div>
+);
 };
 
 export default GenerateAndPrintEinvoice;
+

@@ -44,7 +44,10 @@ const EwbGenerateAndPrint = () => {
   const dynamicId = receivedData.id || invoiceData.pid;
   console.log("toTrdName:",receivedData ?.clientCompanyName)
   console.log("vehicleNo",receivedData?.vehicleNo);
-   console.log("hsncode",receivedData?.invoiceProductDetails[0]?.hsncode);
+  console.log(
+  "hsncode",
+  receivedData?.invoiceData?.invoiceProductDetails?.[0]?.hsncode
+);
 
     const DEFAULT_FORM = {
         supplyType: "O",

@@ -1,132 +1,254 @@
 // Einv&EwayfeildsDisplay.js
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const EinvfeildsDisplay = () => {
 
+  // =========================
+  // NAVIGATION
+  // =========================
+
   const navigate = useNavigate();
 
+  // =========================
+  // STATES
+  // =========================
+
   const [loading, setLoading] = useState(false);
+
   const [invoiceData, setInvoiceData] = useState([]);
 
   // =========================
-  // FETCH DATA
+  // PREVENT DOUBLE API CALL
+  // =========================
+
+  const hasFetched = useRef(false);
+
+  // =========================
+  // FETCH INVOICE DATA
   // =========================
 
   const getInvoiceData = async () => {
+
     try {
+
+      // SHOW LOADING
       setLoading(true);
 
+      console.log("Fetching Invoice Data...");
+
+      // API CALL
       const response = await axios.get(
         "http://localhost:3001/api/invoices"
       );
 
+      console.log("API Response:", response.data);
+
+      // CHECK ARRAY RESPONSE
       if (Array.isArray(response.data)) {
+
         setInvoiceData(response.data);
+
       } else {
+
         setInvoiceData([]);
+
       }
 
     } catch (error) {
+
       console.log("Fetch Error:", error);
+
       alert("Failed to fetch invoice data");
+
     } finally {
+
+      // STOP LOADING
       setLoading(false);
+
     }
+
   };
 
+  // =========================
+  // USE EFFECT
+  // =========================
+
   useEffect(() => {
+
+    // PREVENT DOUBLE EXECUTION
+    if (hasFetched.current) return;
+
+    hasFetched.current = true;
+
     getInvoiceData();
+
   }, []);
 
   // =========================
-  // NAVIGATION ACTIONS
+  // GENERATE E-INVOICE
   // =========================
 
-const handleGenerateEinvoice = (row) => {
+  const handleGenerateEinvoice = (row) => {
 
-navigate("/einvoice/generate-print", {
-  state: {
-    invoiceData: row,
-    id: row.pid
-  }
-});
+    console.log("Selected Row:", row);
 
-};
+    navigate("/einvoice/generate-print", {
+      state: {
+        invoiceData: row,
+       id: row.pid || row.id 
+      }
+    });
+
+  };
+
+  // =========================
+  // UI
+  // =========================
 
   return (
+
     <div style={styles.container}>
 
-      {/* HEADER */}
-      <h2 style={styles.heading}>Invoice List</h2>
+      {/* HEADING */}
+
+      <h2 style={styles.heading}>
+        Invoice List
+      </h2>
 
       {/* LOADING */}
-      {loading && <div style={styles.loading}>Loading...</div>}
+
+      {loading && (
+        <div style={styles.loading}>
+          Loading...
+        </div>
+      )}
 
       {/* TABLE */}
+
       <div style={styles.tableWrapper}>
+
         <table style={styles.table}>
 
+          {/* TABLE HEADER */}
+
           <thead>
+
             <tr>
+
               <th style={styles.th}>#</th>
+
               <th style={styles.th}>Customer Name</th>
+
               <th style={styles.th}>Mobile</th>
+
               <th style={styles.th}>PO</th>
+
               <th style={styles.th}>PO Date</th>
+
               <th style={styles.th}>Invoice Created</th>
+
               <th style={styles.th}>Created On</th>
+
               <th style={styles.th}>GSTIN</th>
+
               <th style={styles.th}>Vehicle</th>
+
               <th style={styles.th}>E-Way No</th>
+
               <th style={styles.th}>Status</th>
+
               <th style={styles.th}>Action</th>
+
             </tr>
+
           </thead>
+
+          {/* TABLE BODY */}
 
           <tbody>
 
             {invoiceData.length > 0 ? (
+
               invoiceData.map((row, index) => (
+
                 <tr key={index}>
 
-                  <td style={styles.td}>{index + 1}</td>
-                  <td style={styles.td}>{row.clientCompanyName || "-"}</td>
-                  <td style={styles.td}>{row.mobileNo || "-"}</td>
-                  <td style={styles.td}>{row.purchaseOrder || "-"}</td>
+                  <td style={styles.td}>
+                    {index + 1}
+                  </td>
 
                   <td style={styles.td}>
+                    {row.clientCompanyName || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    {row.mobileNo || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    {row.purchaseOrder || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+
                     {row.purchaseOrderDate
-                      ? new Date(row.purchaseOrderDate).toLocaleDateString()
+                      ? new Date(
+                          row.purchaseOrderDate
+                        ).toLocaleDateString()
                       : "-"}
+
                   </td>
 
                   <td style={styles.td}>
+
                     {row.invoiceCreatedOn
-                      ? new Date(row.invoiceCreatedOn).toLocaleString()
+                      ? new Date(
+                          row.invoiceCreatedOn
+                        ).toLocaleString()
                       : "-"}
+
                   </td>
 
                   <td style={styles.td}>
+
                     {row.createdOn
-                      ? new Date(row.createdOn).toLocaleString()
+                      ? new Date(
+                          row.createdOn
+                        ).toLocaleString()
                       : "-"}
+
                   </td>
 
-                  <td style={styles.td}>{row.gstin || "-"}</td>
-                  <td style={styles.td}>{row.vehicleNo || "-"}</td>
-                  <td style={styles.td}>{row.eWayBillNumber || "-"}</td>
-                  <td style={styles.td}>{row.transactionStatusXid || "-"}</td>
+                  <td style={styles.td}>
+                    {row.gstin || "-"}
+                  </td>
 
-                  {/* ACTION BUTTONS */}
+                  <td style={styles.td}>
+                    {row.vehicleNo || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    {row.eWayBillNumber || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    {row.transactionStatusXid || "-"}
+                  </td>
+
+                  {/* ACTION BUTTON */}
+
                   <td style={styles.actionTd}>
 
                     <div style={styles.buttonContainer}>
+
                       <button
                         style={styles.einvoiceBtn}
-                        onClick={() => handleGenerateEinvoice(row)}
+                        onClick={() =>
+                          handleGenerateEinvoice(row)
+                        }
                       >
                         Generate E-Invoice
                       </button>
@@ -136,20 +258,34 @@ navigate("/einvoice/generate-print", {
                   </td>
 
                 </tr>
+
               ))
+
             ) : (
+
               <tr>
-                <td colSpan="12" style={styles.noData}>
+
+                <td
+                  colSpan="12"
+                  style={styles.noData}
+                >
                   No Invoice Data Found
                 </td>
+
               </tr>
+
             )}
 
           </tbody>
+
         </table>
+
       </div>
+
     </div>
+
   );
+
 };
 
 // =========================
@@ -217,16 +353,6 @@ const styles = {
     gap: "8px"
   },
 
-  ewayBtn: {
-    backgroundColor: "green",
-    color: "white",
-    border: "none",
-    padding: "8px 12px",
-    borderRadius: "5px",
-    cursor: "pointer",
-    width: "150px"
-  },
-
   einvoiceBtn: {
     backgroundColor: "#1976d2",
     color: "white",
@@ -241,16 +367,8 @@ const styles = {
     textAlign: "center",
     padding: "15px",
     fontWeight: "bold"
-  },
-
-  productSection: {
-    marginTop: "30px"
-  },
-
-  productHeading: {
-    marginBottom: "10px",
-    color: "#333"
   }
+
 };
 
 export default EinvfeildsDisplay;
