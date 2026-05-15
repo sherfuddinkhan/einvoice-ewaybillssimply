@@ -91,629 +91,646 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
     </select>
   </label>
 );
+
 const createBasePayload = (invoiceData, dynamicId) => {
+  /* =======================================================
+      1. SETUP CONSTANTS & LOGIC
+  ======================================================= */
   const sellerStateCode = "01";
+  
+  // Logic to ensure Buyer GSTIN and State Code are synced
+  const buyerGstin = (invoiceData?.gstin?.length === 15) 
+    ? invoiceData.gstin 
+    : "02AAACI9260R002";
 
-  const buyerStateCode =
-    invoiceData?.gstin?.substring(0, 2) || "02";
-
-  const isInterState =
-    sellerStateCode !== buyerStateCode;
-
-  const productList =
-    invoiceData?.invoiceProductDetails?.length > 0
-      ? invoiceData.invoiceProductDetails
-      : [
-          {
-            hsnCode: "73041190",
-            description: "SEAMLESS STEEL TUBE",
-            itemName: "SEAMLESS STEEL TUBE",
-            quantity: 1,
-            quantityAmount: 3322.45,
-            totalAmount: 3322.45,
-            afterGSTAmount: 4252.73,
-            gstPer: 28,
-            igstPer: 28,
-            igstAmount: 930.28,
-            cgstPer: 0,
-            sgstPer: 0,
-            cgstAmount: 0,
-            sgstAmount: 0,
-            invoiceDiscountAmount: 0,
-            uom: "NOS",
-          },
-        ];
-
-  const totalTaxableValue = Number(
-    productList
-      .reduce(
-        (sum, item) =>
-          sum + Number(item?.totalAmount || 0),
-        0
-      )
-      .toFixed(2)
-  );
-
-  const totalIGST = Number(
-    productList
-      .reduce(
-        (sum, item) =>
-          sum + Number(item?.igstAmount || 0),
-        0
-      )
-      .toFixed(2)
-  );
-
-  const totalCGST = Number(
-    productList
-      .reduce(
-        (sum, item) =>
-          sum + Number(item?.cgstAmount || 0),
-        0
-      )
-      .toFixed(2)
-  );
-
-  const totalSGST = Number(
-    productList
-      .reduce(
-        (sum, item) =>
-          sum + Number(item?.sgstAmount || 0),
-        0
-      )
-      .toFixed(2)
-  );
-
-  const totalDiscount = Number(
-    productList
-      .reduce(
-        (sum, item) =>
-          sum +
-          Number(item?.invoiceDiscountAmount || 0),
-        0
-      )
-      .toFixed(2)
-  );
-
-  const totalInvoiceValue = Number(
-    (
-      totalTaxableValue +
-      totalIGST +
-      totalCGST +
-      totalSGST
-    ).toFixed(2)
-  );
-
-  return {
-    /* =======================================================
-       BASIC DETAILS
-    ======================================================= */
-
-    id: dynamicId || "1001",
-
-    userGstin:
-      invoiceData?.gstin?.length === 15
-        ? invoiceData.gstin
-        : "01AAACI9260R002",
+  const buyerStateCode = buyerGstin.substring(0, 2);
+  const isInterState = sellerStateCode !== buyerStateCode;
 
-    pobCode: null,
+  /* =======================================================
+      2. HANDLE PRODUCT LIST
+  ======================================================= */
+  const productList = invoiceData?.invoiceProductDetails?.length > 0
+    ? invoiceData.invoiceProductDetails
+    : [{
+        hsnCode: "73041190",
+        itemName: "SEAMLESS STEEL TUBE 10X2 -U71889903",
+        quantity: 1,
+        totalAmount: 3322.45, // Taxable Value
+        igstAmount: 930.28,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        gstPer: 28,
+        igstPer: 28,
+        cgstPer: 0,
+        sgstPer: 0,
+        uom: "NOS",
+        discount: 0
+      }];
 
-    supplyType: "O",
+  /* =======================================================
+      3. TOTALS CALCULATION
+  ======================================================= */
+  const totTxVal = Number(productList.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0).toFixed(2));
+  const totIgst = Number(productList.reduce((sum, item) => sum + Number(item.igstAmount || 0), 0).toFixed(2));
+  const totCgst = Number(productList.reduce((sum, item) => sum + Number(item.cgstAmount || 0), 0).toFixed(2));
+  const totSgst = Number(productList.reduce((sum, item) => sum + Number(item.sgstAmount || 0), 0).toFixed(2));
+  
+  const otherCharges = 20; // Based on your provided JSON
+  const totalDiscount = 10; // Based on your provided JSON
+  
+  // Total Invoice Value = Taxable + Taxes + Other Charges - Discount
+  const totalInvVal = Number((totTxVal + totIgst + totCgst + totSgst + otherCharges - totalDiscount).toFixed(2));
 
-    ntr: isInterState
-      ? "Inter"
-      : "Intra",
+  /* =======================================================
+      4. RETURN FORMATTED PAYLOAD
+  ======================================================= */
+ return {
+  /* ======================================================
+      BASIC DETAILS
+  ====================================================== */
 
-    docType: "RI",
+  id: String(dynamicId || "1001"),
 
-    catg: "B2B",
+  userGstin: "01AAACI9260R002",
 
-    dst: "O",
+  pobCode: null,
 
-    trnTyp: "REG",
+  supplyType: "O",
 
-    no:
-      invoiceData?.purchaseOrder ||
-      "AG/03-09/4565",
+  ntr: isInterState
+    ? "Inter"
+    : "Intra",
 
-    dt: invoiceData?.purchaseOrderDate
-      ? new Date(invoiceData.purchaseOrderDate)
-          .toLocaleDateString("en-GB")
-          .replace(/\//g, "-")
-      : "28-03-2021",
+  docType: "RI",
 
-    refinum: null,
+  catg: "B2B",
 
-    refidt: null,
+  dst: "O",
 
-    pos: buyerStateCode,
+  trnTyp: "REG",
 
-    diffprcnt: null,
+  no:
+    invoiceData?.purchaseOrder ||
+    "AG/03-09/4565",
 
-    etin: null,
+  dt: "28-03-2021",
 
-    rchrg: "N",
+  refinum: null,
 
-    /* =======================================================
-       SELLER DETAILS
-    ======================================================= */
+  refidt: null,
 
-    sgstin: "01AAACI9260R002",
+  pos: buyerStateCode,
 
-    strdNm: "TEST COMPANY",
+  diffprcnt: null,
 
-    slglNm: "TEST PROD",
+  etin: null,
 
-    sbnm: "Testing",
+  rchrg: "N",
 
-    sflno: "ABC",
+  /* ======================================================
+      SELLER DETAILS
+  ====================================================== */
 
-    sloc: "BANGALORE",
+  sgstin: "01AAACI9260R002",
 
-    sdst: "BENGALURU",
+  strdNm: "TEST Company",
 
-    sstcd: sellerStateCode,
+  slglNm: "TEST PROD",
 
-    spin: "171001",
+  sbnm: "Testing",
 
-    sph: "9876543210",
+  sflno: "ABC",
 
-    sem: "test@gmail.com",
+  sloc: "BANGALOR32",
 
-    /* =======================================================
-       BUYER DETAILS
-    ======================================================= */
+  sdst: "BENGALURU",
 
-    bgstin:
-      invoiceData?.gstin?.length === 15
-        ? invoiceData.gstin
-        : "02AAACI9260R002",
+  sstcd: sellerStateCode,
 
-    btrdNm:
-      invoiceData?.clientCompanyName ||
-      "TEST ENTERPRISES",
+  spin: "192233",
 
-    blglNm:
-      invoiceData?.clientCompanyName ||
-      "ABC Technologies Private Limited",
+  sph: "9876543210",
 
-    bbnm:
-      invoiceData?.clientCompanyName ||
-      "ABCD12345",
+  sem: "abc123@gmail.com",
 
-    bflno:
-      invoiceData?.floorNo &&
-      invoiceData.floorNo.trim().length >= 1
-        ? invoiceData.floorNo
-            .trim()
-            .substring(0, 10)
-        : "BUILDING",
+  /* ======================================================
+      BUYER DETAILS
+  ====================================================== */
 
-    bloc:
-      invoiceData?.officeAddress ||
-      "Jijamat",
+  bgstin: buyerGstin,
 
-    bdst:
-      invoiceData?.stateName ||
-      "BANGALORE",
+  btrdNm: "TEST ENTERPRISES",
 
-    bstcd: buyerStateCode || "02",
+  blglNm: "TEST PRODUCT",
 
-    bpin:
-      String(
-        invoiceData?.pincode || "500037"
-      ).length >= 6
-        ? String(invoiceData?.pincode)
-        : "500037",
+  bbnm: "ABCD12345",
 
-    bph:
-      invoiceData?.mobileNo ||
-      "9876543210",
+  bflno: "abc",
 
-    bem:
-      invoiceData?.clientEmail ||
-      "test@gmail.com",
+  bloc: "Jijamat",
 
-    /* =======================================================
-       DISPATCH DETAILS
-    ======================================================= */
+  bdst: "BANGALORE",
 
-    dgstin: null,
-    dtrdNm: null,
-    dlglNm: null,
-    dbnm: null,
-    dflno: null,
-    dloc: null,
-    ddst: null,
-    dstcd: null,
-    dpin: null,
-    dph: null,
-    dem: null,
+  bstcd: buyerStateCode,
 
-    /* =======================================================
-       SHIP TO DETAILS
-    ======================================================= */
+  bpin: "174001",
 
-    togstin: null,
-    totrdNm: null,
-    tolglNm: null,
-    tobnm: null,
-    toflno: null,
-    toloc: null,
-    todst: null,
-    tostcd: null,
-    topin: null,
-    toph: null,
-    toem: null,
+  bph: "9898981111",
 
-    /* =======================================================
-       EXPORT DETAILS
-    ======================================================= */
+  bem: "abc123@gmail.com",
 
-    sbnum: null,
+  /* ======================================================
+      DISPATCH DETAILS
+  ====================================================== */
 
-    sbdt: null,
+  dgstin: "29ABCDE1234F1Z5",
 
-    port: null,
+  dtrdNm: "ABC Traders",
 
-    expduty: 0,
+  dlglNm:
+    "ABC Traders Private Limited",
 
-    cntcd: null,
+  dbnm: "ABC Tower",
 
-    forCur: null,
+  dflno: "2nd Floor",
 
-    invForCur: null,
+  dloc: "MG Road",
 
-    /* =======================================================
-       TAX & TOTALS
-    ======================================================= */
+  ddst: "Bengaluru Urban",
 
-    taxSch: "GST",
+  dstcd: "29",
 
-    totinvval: totalInvoiceValue,
+  dpin: "560001",
 
-    totdisc: totalDiscount,
+  dph: "9876543210",
 
-    totfrt: 0,
+  dem: "dispatch@abctraders.com",
 
-    totins: 0,
+  /* ======================================================
+      SHIP TO DETAILS
+  ====================================================== */
 
-    totpkg: 0,
+  togstin: "27XYZDE5678K1Z2",
 
-    totothchrg: 0,
+  totrdNm: "XYZ Enterprises",
 
-    tottxval: totalTaxableValue,
+  tolglNm:
+    "XYZ Enterprises LLP",
 
-    totiamt: isInterState
-      ? totalIGST
-      : 0,
+  tobnm: "XYZ Business Park",
 
-    totcamt: isInterState
-      ? 0
-      : totalCGST,
+  toflno: "5th Floor",
 
-    totsamt: isInterState
-      ? 0
-      : totalSGST,
+  toloc: "Andheri East",
 
-    totcsamt: 0,
+  todst: "Mumbai",
 
-    totstcsamt: 0,
+  tostcd: "27",
 
-    rndOffAmt: 0,
+  topin: "400069",
 
-    /* =======================================================
-       INVOICE FLAGS
-    ======================================================= */
+  toph: "9123456780",
 
-    sec7act: "N",
+  toem:
+    "warehouse@xyzenterprises.com",
 
-    invStDt: null,
+  /* ======================================================
+      EXPORT DETAILS
+  ====================================================== */
 
-    invEndDt: null,
+  sbnum: null,
 
-    invRmk:
-      invoiceData?.remarks ||
-      "Invoice Generated Successfully",
+  sbdt: null,
 
-    /* =======================================================
-       PAYMENT DETAILS
-    ======================================================= */
+  port: null,
 
-    payNm: null,
-    acctdet: null,
-    pa: null,
-    mode: null,
-    ifsc: null,
-    payTerm: null,
-    payInstr: null,
-    crTrn: null,
-    dirDr: null,
-    crDay: null,
-    balAmt: null,
-    paidAmt: null,
-    payDueDt: null,
-    transId: null,
+  expduty: 0,
 
-    /* =======================================================
-       TRANSPORT DETAILS
-    ======================================================= */
+  cntcd: null,
 
-    subSplyTyp: "Supply",
+  forCur: null,
 
-    subSplyDes: null,
+  invForCur: null,
 
-    kdrefinum: null,
+  /* ======================================================
+      TAX & TOTALS
+  ====================================================== */
 
-    kdrefidt: null,
+  taxSch: "GST",
 
-    transMode:
-      invoiceData?.transportMode || "1",
+  totinvval: totalInvVal,
 
-    vehTyp:
-      invoiceData?.vehicleType || "R",
+  totdisc: totalDiscount,
 
-    transDist:
-      invoiceData?.transportDistance || "10",
+  totfrt: 0,
 
-    transName:
-      invoiceData?.transporterName ||
-      "ABC TRANSPORT",
+  totins: 0,
 
-    transDocNo:
-      invoiceData?.transportDocNo ||
-      "DOC001",
+  totpkg: 0,
 
-    transDocDate:
-      invoiceData?.transportDocDate ||
-      "28-03-2021",
+  totothchrg: otherCharges,
 
-    vehNo:
-      invoiceData?.vehicleNo ||
-      "KA01AB1234",
+  tottxval: totTxVal,
 
-    /* =======================================================
-       OTHER FLAGS
-    ======================================================= */
+  totiamt: totIgst,
 
-    clmrfnd: null,
+  totcamt: totCgst,
 
-    rfndelg: null,
+  totsamt: totSgst,
 
-    boef: null,
+  totcsamt: 0,
 
-    fy: "2025-26",
+  totstcsamt: 0,
 
-    refnum: null,
+  rndOffAmt: 0,
 
-    pdt: null,
+  /* ======================================================
+      INVOICE FLAGS
+  ====================================================== */
 
-    ivst: null,
+  sec7act: "N",
 
-    cptycde: null,
+  invStDt: null,
 
-    pobewb: "Null",
+  invEndDt: null,
 
-    pobret: "Null",
+  invRmk:
+    "Invoice Generated Successfully",
 
-    tcsrt: "0",
+  /* ======================================================
+      PAYMENT DETAILS
+  ====================================================== */
 
-    tcsamt: 0,
+  payNm: null,
 
-    pretcs: 0,
+  acctdet: null,
 
-    genIrn: true,
+  pa: null,
 
-    genewb: "N",
+  mode: null,
 
-    signedDataReq: true,
+  ifsc: null,
 
-    /* =======================================================
-       ITEM LIST
-    ======================================================= */
+  payTerm: null,
 
-    itemList: productList.map(
-      (item, index) => {
-        const qty = Number(item?.quantity || 1);
+  payInstr: null,
 
-        const taxableValue = Number(
-          Number(
-            item?.totalAmount || 0
-          ).toFixed(2)
-        );
+  crTrn: null,
 
-        const igstAmount = Number(
-          Number(
-            item?.igstAmount || 0
-          ).toFixed(2)
-        );
+  dirDr: null,
 
-        const cgstAmount = Number(
-          Number(
-            item?.cgstAmount || 0
-          ).toFixed(2)
-        );
+  crDay: null,
 
-        const sgstAmount = Number(
-          Number(
-            item?.sgstAmount || 0
-          ).toFixed(2)
-        );
+  balAmt: null,
 
-        const itemTotal = Number(
+  paidAmt: null,
+
+  payDueDt: null,
+
+  transId: null,
+
+  /* ======================================================
+      TRANSPORT DETAILS
+  ====================================================== */
+
+  subSplyTyp: "Supply",
+
+  subSplyDes: null,
+
+  kdrefinum: null,
+
+  kdrefidt: null,
+
+  transMode: String(
+    invoiceData?.transportMode || "1"
+  ),
+
+  vehTyp:
+    invoiceData?.vehicleType || "R",
+
+  transDist: Number(
+    invoiceData?.transportDistance ||
+      100
+  ),
+
+  transName:
+    invoiceData?.transporterName ||
+    "FastTrack Logistics",
+
+  transDocNo:
+    invoiceData?.transportDocNo ||
+    "DOC001",
+
+  transDocDate:
+    invoiceData?.transportDocDate ||
+    "28-03-2021",
+
+  vehNo:
+    invoiceData?.vehicleNo ||
+    "KA01AB1234",
+
+  /* ======================================================
+      OTHER FLAGS
+  ====================================================== */
+
+  clmrfnd: null,
+
+  rfndelg: null,
+
+  boef: null,
+
+  fy: "2025-26",
+
+  refnum: null,
+
+  pdt: null,
+
+  ivst: null,
+
+  cptycde: null,
+
+  pobewb: null,
+
+  pobret: null,
+
+  tcsrt: 0,
+
+  tcsamt: 0,
+
+  pretcs: 0,
+
+  genIrn: true,
+
+  genewb: "Y",
+
+  signedDataReq: true,
+
+  /* ======================================================
+    EXPORT DETAILS
+====================================================== */
+
+sbnum: "SB123456",
+
+sbdt: "28-03-2021",
+
+port: "INBLR1",
+
+expduty: 0,
+
+cntcd: "IN",
+
+forCur: "INR",
+
+invForCur: Number(totalInvVal).toFixed(2),
+
+/* ======================================================
+    PAYMENT DETAILS
+====================================================== */
+
+payNm: "ABC Industries Pvt Ltd",
+
+acctdet:
+  "HDFC BANK A/C - 50200012345678",
+
+ifsc: "HDFC0001234",
+
+mode: "NEFT",
+
+paidAmt: Number(totalInvVal),
+
+balAmt: 0,
+
+payTerm: "Immediate",
+
+payInstr: "Paid via Bank Transfer",
+
+payDueDt: "28-03-2021",
+
+/* ======================================================
+    TRANSPORT DETAILS
+====================================================== */
+
+transName: "FastTrack Logistics",
+
+vehTyp: "R",
+
+subSplyTyp: 1,
+
+subSplyDes: "Supply",
+
+transDocNo: "DOC001",
+
+transDocDate: "28-03-2021",
+
+  /* ======================================================
+      ITEM LIST
+  ====================================================== */
+
+  itemList: productList.map(
+    (item, index) => {
+      const txVal = Number(
+        item.totalAmount || 0
+      );
+
+      return {
+        barcde: null,
+
+        bchExpDt: null,
+
+        bchWrDt: null,
+
+        bchnm: null,
+
+        num: String(index + 1).padStart(
+          5,
+          "0"
+        ),
+
+        hsnCd:
+          item.hsnCode || "73041190",
+
+        prdNm:
+          item.itemName ||
+          "SEAMLESS STEEL TUBE",
+
+        prdDesc:
+          item.description ||
+          "SEAMLESS STEEL TUBE",
+
+        qty: Number(
+          item.quantity || 1
+        ),
+
+        freeQty: 0,
+
+        unit: item.uom || "NOS",
+
+        unitPrice: Number(
+          item.totalAmount
+        ),
+
+        discount: Number(
+          item.discount || 0
+        ),
+
+        disc: Number(
+          item.discount || 0
+        ),
+
+        preTaxVal: 0,
+
+        othchrg: 0,
+
+        assAmt: txVal,
+
+        txval: txVal,
+
+        sval: txVal,
+
+        rt: Number(
+          item.gstPer || 28
+        ),
+
+        irt: isInterState
+          ? Number(
+              item.igstPer || 28
+            )
+          : 0,
+
+        crt: !isInterState
+          ? Number(
+              item.cgstPer || 0
+            )
+          : 0,
+
+        srt: !isInterState
+          ? Number(
+              item.sgstPer || 0
+            )
+          : 0,
+
+        iamt: isInterState
+          ? Number(
+              item.igstAmount || 0
+            )
+          : 0,
+
+        camt: !isInterState
+          ? Number(
+              item.cgstAmount || 0
+            )
+          : 0,
+
+        samt: !isInterState
+          ? Number(
+              item.sgstAmount || 0
+            )
+          : 0,
+
+        csrt: 0,
+
+        csamt: 0,
+
+        stcsrt: 0,
+
+        stcsamt: 0,
+
+        itmVal: Number(
           (
-            taxableValue +
-            igstAmount +
-            cgstAmount +
-            sgstAmount
+            txVal +
+            (isInterState
+              ? Number(
+                  item.igstAmount || 0
+                )
+              : Number(
+                  item.cgstAmount || 0
+                ) +
+                Number(
+                  item.sgstAmount || 0
+                ))
           ).toFixed(2)
-        );
+        ),
 
-        return {
-          barcde: null,
+        isServc: "N",
 
-          bchExpDt: null,
+        ordLineRef: null,
 
-          bchWrDt: null,
+        orgCntry: "IN",
 
-          bchnm: null,
+        txp: null,
 
-          num: String(index + 1).padStart(
-            5,
-            "0"
-          ),
+        prdSlNo: null,
 
-          hsnCd:
-            item?.hsnCode || "73041190",
+        itmgen1: null,
+        itmgen2: null,
+        itmgen3: null,
+        itmgen4: null,
+        itmgen5: null,
 
-          prdNm:
-            item?.description ||
-            item?.itemName ||
-            "SEAMLESS STEEL TUBE",
+        invItmOtherDtls: [
+          {
+            attNm: "Project",
 
-          prdDesc:
-            item?.description ||
-            "SEAMLESS STEEL TUBE",
+            attVal: "PJTCG001",
+          },
+        ],
+      };
+    }
+  ),
 
-          qty: qty,
+  /* ======================================================
+      OTHER DOCUMENT DETAILS
+  ====================================================== */
 
-          freeQty: 0,
+  invOthDocDtls: [
+    {
+      url: "www.google.com",
 
-          unit: item?.uom || "NOS",
+      docs: "Tax Invoice",
 
-          unitPrice: Number(
-            Number(
-              item?.quantityAmount ||
-                taxableValue
-            ).toFixed(2)
-          ),
+      infoDtls: "System Generated",
+    },
+  ],
 
-          discount: Number(
-            Number(
-              item?.invoiceDiscountAmount ||
-                0
-            ).toFixed(2)
-          ),
+  /* ======================================================
+      PREVIOUS REFERENCE DETAILS
+  ====================================================== */
 
-          disc: Number(
-            Number(
-              item?.invoiceDiscountAmount ||
-                0
-            ).toFixed(2)
-          ),
+  invRefPreDtls: [
+    {
+      oinum: null,
 
-          preTaxVal: 0,
+      oidt: null,
 
-          othchrg: 0,
+      othRefNo: null,
+    },
+  ],
 
-          assAmt: taxableValue,
+  /* ======================================================
+      CONTRACT DETAILS
+  ====================================================== */
 
-          txval: taxableValue,
+  invRefContDtls: [
+    {
+      raref: null,
 
-          sval: taxableValue,
+      radt: null,
 
-          rt: Number(item?.gstPer || 18),
+      tendref: null,
 
-          irt: isInterState
-            ? Number(item?.igstPer || 18)
-            : 0,
+      contref: null,
 
-          crt: isInterState
-            ? 0
-            : Number(item?.cgstPer || 9),
+      extref: null,
 
-          srt: isInterState
-            ? 0
-            : Number(item?.sgstPer || 9),
+      projref: null,
 
-          iamt: isInterState
-            ? igstAmount
-            : 0,
+      poref: null,
 
-          camt: isInterState
-            ? 0
-            : cgstAmount,
-
-          samt: isInterState
-            ? 0
-            : sgstAmount,
-
-          csrt: 0,
-
-          csamt: 0,
-
-          stcsrt: 0,
-
-          stcsamt: 0,
-
-          itmVal: itemTotal,
-
-          isServc: "N",
-
-          ordLineRef: null,
-
-          orgCntry: "IN",
-
-          txp: null,
-
-          prdSlNo: null,
-
-          itmgen1: null,
-          itmgen2: null,
-          itmgen3: null,
-          itmgen4: null,
-          itmgen5: null,
-
-          invItmOtherDtls: [],
-        };
-      }
-    ),
-
-    /* =======================================================
-       OTHER DOCUMENT DETAILS
-    ======================================================= */
-
-    invOthDocDtls: [
-      {
-        url:
-          "https://your-secure-storage.com/docs/inv-99.pdf",
-        docs: "Tax_Invoice",
-        infoDtls:
-          "Original signed copy for compliance",
-      },
-    ],
-
-    /* =======================================================
-       PREVIOUS REFERENCE DETAILS
-    ======================================================= */
-
-    invRefPreDtls: [
-      {
-        oinum: null,
-        oidt: null,
-        othRefNo: null,
-      },
-    ],
-
-    /* =======================================================
-       CONTRACT DETAILS
-    ======================================================= */
-
-    invRefContDtls: [
-      {
-        raref: null,
-        radt: null,
-        tendref: null,
-        contref: null,
-        extref: null,
-        projref: null,
-        poref: null,
-        porefdt: null,
-      },
-    ],
-  };
+      porefdt: null,
+    },
+  ],
 };
-
+};
 const GenerateAndPrintEinvoice = () => {
   const { token, setLastInvoice } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -1514,15 +1531,554 @@ return (
 
       {/* ========================================================= */}
       {/* TRANSPORT */}
-      {/* ========================================================= */}
-      <Section title="Transport Details" color="#9C27B0">
-        <Row>
-          <Cell><LabeledInput label="Mode" value={payload.transMode} onChange={(v) => setField("transMode", v)} /></Cell>
-          <Cell><LabeledInput label="Vehicle No" value={payload.vehNo} onChange={(v) => setField("vehNo", v)} /></Cell>
-          <Cell><LabeledInput label="Distance" value={payload.transDist} onChange={(v) => setField("transDist", v)} /></Cell>
-        </Row>
-      </Section>
+      /* ========================================================= */
+/* TRANSPORT DETAILS */
+/* ========================================================= */}
+<Section title="Transport Details" color="#9C27B0">
 
+  {/* ROW 1 */}
+  <Row>
+    <Cell>
+      <LabeledSelect
+        label="Sub Supply Type"
+        value={payload.subSplyTyp}
+         options={[
+    "supply",   
+    "Import",
+    "Export",
+    "Job Work",
+    "For Own Use",
+    "Job Work Returns",
+    "Sales Return",
+    "Others",
+    "SKD/CKD",
+    "Line Sales",
+    "Recipient Not Known",
+    "Exhibition or Fairs",
+  ]}
+        onChange={(v) =>
+          setField("subSplyTyp", v)
+        }
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Sub Supply Description"
+        value={payload.subSplyDes || ""}
+        onChange={(v) =>
+          setField("subSplyDes", v)
+        }
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledSelect
+        label="Transport Mode"
+        value={payload.transMode}
+        options={[
+          "1", // Road
+          "2", // Rail
+          "3", // Air
+          "4", // Ship
+        ]}
+        onChange={(v) =>
+          setField("transMode", v)
+        }
+      />
+    </Cell>
+  </Row>
+
+  {/* ROW 2 */}
+  <Row>
+    <Cell>
+      <LabeledSelect
+        label="Vehicle Type"
+        value={payload.vehTyp}
+        options={[
+          "R", // Regular
+          "O", // ODC
+        ]}
+        onChange={(v) =>
+          setField("vehTyp", v)
+        }
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Transport Distance (KM)"
+        value={payload.transDist}
+        onChange={(v) =>
+          setField("transDist", v)
+        }
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Transporter Name"
+        value={payload.transName}
+        onChange={(v) =>
+          setField("transName", v)
+        }
+      />
+    </Cell>
+  </Row>
+
+  {/* ROW 3 */}
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Vehicle Number"
+        value={payload.vehNo}
+        onChange={(v) =>
+          setField("vehNo", v)
+        }
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Transport Document Number"
+        value={payload.transDocNo}
+        onChange={(v) =>
+          setField("transDocNo", v)
+        }
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Transport Document Date"
+        value={payload.transDocDate}
+        onChange={(v) =>
+          setField("transDocDate", v)
+        }
+      />
+    </Cell>
+  </Row>
+
+  {/* ROW 4 */}
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="KD Reference Invoice Number"
+        value={payload.kdrefinum || ""}
+        onChange={(v) =>
+          setField("kdrefinum", v)
+        }
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="KD Reference Invoice Date"
+        value={payload.kdrefidt || ""}
+        onChange={(v) =>
+          setField("kdrefidt", v)
+        }
+      />
+    </Cell>
+
+    <Cell />
+  </Row>
+
+</Section>
+      /* ========================================================= */
+/* DISPATCH DETAILS */
+/* ========================================================= */
+<Section title="Dispatch Details (From)" color="#795548">
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Dispatch GSTIN"
+        value={payload.dgstin}
+        onChange={(v) => setField("dgstin", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Dispatch Trade Name"
+        value={payload.dtrdNm}
+        onChange={(v) => setField("dtrdNm", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Dispatch Legal Name"
+        value={payload.dlglNm}
+        onChange={(v) => setField("dlglNm", v)}
+      />
+    </Cell>
+  </Row>
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Building Name"
+        value={payload.dbnm}
+        onChange={(v) => setField("dbnm", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Floor Number"
+        value={payload.dflno}
+        onChange={(v) => setField("dflno", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Location"
+        value={payload.dloc}
+        onChange={(v) => setField("dloc", v)}
+      />
+    </Cell>
+  </Row>
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="District"
+        value={payload.ddst}
+        onChange={(v) => setField("ddst", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="State Code"
+        value={payload.dstcd}
+        onChange={(v) => setField("dstcd", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="PIN Code"
+        value={payload.dpin}
+        onChange={(v) => setField("dpin", v)}
+      />
+    </Cell>
+  </Row>
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Phone Number"
+        value={payload.dph}
+        onChange={(v) => setField("dph", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Email Address"
+        value={payload.dem}
+        onChange={(v) => setField("dem", v)}
+      />
+    </Cell>
+
+    <Cell />
+  </Row>
+
+</Section>
+
+{/* ========================================================= */}
+{/* SHIP TO DETAILS */}
+{/* ========================================================= */}
+<Section title="Ship To Details" color="#3F51B5">
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Ship-To GSTIN"
+        value={payload.togstin}
+        onChange={(v) => setField("togstin", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Trade Name"
+        value={payload.totrdNm}
+        onChange={(v) => setField("totrdNm", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Legal Name"
+        value={payload.tolglNm}
+        onChange={(v) => setField("tolglNm", v)}
+      />
+    </Cell>
+  </Row>
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Building Name"
+        value={payload.tobnm}
+        onChange={(v) => setField("tobnm", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Floor Number"
+        value={payload.toflno}
+        onChange={(v) => setField("toflno", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Location"
+        value={payload.toloc}
+        onChange={(v) => setField("toloc", v)}
+      />
+    </Cell>
+  </Row>
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="District"
+        value={payload.todst}
+        onChange={(v) => setField("todst", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="State Code"
+        value={payload.tostcd}
+        onChange={(v) => setField("tostcd", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="PIN Code"
+        value={payload.topin}
+        onChange={(v) => setField("topin", v)}
+      />
+    </Cell>
+  </Row>
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Phone Number"
+        value={payload.toph}
+        onChange={(v) => setField("toph", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Email Address"
+        value={payload.toem}
+        onChange={(v) => setField("toem", v)}
+      />
+    </Cell>
+
+    <Cell />
+  </Row>
+
+</Section>
+
+{/* ========================================================= */}
+{/* EXPORT DETAILS */}
+{/* ========================================================= */}
+<Section title="Export Details" color="#607D8B">
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Shipping Bill Number"
+        value={payload.sbnum}
+        onChange={(v) => setField("sbnum", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Shipping Bill Date"
+        value={payload.sbdt}
+        onChange={(v) => setField("sbdt", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Port"
+        value={payload.port}
+        onChange={(v) => setField("port", v)}
+      />
+    </Cell>
+  </Row>
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Export Duty"
+        value={payload.expduty}
+        onChange={(v) => setField("expduty", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Country Code"
+        value={payload.cntcd}
+        onChange={(v) => setField("cntcd", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Foreign Currency"
+        value={payload.forCur}
+        onChange={(v) => setField("forCur", v)}
+      />
+    </Cell>
+  </Row>
+
+</Section>
+
+{/* ========================================================= */}
+{/* PAYMENT DETAILS */}
+{/* ========================================================= */}
+<Section title="Payment Details" color="#009688">
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Payee Name"
+        value={payload.payNm}
+        onChange={(v) => setField("payNm", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Account Details"
+        value={payload.acctdet}
+        onChange={(v) => setField("acctdet", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="IFSC"
+        value={payload.ifsc}
+        onChange={(v) => setField("ifsc", v)}
+      />
+    </Cell>
+  </Row>
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Payment Mode"
+        value={payload.mode}
+        onChange={(v) => setField("mode", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Paid Amount"
+        value={payload.paidAmt}
+        onChange={(v) => setField("paidAmt", v)}
+      />
+    </Cell>
+
+    <Cell>
+      <LabeledInput
+        label="Balance Amount"
+        value={payload.balAmt}
+        onChange={(v) => setField("balAmt", v)}
+      />
+    </Cell>
+  </Row>
+
+</Section>
+
+{/* ========================================================= */}
+{/* EXTRA TRANSPORT DETAILS */}
+{/* ========================================================= */}
+<Row>
+  <Cell>
+    <LabeledInput
+      label="Transporter Name"
+      value={payload.transName}
+      onChange={(v) => setField("transName", v)}
+    />
+  </Cell>
+
+  <Cell>
+    <LabeledInput
+      label="Vehicle Type"
+      value={payload.vehTyp}
+      onChange={(v) => setField("vehTyp", v)}
+    />
+  </Cell>
+
+  <Cell>
+    <LabeledInput
+      label="Sub Supply Type"
+      value={payload.subSplyTyp}
+      onChange={(v) => setField("subSplyTyp", v)}
+    />
+  </Cell>
+</Row>
+
+<Row>
+  <Cell>
+    <LabeledInput
+      label="Transport Doc No"
+      value={payload.transDocNo}
+      onChange={(v) => setField("transDocNo", v)}
+    />
+  </Cell>
+
+  <Cell>
+    <LabeledInput
+      label="Transport Doc Date"
+      value={payload.transDocDate}
+      onChange={(v) => setField("transDocDate", v)}
+    />
+  </Cell>
+
+  <Cell />
+</Row>
+
+{/* ========================================================= */}
+{/* INVOICE REMARKS */}
+{/* ========================================================= */}
+<Section title="Invoice Remarks" color="#E91E63">
+
+  <Row>
+    <Cell>
+      <LabeledInput
+        label="Invoice Remarks"
+        value={payload.invRmk}
+        onChange={(v) => setField("invRmk", v)}
+      />
+    </Cell>
+  </Row>
+
+</Section>
+      
       {/* ========================================================= */}
       {/* ITEMS */}
       {/* ========================================================= */}

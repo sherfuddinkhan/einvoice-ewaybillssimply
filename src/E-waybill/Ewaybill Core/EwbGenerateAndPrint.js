@@ -42,14 +42,27 @@ const EwbGenerateAndPrint = () => {
 
   // ✅ dynamic id
   const dynamicId = receivedData.id || invoiceData.pid;
-  console.log("toTrdName:",receivedData ?.clientCompanyName)
-  console.log("vehicleNo",receivedData?.vehicleNo);
-  console.log(
-  "hsncode",
-  receivedData?.invoiceData?.invoiceProductDetails?.[0]?.hsncode
+  console.log("toTrdName:",receivedData ?.invoiceData.clientCompanyName)
+  console.log("vehicleNo",receivedData ?.invoiceData?.vehicleNo);
+console.log("hsncode", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.hsncode);
+console.log("totInvValue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.afterGSTAmount);
+console.log("totalValue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount);
+console.log("cgstvalue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount);
+console.log("igstvalue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount);
+console.log("sgstvalue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount);
+console.log("cgstPer", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstPer);
+console.log("igstPer", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstPer);
+console.log("gstPer", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.gstPer);
+console.log("itemName", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.itemName);
+console.log("quantity", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.quantity);
+console.log("quantityAmount", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.quantityAmount);
+console.log("totalAmount", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount);
+console.log("uom", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.uom);
+console.log("producdescription", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.description);
+console.log("product name", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.itemName
 );
 
-    const DEFAULT_FORM = {
+        const DEFAULT_FORM = {
         supplyType: "O",
         subSupplyType: "1",
         docType: "INV",
@@ -103,7 +116,7 @@ const EwbGenerateAndPrint = () => {
 
         toTrdName:
           invoiceData?.clientCompanyName ||
-          receivedData?.clientCompanyName ||
+          receivedData ?.invoiceData.clientCompanyName ||
           "",
 
         toAddr1:
@@ -124,19 +137,19 @@ const EwbGenerateAndPrint = () => {
           invoiceData?.clientStateCode || 5,
 
         totInvValue:
-          invoiceData?.grandTotal || 21000,
+          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.afterGSTAmount || 21000,
 
         totalValue:
-          invoiceData?.taxableAmount || 20000,
+          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount || 20000,
 
         cgstValue:
-          invoiceData?.cgstAmount || 500,
+          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount || 500,
 
         sgstValue:
-          invoiceData?.sgstAmount || 500,
+          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount || 500,
 
         igstValue:
-          invoiceData?.igstAmount || 0,
+          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount || 0,
 
         cessValue: 0,
         cessNonAdvolValue: 0,
@@ -162,7 +175,7 @@ const EwbGenerateAndPrint = () => {
 
         vehicleNo:
           invoiceData?.vehicleNo ||
-          receivedData?.vehicleNo ||
+          receivedData ?.invoiceData?.vehicleNo ||
           "RJ14CA9999",
 
         vehicleType: "R",
@@ -176,45 +189,45 @@ const EwbGenerateAndPrint = () => {
         itemList: [
           {
             productName:
-              receivedData?.itemName || "",
+              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.itemName|| "",
 
             productDesc:
-              receivedData?.moreDescription ||
+               receivedData?.invoiceData?.invoiceProductDetails?.[0]?.description ||
               "",
 
             hsnCode:
-              receivedData?.hsncode || "",
+              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.hsncode || "",
 
             quantity:
               receivedData?.quantity || 1,
 
             qtyUnit:
-              receivedData?.uom || "",
+             receivedData?.invoiceData?.invoiceProductDetails?.[0]?.uom || "",
 
             taxableAmount:
-              receivedData?.taxableAmount ||
+              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount ||
               20000,
 
             sgstRate:
-              receivedData?.sgstRate || 2.5,
+              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstPer || 2.5,
 
             cgstRate:
-              receivedData?.cgstRate || 2.5,
+              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstPer || 2.5,
 
             igstRate:
-              receivedData?.igstRate || 0,
+              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstPer || 0,
 
             cessRate: 0,
             cessNonAdvol: 0,
 
             iamt:
-              receivedData?.igstAmount || 0,
+              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount || 0,
 
             camt:
-              receivedData?.cgstAmount || 500,
+             receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount || 500,
 
             samt:
-              receivedData?.sgstAmount || 500,
+              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount || 500,
 
             csamt: 0,
 
