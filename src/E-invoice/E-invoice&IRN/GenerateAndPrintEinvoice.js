@@ -143,21 +143,61 @@ const createBasePayload = (
   dynamicId,
   selectedCatg = "B2B"
 ) => {
-  const sellerStateCode = "01";
+  // =========================================================
+  // HELPERS
+  // =========================================================
+
+  const formatDate = (date) => {
+    if (!date) {
+      const d = new Date();
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yyyy = d.getFullYear();
+      return `${dd}-${mm}-${yyyy}`;
+    }
+
+    if (typeof date === "string" && date.includes("-")) {
+      return date;
+    }
+
+    const d = new Date(date);
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+
+    return `${dd}-${mm}-${yyyy}`;
+  };
+
+  const sellerStateCode = "29";
+
+  const invoiceDate = formatDate(
+    invoiceData?.invoiceDate || new Date()
+  );
+
+  const transportDocDate = formatDate(
+    invoiceData?.transportDocDate ||
+      invoiceData?.invoiceDate ||
+      new Date()
+  );
+
   const isExport = selectedCatg === "EXP";
 
   // =========================================================
-  // TRANSACTION TYPE
+  // TRANSACTION TYPES
   // =========================================================
-  // REG  -> Regular
-  // BILLTO_SHIPTO -> Ship To allowed
-  // BILLFROM_DISPATCHFROM -> Dispatch From allowed
+  // REG
+  // BILLTO_SHIPTO
+  // BILLFROM_DISPATCHFROM
   // =========================================================
 
-  const selectedTrnTyp = invoiceData?.transactionType || "REG";
+  const selectedTrnTyp =
+    invoiceData?.transactionType || "REG";
 
   const isRegular = selectedTrnTyp === "REG";
-  const isBillToShipTo = selectedTrnTyp === "BILLTO_SHIPTO";
+
+  const isBillToShipTo =
+    selectedTrnTyp === "BILLTO_SHIPTO";
+
   const isBillFromDispatchFrom =
     selectedTrnTyp === "BILLFROM_DISPATCHFROM";
 
@@ -171,7 +211,7 @@ const createBasePayload = (
     buyerGstin =
       invoiceData?.gstin?.length === 15
         ? invoiceData.gstin
-        : "02AAACI9260R002";
+        : "27ABCDE1234F1Z5";
   }
 
   const buyerStateCode =
@@ -179,7 +219,8 @@ const createBasePayload = (
       ? buyerGstin.substring(0, 2)
       : invoiceData?.buyerStateCode || "27";
 
-  const isInterState = sellerStateCode !== buyerStateCode;
+  const isInterState =
+    sellerStateCode !== buyerStateCode;
 
   // =========================================================
   // PRODUCTS
@@ -209,30 +250,51 @@ const createBasePayload = (
 
   const totTxVal = Number(
     productList
-      .reduce((sum, item) => sum + Number(item.totalAmount || 0), 0)
+      .reduce(
+        (sum, item) =>
+          sum + Number(item.totalAmount || 0),
+        0
+      )
       .toFixed(2)
   );
 
   const totIgst = Number(
     productList
-      .reduce((sum, item) => sum + Number(item.igstAmount || 0), 0)
+      .reduce(
+        (sum, item) =>
+          sum + Number(item.igstAmount || 0),
+        0
+      )
       .toFixed(2)
   );
 
   const totCgst = Number(
     productList
-      .reduce((sum, item) => sum + Number(item.cgstAmount || 0), 0)
+      .reduce(
+        (sum, item) =>
+          sum + Number(item.cgstAmount || 0),
+        0
+      )
       .toFixed(2)
   );
 
   const totSgst = Number(
     productList
-      .reduce((sum, item) => sum + Number(item.sgstAmount || 0), 0)
+      .reduce(
+        (sum, item) =>
+          sum + Number(item.sgstAmount || 0),
+        0
+      )
       .toFixed(2)
   );
 
-  const totalDiscount = Number(invoiceData?.totalDiscount || 0);
-  const otherCharges = Number(invoiceData?.otherCharges || 0);
+  const totalDiscount = Number(
+    invoiceData?.totalDiscount || 0
+  );
+
+  const otherCharges = Number(
+    invoiceData?.otherCharges || 0
+  );
 
   const totalInvVal = Number(
     (
@@ -245,17 +307,37 @@ const createBasePayload = (
     ).toFixed(2)
   );
 
+  // =========================================================
+  // SAFE EWB DISTANCE
+  // =========================================================
+
+  let transportDistance = Number(
+    invoiceData?.transportDistance || 120
+  );
+
+  if (transportDistance <= 0) {
+    transportDistance = 120;
+  }
+
+  if (transportDistance > 4000) {
+    transportDistance = 4000;
+  }
+
+  // =========================================================
+  // PAYLOAD
+  // =========================================================
+
   return {
-    // =========================================================
+    // =====================================================
     // BASIC
-    // =========================================================
+    // =====================================================
 
     id: String(dynamicId || "1001"),
 
     userGstin:
       selectedCatg === "B2C"
         ? "29ABCDE1234F1Z5"
-        : "01AAACI9260R002",
+        : "29ABCDE1234F1Z5",
 
     pobCode: null,
 
@@ -267,7 +349,10 @@ const createBasePayload = (
 
     docType: "RI",
 
-    catg: selectedCatg === "B2C" ? "B2CS" : selectedCatg,
+    catg:
+      selectedCatg === "B2C"
+        ? "B2CS"
+        : selectedCatg,
 
     dst: "O",
 
@@ -275,11 +360,9 @@ const createBasePayload = (
 
     no:
       invoiceData?.invoiceNo ||
-      (selectedCatg === "B2C"
-        ? "AG45y64324h"
-        : "AG-03-09-4565"),
+      `INV-${Date.now()}`,
 
-    dt: invoiceData?.invoiceDate || "28-03-2021",
+    dt: invoiceDate,
 
     refinum: null,
     refidt: null,
@@ -291,44 +374,51 @@ const createBasePayload = (
 
     rchrg: "N",
 
-    // =========================================================
+    // =====================================================
     // SELLER
-    // =========================================================
+    // =====================================================
 
-    sgstin: "01AAACI9260R002",
+    sgstin: "29ABCDE1234F1Z5",
 
     strdNm:
-      invoiceData?.sellerTradeName || "TEST Company",
+      invoiceData?.sellerTradeName ||
+      "TEST Company",
 
     slglNm:
-      invoiceData?.sellerLegalName || "TEST PROD",
+      invoiceData?.sellerLegalName ||
+      "TEST PROD",
 
     sbnm:
-      invoiceData?.sellerBuildingName || "Testing",
+      invoiceData?.sellerBuildingName ||
+      "Testing",
 
     sflno:
       invoiceData?.sellerFloorNo || "ABC",
 
     sloc:
-      invoiceData?.sellerLocation || "BANGALOR32",
+      invoiceData?.sellerLocation ||
+      "BANGALORE",
 
     sdst:
-      invoiceData?.sellerDistrict || "BENGALURU",
+      invoiceData?.sellerDistrict ||
+      "BENGALURU",
 
     sstcd: sellerStateCode,
 
     spin:
-      invoiceData?.sellerPincode || "192233",
+      invoiceData?.sellerPincode || "560001",
 
     sph:
-      invoiceData?.sellerPhone || "9876543210",
+      invoiceData?.sellerPhone ||
+      "9876543210",
 
     sem:
-      invoiceData?.sellerEmail || "abc123@gmail.com",
+      invoiceData?.sellerEmail ||
+      "abc123@gmail.com",
 
-    // =========================================================
+    // =====================================================
     // BUYER
-    // =========================================================
+    // =====================================================
 
     bgstin: buyerGstin,
 
@@ -348,82 +438,94 @@ const createBasePayload = (
       invoiceData?.buyerFloorNo || "abc",
 
     bloc:
-      invoiceData?.buyerLocation || "Jijamat",
+      invoiceData?.buyerLocation ||
+      "Mumbai",
 
     bdst:
-      invoiceData?.buyerDistrict || "BANGALORE",
+      invoiceData?.buyerDistrict ||
+      "Mumbai",
 
     bstcd: buyerStateCode,
 
     bpin:
-      invoiceData?.buyerPincode || "174001",
+      invoiceData?.buyerPincode || "400001",
 
     bph:
-      invoiceData?.buyerPhone || "9898981111",
+      invoiceData?.buyerPhone ||
+      "9898989898",
 
     bem:
-      invoiceData?.buyerEmail || "abc123@gmail.com",
+      invoiceData?.buyerEmail ||
+      "buyer@gmail.com",
 
-    // =========================================================
+    // =====================================================
     // DISPATCH FROM
     // ONLY FOR BILLFROM_DISPATCHFROM
-    // =========================================================
+    // =====================================================
 
     dgstin: isBillFromDispatchFrom
-      ? invoiceData?.dispatchGstin || "29ABCDE1234F1Z5"
+      ? invoiceData?.dispatchGstin ||
+        "29ABCDE1234F1Z5"
       : null,
 
     dtrdNm: isBillFromDispatchFrom
-      ? invoiceData?.dispatchTradeName || "ABC Traders"
+      ? invoiceData?.dispatchTradeName ||
+        "ABC Traders"
       : null,
 
     dlglNm: isBillFromDispatchFrom
       ? invoiceData?.dispatchLegalName ||
-        "ABC Traders Private Limited"
+        "ABC Traders Pvt Ltd"
       : null,
 
     dbnm: isBillFromDispatchFrom
-      ? invoiceData?.dispatchBuildingName || "ABC Tower"
+      ? invoiceData?.dispatchBuildingName ||
+        "ABC Tower"
       : null,
 
     dflno: isBillFromDispatchFrom
-      ? invoiceData?.dispatchFloorNo || "2nd Floor"
+      ? invoiceData?.dispatchFloorNo ||
+        "2nd Floor"
       : null,
 
     dloc: isBillFromDispatchFrom
-      ? invoiceData?.dispatchLocation || "MG Road"
+      ? invoiceData?.dispatchLocation ||
+        "MG Road"
       : null,
 
     ddst: isBillFromDispatchFrom
       ? invoiceData?.dispatchDistrict ||
-        "Bengaluru Urban"
+        "Bengaluru"
       : null,
 
     dstcd: isBillFromDispatchFrom
-      ? invoiceData?.dispatchStateCode || "29"
+      ? invoiceData?.dispatchStateCode ||
+        "29"
       : null,
 
     dpin: isBillFromDispatchFrom
-      ? invoiceData?.dispatchPincode || "560001"
+      ? invoiceData?.dispatchPincode ||
+        "560001"
       : null,
 
     dph: isBillFromDispatchFrom
-      ? invoiceData?.dispatchPhone || "9876543210"
+      ? invoiceData?.dispatchPhone ||
+        "9876543210"
       : null,
 
     dem: isBillFromDispatchFrom
       ? invoiceData?.dispatchEmail ||
-        "dispatch@abctraders.com"
+        "dispatch@test.com"
       : null,
 
-    // =========================================================
+    // =====================================================
     // SHIP TO
     // ONLY FOR BILLTO_SHIPTO
-    // =========================================================
+    // =====================================================
 
     togstin: isBillToShipTo
       ? invoiceData?.shipToGstin ||
-        "27XYZDE5678K1Z2"
+        "27ABCDE1234F1Z5"
       : null,
 
     totrdNm: isBillToShipTo
@@ -457,37 +559,46 @@ const createBasePayload = (
       : null,
 
     tostcd: isBillToShipTo
-      ? invoiceData?.shipToStateCode || "27"
+      ? invoiceData?.shipToStateCode ||
+        "27"
       : null,
 
     topin: isBillToShipTo
-      ? invoiceData?.shipToPincode || "400069"
+      ? invoiceData?.shipToPincode ||
+        "400069"
       : null,
 
     toph: isBillToShipTo
-      ? invoiceData?.shipToPhone || "9123456780"
+      ? invoiceData?.shipToPhone ||
+        "9123456780"
       : null,
 
     toem: isBillToShipTo
       ? invoiceData?.shipToEmail ||
-        "warehouse@xyzenterprises.com"
+        "warehouse@test.com"
       : null,
 
-    // =========================================================
+    // =====================================================
     // EXPORT
-    // =========================================================
+    // =====================================================
 
     sbnum: isExport ? "SB123456" : null,
-    sbdt: isExport ? "28-03-2021" : null,
-    port: isExport ? "INMAA1" : null,
-    expduty: isExport ? 0 : null,
-    cntcd: isExport ? "US" : null,
-    forCur: isExport ? "USD" : null,
-    invForCur: isExport ? 0 : null,
 
-    // =========================================================
+    sbdt: isExport ? invoiceDate : null,
+
+    port: isExport ? "INMAA1" : null,
+
+    expduty: isExport ? 0 : null,
+
+    cntcd: isExport ? "US" : null,
+
+    forCur: isExport ? "USD" : null,
+
+    invForCur: isExport ? totalInvVal : null,
+
+    // =====================================================
     // TOTALS
-    // =========================================================
+    // =====================================================
 
     taxSch: "GST",
 
@@ -495,17 +606,21 @@ const createBasePayload = (
 
     totdisc: totalDiscount,
 
-    totfrt: Number(invoiceData?.freight || 0),
+    totfrt: Number(
+      invoiceData?.freight || 0
+    ),
 
-    totins: Number(invoiceData?.insurance || 0),
+    totins: Number(
+      invoiceData?.insurance || 0
+    ),
 
-    totpkg: Number(invoiceData?.packingCharges || 0),
+    totpkg: Number(
+      invoiceData?.packingCharges || 0
+    ),
 
     totothchrg: otherCharges,
 
     tottxval: totTxVal,
-
-    tottaxval: totTxVal,
 
     totiamt: totIgst,
 
@@ -517,109 +632,133 @@ const createBasePayload = (
 
     totstcsamt: 0,
 
-    rndOffAmt: Number(invoiceData?.roundOff || 0),
+    rndOffAmt: Number(
+      invoiceData?.roundOff || 0
+    ),
 
-    // =========================================================
+    // =====================================================
     // PAYMENT
-    // =========================================================
+    // =====================================================
 
     payNm:
-      invoiceData?.payeeName ||
-      "ABC Industries Pvt Ltd",
+      invoiceData?.payeeName || "Rahul S",
 
     acctdet:
       invoiceData?.accountDetails ||
-      "50200012345678",
+      "123456789012",
+
+    pa: "919876543210@federal",
+
+    mc: "8888",
+
+    mode: "1",
 
     ifsc:
-      invoiceData?.ifsc || "HDFC0001234",
-
-    mode:
-      invoiceData?.paymentMode || "NEFT",
+      invoiceData?.ifsc || "FDRL0001757",
 
     paidAmt: totalInvVal,
 
     balAmt: 0,
 
-    payDueDt:
-      invoiceData?.paymentDueDate ||
-      "28-03-2021",
+    // =====================================================
+    // EWAY BILL
+    // =====================================================
 
-    // =========================================================
-    // TRANSPORT
-    // =========================================================
+    transId: "29ABCDE1234F1Z5",
 
     subSplyTyp: "Supply",
 
-    subSplyDes: "Supply",
+    subSplyDes: null,
 
     transMode: "1",
 
     vehTyp: "R",
 
-    transDist: 100,
+    transDist: transportDistance,
 
     transName: "FastTrack Logistics",
 
-    transDocNo: "DOC001",
+    transDocNo:
+      invoiceData?.transportDocNo || "DOC001",
 
-    transDocDate: "28-03-2021",
+    transDocDate: transportDocDate,
 
-    vehNo: "KA01AB1234",
+    vehNo:
+      invoiceData?.vehicleNo || "KA01AB1234",
 
-    // =========================================================
-    // OTHER
-    // =========================================================
+    // =====================================================
+    // FLAGS
+    // =====================================================
 
     fy: "2025-26",
 
-    tcsrt: 0,
-    tcsamt: 0,
-    pretcs: 0,
-
     genIrn: true,
 
-    genewb: "N",
+    genewb: "Y",
 
     signedDataReq: true,
 
-    // =========================================================
+    // =====================================================
     // ITEMS
-    // =========================================================
+    // =====================================================
 
     itemList: productList.map((item, index) => {
-      const txVal = Number(item.totalAmount || 0);
+      const txVal = Number(
+        item.totalAmount || 0
+      );
 
-      // IMPORTANT:
-      // DO NOT USE 12 OR 28
-      // USE 18%
       const itemRate =
-        item.gstPer === 12 || item.gstPer === 28
+        item.gstPer === 12 ||
+        item.gstPer === 28
           ? 18
           : Number(item.gstPer || 18);
 
-      return {
-        num: String(index + 1).padStart(5, "0"),
+      const igstAmt = Number(
+        item.igstAmount || 0
+      );
 
-        hsnCd: item.hsnCode || "73041190",
+      const cgstAmt = Number(
+        item.cgstAmount || 0
+      );
+
+      const sgstAmt = Number(
+        item.sgstAmount || 0
+      );
+
+      return {
+        num: String(index + 1).padStart(
+          5,
+          "0"
+        ),
+
+        hsnCd:
+          item.hsnCode || "73041190",
 
         prdNm:
-          item.itemName || "SEAMLESS STEEL TUBE",
+          item.itemName ||
+          "SEAMLESS STEEL TUBE",
 
         prdDesc:
-          item.description || "SEAMLESS STEEL TUBE",
+          item.description ||
+          "SEAMLESS STEEL TUBE",
 
         qty: Number(item.quantity || 1),
 
         freeQty: 0,
 
-        unit: sanitizeUQC(item.uom || "NOS"),
+        unit: sanitizeUQC(
+          item.uom || "NOS"
+        ),
 
-        unitPrice: Number(item.unitPrice || txVal),
+        unitPrice: Number(
+          item.unitPrice || txVal
+        ),
 
         totAmt: txVal,
 
-        discount: Number(item.discount || 0),
+        discount: Number(
+          item.discount || 0
+        ),
 
         preTaxVal: txVal,
 
@@ -627,49 +766,42 @@ const createBasePayload = (
 
         txval: txVal,
 
-        gstRt: itemRate,
-
         rt: itemRate,
 
-        irt: isInterState ? itemRate : 0,
+        irt: isInterState
+          ? itemRate
+          : 0,
 
-        crt: !isInterState ? itemRate / 2 : 0,
+        crt: !isInterState
+          ? itemRate / 2
+          : 0,
 
-        srt: !isInterState ? itemRate / 2 : 0,
+        srt: !isInterState
+          ? itemRate / 2
+          : 0,
 
         iamt: isInterState
-          ? Number(item.igstAmount || 0)
+          ? igstAmt
           : 0,
 
         camt: !isInterState
-          ? Number(item.cgstAmount || 0)
+          ? cgstAmt
           : 0,
 
         samt: !isInterState
-          ? Number(item.sgstAmount || 0)
+          ? sgstAmt
           : 0,
 
         csamt: 0,
 
         othChrg: 0,
 
-        totItemVal: Number(
-          (
-            txVal +
-            (isInterState
-              ? Number(item.igstAmount || 0)
-              : Number(item.cgstAmount || 0) +
-                Number(item.sgstAmount || 0))
-          ).toFixed(2)
-        ),
-
         itmVal: Number(
           (
             txVal +
-            (isInterState
-              ? Number(item.igstAmount || 0)
-              : Number(item.cgstAmount || 0) +
-                Number(item.sgstAmount || 0))
+            igstAmt +
+            cgstAmt +
+            sgstAmt
           ).toFixed(2)
         ),
 
@@ -679,13 +811,13 @@ const createBasePayload = (
       };
     }),
 
-    // =========================================================
-    // OPTIONAL REFERENCES
-    // =========================================================
+    // =====================================================
+    // OPTIONAL
+    // =====================================================
 
     invOthDocDtls: [
       {
-        url: "www.google.com",
+        url: "https://www.google.com",
         docs: "Tax Invoice",
         infoDtls: "System Generated",
       },
