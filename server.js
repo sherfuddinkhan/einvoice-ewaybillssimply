@@ -955,93 +955,74 @@ app.get("/proxy/onyx/einvoice/details", async (req, res) => {
 // =========================
 
 const https = require("https");
+
+
+/**
+ * HTTPS Agent Configuration
+ * --------------------------------------------------
+ * Used to bypass SSL certificate validation.
+ * Recommended only for development/testing environments.
+ */
 const agent = new https.Agent({
-
-    rejectUnauthorized: false
-
+    rejectUnauthorized: false,
 });
+
+/**
+ * API Route : Get Invoice Details
+ * --------------------------------------------------
+ * This endpoint calls an external invoice API using
+ * Bearer Token Authorization and returns the response.
+ */
 app.get("/api/invoices", async (req, res) => {
+
+    // Authorization Token
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6IjA4ZDE1YzVmLTNhZTctNDcwMS04ODY1LTU4Yjg2ZWIwY2RjZCIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3Nzg5NjAwOTMsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.oocGIvxorPRi2emD7147vChs2Q3_ZDwounMwdm95Nmw";
 
     try {
 
-        console.log(
-            "Calling External API..."
-        );
+        console.log("Calling Authorized External Invoice API...");
 
+        // External API Request
         const response = await axios.get(
-
-            "https://development.myschoolzone.in/api/Invoice/GetInvoicesListOfSalesOrderForBulkExport/10/6",
-
+            "https://development.myschoolzone.in/api/Invoice/GetFinalInvoiceByID/1086",
             {
-
                 httpsAgent: agent,
 
                 headers: {
+                    "Accept": "application/json",
 
-                    accept: "text/plain"
-
-                }
-
+                    // Bearer Token Authorization
+                    "Authorization": `Bearer ${token}`,
+                },
             }
         );
 
-        console.log(
-            "SUCCESS RESPONSE:"
-        );
-
+        console.log("Invoice Data Fetched Successfully");
         console.log(response.data);
 
-        res.status(200).json(
-            response.data
-        );
+        // Success Response
+        return res.status(200).json({
+            success: true,
+            message: "Invoice fetched successfully",
+            data: response.data,
+        });
 
     } catch (error) {
 
-        console.log(
-            "=========== ERROR ==========="
-        );
+        console.log("=========== AUTHORIZED API ERROR ===========");
 
-        console.log(
-            "MESSAGE:"
-        );
+        console.log("Error Message:", error.message);
 
-        console.log(error.message);
+        console.log("Error Status:", error.response?.status);
 
-        console.log(
-            "STATUS:"
-        );
+        console.log("Error Response:", error.response?.data);
 
-        console.log(
-            error.response?.status
-        );
-
-        console.log(
-            "DATA:"
-        );
-
-        console.log(
-            error.response?.data
-        );
-
-        console.log(
-            "FULL ERROR:"
-        );
-
-        console.log(error);
-
-        res.status(500).json({
-
+        // Failure Response
+        return res.status(500).json({
             success: false,
-
-            message:
-                error.message,
-
-            status:
-                error.response?.status,
-
-            data:
-                error.response?.data
-
+            message: error.message || "Failed to fetch invoice",
+            status: error.response?.status || 500,
+            data: error.response?.data || null,
         });
     }
 });
@@ -1060,13 +1041,23 @@ const TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6IjA4ZDE1YzVmLTNhZTctNDcwMS04ODY1LTU4Yjg2ZWIwY2RjZCIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3Nzg5NjAwOTMsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.oocGIvxorPRi2emD7147vChs2Q3_ZDwounMwdm95Nmw";
 
 app.get("/api/invoice/:id", async (req, res) => {
+
   try {
+
+    // ============================================
+    // GET PARAM ID
+    // ============================================
+
     const { id } = req.params;
 
     console.log("Fetching Invoice ID:", id);
 
+    // ============================================
+    // EXTERNAL API CALL
+    // ============================================
+
     const response = await axios.get(
-      `https://ams.calibrecue.com/api/Invoice/${id}/5/EMPTY`,
+      `https://ams.calibrecue.com/api/Invoice/GetFinalInvoiceByID/${id}`,
       {
         headers: {
           Authorization: `Bearer ${TOKEN}`,
@@ -1075,14 +1066,26 @@ app.get("/api/invoice/:id", async (req, res) => {
       }
     );
 
-    console.log("Invoice Response Success");
+    console.log(
+      "=========== INVOICE API SUCCESS ==========="
+    );
 
-    res.status(200).json({
+    console.log(response.data);
+
+    // ============================================
+    // SEND RESPONSE
+    // ============================================
+
+    return res.status(200).json({
       success: true,
       data: response.data,
     });
+
   } catch (error) {
-    console.log("=========== API ERROR ===========");
+
+    console.log(
+      "=========== API ERROR ==========="
+    );
 
     console.log("MESSAGE:");
     console.log(error.message);
@@ -1093,15 +1096,18 @@ app.get("/api/invoice/:id", async (req, res) => {
     console.log("DATA:");
     console.log(error.response?.data);
 
-    res.status(error.response?.status || 500).json({
+    return res.status(
+      error.response?.status || 500
+    ).json({
       success: false,
       message: "Failed to fetch invoice",
       error: error.message,
       data: error.response?.data || null,
     });
-  }
-});
 
+  }
+
+});
 /* =====================================================
     SERVER START
     ===================================================== */

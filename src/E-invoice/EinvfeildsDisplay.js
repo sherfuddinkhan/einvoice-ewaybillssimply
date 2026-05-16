@@ -1,4 +1,4 @@
-// Einv&EwayfeildsDisplay.js
+// EinvfeildsDisplay.js
 
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
@@ -6,50 +6,72 @@ import { useNavigate } from "react-router-dom";
 
 const EinvfeildsDisplay = () => {
 
-  // =========================
+  // ======================================================
   // NAVIGATION
-  // =========================
+  // ======================================================
 
   const navigate = useNavigate();
 
-  // =========================
+  // ======================================================
   // STATES
-  // =========================
+  // ======================================================
 
   const [loading, setLoading] = useState(false);
 
   const [invoiceData, setInvoiceData] = useState([]);
 
-  // =========================
+  const [error, setError] = useState("");
+
+  // ======================================================
   // PREVENT DOUBLE API CALL
-  // =========================
+  // ======================================================
 
   const hasFetched = useRef(false);
 
-  // =========================
+  // ======================================================
   // FETCH INVOICE DATA
-  // =========================
+  // ======================================================
 
   const getInvoiceData = async () => {
 
     try {
 
-      // SHOW LOADING
       setLoading(true);
+
+      setError("");
 
       console.log("Fetching Invoice Data...");
 
+      // ======================================================
       // API CALL
+      // ======================================================
+
       const response = await axios.get(
         "http://localhost:3001/api/invoices"
       );
 
-      console.log("API Response:", response.data);
+      console.log("Full API Response:", response.data);
 
-      // CHECK ARRAY RESPONSE
-      if (Array.isArray(response.data)) {
+      // ======================================================
+      // EXTRACT INVOICE DATA
+      // ======================================================
 
-        setInvoiceData(response.data);
+      const invoices = response?.data?.data;
+
+      console.log("Invoices:", invoices);
+
+      // ======================================================
+      // HANDLE DIFFERENT RESPONSE TYPES
+      // ======================================================
+
+      if (Array.isArray(invoices)) {
+
+        setInvoiceData(invoices);
+
+      } else if (invoices && typeof invoices === "object") {
+
+        // If single object response
+        setInvoiceData([invoices]);
 
       } else {
 
@@ -59,26 +81,32 @@ const EinvfeildsDisplay = () => {
 
     } catch (error) {
 
-      console.log("Fetch Error:", error);
+      console.log("=========== FETCH ERROR ===========");
 
-      alert("Failed to fetch invoice data");
+      console.log("Message:", error.message);
+
+      console.log("Status:", error.response?.status);
+
+      console.log("Response:", error.response?.data);
+
+      setError("Failed to fetch invoice data");
+
+      setInvoiceData([]);
 
     } finally {
 
-      // STOP LOADING
       setLoading(false);
 
     }
 
   };
 
-  // =========================
+  // ======================================================
   // USE EFFECT
-  // =========================
+  // ======================================================
 
   useEffect(() => {
 
-    // PREVENT DOUBLE EXECUTION
     if (hasFetched.current) return;
 
     hasFetched.current = true;
@@ -87,52 +115,131 @@ const EinvfeildsDisplay = () => {
 
   }, []);
 
-  // =========================
+  // ======================================================
   // GENERATE E-INVOICE
-  // =========================
+  // ======================================================
 
-  const handleGenerateEinvoice = (row) => {
+const handleGenerateEinvoice = (row) => {
 
-    console.log("Selected Row:", row);
+  console.log(
+    "=========== SELECTED INVOICE ==========="
+  );
 
-    navigate("/einvoice/generate-print", {
-      state: {
-        invoiceData: row,
-       id: row.pid || row.id 
-      }
-    });
+  console.log(row);
+
+  // ==========================================
+  // GET ACTUAL INVOICE ID
+  // ==========================================
+
+  const actualInvoiceId =
+    row.invoiceProductDetails?.[0]?.invoiceXID;
+
+  console.log(
+    "Actual Invoice ID:",
+    actualInvoiceId
+  );
+
+  // ==========================================
+  // NAVIGATE
+  // ==========================================
+
+  navigate("/einvoice/generate-print", {
+    state: {
+      invoiceData: row,
+      id: actualInvoiceId
+    }
+  });
+
+};
+  
+
+  // ======================================================
+  // FORMAT DATE
+  // ======================================================
+
+  const formatDate = (date) => {
+
+    if (!date) return "-";
+
+    try {
+
+      return new Date(date).toLocaleDateString();
+
+    } catch {
+
+      return "-";
+
+    }
 
   };
 
-  // =========================
+  // ======================================================
+  // FORMAT DATE & TIME
+  // ======================================================
+
+  const formatDateTime = (date) => {
+
+    if (!date) return "-";
+
+    try {
+
+      return new Date(date).toLocaleString();
+
+    } catch {
+
+      return "-";
+
+    }
+
+  };
+
+  // ======================================================
   // UI
-  // =========================
+  // ======================================================
 
   return (
 
     <div style={styles.container}>
 
-      {/* HEADING */}
+      {/* ====================================================== */}
+      {/* PAGE HEADING */}
+      {/* ====================================================== */}
 
       <h2 style={styles.heading}>
         Invoice List
       </h2>
 
+      {/* ====================================================== */}
       {/* LOADING */}
+      {/* ====================================================== */}
 
       {loading && (
         <div style={styles.loading}>
-          Loading...
+          Loading Invoice Data...
         </div>
       )}
 
+      {/* ====================================================== */}
+      {/* ERROR */}
+      {/* ====================================================== */}
+
+      {error && (
+        <div style={styles.error}>
+          {error}
+        </div>
+      )}
+
+      {/* ====================================================== */}
       {/* TABLE */}
+      {/* ====================================================== */}
 
       <div style={styles.tableWrapper}>
 
         <table style={styles.table}>
 
+          {/* ====================================================== */}
           {/* TABLE HEADER */}
+          {/* ====================================================== */}
 
           <thead>
 
@@ -144,7 +251,7 @@ const EinvfeildsDisplay = () => {
 
               <th style={styles.th}>Mobile</th>
 
-              <th style={styles.th}>PO</th>
+              <th style={styles.th}>PO Number</th>
 
               <th style={styles.th}>PO Date</th>
 
@@ -154,9 +261,9 @@ const EinvfeildsDisplay = () => {
 
               <th style={styles.th}>GSTIN</th>
 
-              <th style={styles.th}>Vehicle</th>
+              <th style={styles.th}>Vehicle No</th>
 
-              <th style={styles.th}>E-Way No</th>
+              <th style={styles.th}>E-Way Bill No</th>
 
               <th style={styles.th}>Status</th>
 
@@ -166,7 +273,9 @@ const EinvfeildsDisplay = () => {
 
           </thead>
 
+          {/* ====================================================== */}
           {/* TABLE BODY */}
+          {/* ====================================================== */}
 
           <tbody>
 
@@ -174,7 +283,7 @@ const EinvfeildsDisplay = () => {
 
               invoiceData.map((row, index) => (
 
-                <tr key={index}>
+                <tr key={row.id || index}>
 
                   <td style={styles.td}>
                     {index + 1}
@@ -193,33 +302,15 @@ const EinvfeildsDisplay = () => {
                   </td>
 
                   <td style={styles.td}>
-
-                    {row.purchaseOrderDate
-                      ? new Date(
-                          row.purchaseOrderDate
-                        ).toLocaleDateString()
-                      : "-"}
-
+                    {formatDate(row.purchaseOrderDate)}
                   </td>
 
                   <td style={styles.td}>
-
-                    {row.invoiceCreatedOn
-                      ? new Date(
-                          row.invoiceCreatedOn
-                        ).toLocaleString()
-                      : "-"}
-
+                    {formatDateTime(row.invoiceCreatedOn)}
                   </td>
 
                   <td style={styles.td}>
-
-                    {row.createdOn
-                      ? new Date(
-                          row.createdOn
-                        ).toLocaleString()
-                      : "-"}
-
+                    {formatDateTime(row.createdOn)}
                   </td>
 
                   <td style={styles.td}>
@@ -238,7 +329,9 @@ const EinvfeildsDisplay = () => {
                     {row.transactionStatusXid || "-"}
                   </td>
 
+                  {/* ====================================================== */}
                   {/* ACTION BUTTON */}
+                  {/* ====================================================== */}
 
                   <td style={styles.actionTd}>
 
@@ -263,16 +356,20 @@ const EinvfeildsDisplay = () => {
 
             ) : (
 
-              <tr>
+              !loading && (
 
-                <td
-                  colSpan="12"
-                  style={styles.noData}
-                >
-                  No Invoice Data Found
-                </td>
+                <tr>
 
-              </tr>
+                  <td
+                    colSpan="12"
+                    style={styles.noData}
+                  >
+                    No Invoice Data Found
+                  </td>
+
+                </tr>
+
+              )
 
             )}
 
@@ -288,35 +385,49 @@ const EinvfeildsDisplay = () => {
 
 };
 
-// =========================
+// ======================================================
 // STYLES
-// =========================
+// ======================================================
 
 const styles = {
 
   container: {
     padding: "20px",
-    fontFamily: "Arial",
+    fontFamily: "Arial, sans-serif",
     backgroundColor: "#f4f6f9",
     minHeight: "100vh"
   },
 
   heading: {
-    marginBottom: "15px",
-    color: "#1976d2"
+    marginBottom: "20px",
+    color: "#1976d2",
+    fontSize: "28px",
+    fontWeight: "bold"
   },
 
   loading: {
     marginBottom: "15px",
+    padding: "10px",
+    backgroundColor: "#fff3cd",
+    color: "#856404",
+    borderRadius: "5px",
+    fontWeight: "bold"
+  },
+
+  error: {
+    marginBottom: "15px",
+    padding: "10px",
+    backgroundColor: "#f8d7da",
+    color: "#721c24",
+    borderRadius: "5px",
     fontWeight: "bold"
   },
 
   tableWrapper: {
     width: "100%",
     overflowX: "auto",
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
     borderRadius: "10px",
-    marginBottom: "20px",
     boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
   },
 
@@ -328,45 +439,47 @@ const styles = {
 
   th: {
     backgroundColor: "#1976d2",
-    color: "white",
+    color: "#ffffff",
     padding: "12px",
-    textAlign: "center"
+    textAlign: "center",
+    fontWeight: "bold",
+    borderBottom: "2px solid #1565c0"
   },
 
   td: {
     padding: "10px",
-    borderBottom: "1px solid #ddd",
-    textAlign: "center"
+    borderBottom: "1px solid #dddddd",
+    textAlign: "center",
+    fontSize: "14px"
   },
 
   actionTd: {
     padding: "10px",
-    borderBottom: "1px solid #ddd",
-    verticalAlign: "bottom"
+    borderBottom: "1px solid #dddddd",
+    textAlign: "center"
   },
 
   buttonContainer: {
     display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-end",
-    justifyContent: "flex-end",
-    gap: "8px"
+    justifyContent: "center",
+    alignItems: "center"
   },
 
   einvoiceBtn: {
     backgroundColor: "#1976d2",
-    color: "white",
+    color: "#ffffff",
     border: "none",
-    padding: "8px 12px",
+    padding: "8px 14px",
     borderRadius: "5px",
     cursor: "pointer",
-    width: "150px"
+    fontWeight: "bold"
   },
 
   noData: {
+    padding: "20px",
     textAlign: "center",
-    padding: "15px",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    color: "#666"
   }
 
 };
