@@ -341,8 +341,8 @@ return {
   supplyType: isExport
     ? "EXP"
     : inv?.transactionStatusXid === 2
-      ? "O"
-      : "O",
+      ? "Outward"
+      : "Outward",
 
   ntr: isInterState ? "Inter" : "Intra",
 
