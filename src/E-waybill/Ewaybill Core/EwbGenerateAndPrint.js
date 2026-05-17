@@ -26,250 +26,121 @@ const setLS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
    Component
 --------------------------- */
 const EwbGenerateAndPrint = () => {
-
-  
- const location = useLocation();
-
-  // ✅ received data
+  const location = useLocation();
+  const [loading, setLoading] = useState(false); // ✅ FIX HERE
+  // =========================
+  // RECEIVED DATA
+  // =========================
   const receivedData = location.state || {};
+  const invoiceData = receivedData.invoiceData || {};
+  const dynamicId = receivedData.id || invoiceData.pid;
 
   console.log("Received Data:", receivedData);
+  console.log("invoiceData:", invoiceData);
 
-  // ✅ invoice data
-  const invoiceData = receivedData.invoiceData || {};
+  // =========================
+  // DEFAULT FORM
+  // =========================
+  const DEFAULT_FORM = {
+    supplyType: "O",
+    subSupplyType: "1",
+    docType: "INV",
 
-  console.log("invoiceData",invoiceData)
+    docNo: invoiceData?.invoiceNumber || invoiceData?.billNo || "Topaz340290",
 
-  // ✅ dynamic id
-  const dynamicId = receivedData.id || invoiceData.pid;
-  console.log("toTrdName:",receivedData ?.invoiceData.clientCompanyName)
-  console.log("vehicleNo",receivedData ?.invoiceData?.vehicleNo);
-console.log("hsncode", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.hsncode);
-console.log("totInvValue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.afterGSTAmount);
-console.log("totalValue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount);
-console.log("cgstvalue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount);
-console.log("igstvalue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount);
-console.log("sgstvalue", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount);
-console.log("cgstPer", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstPer);
-console.log("igstPer", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstPer);
-console.log("gstPer", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.gstPer);
-console.log("itemName", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.itemName);
-console.log("quantity", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.quantity);
-console.log("quantityAmount", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.quantityAmount);
-console.log("totalAmount", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount);
-console.log("uom", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.uom);
-console.log("producdescription", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.description);
-console.log("product name", receivedData?.invoiceData?.invoiceProductDetails?.[0]?.itemName
-);
+    invType: "B2B",
 
-        const DEFAULT_FORM = {
-        supplyType: "O",
-        subSupplyType: "1",
-        docType: "INV",
+    docDate: new Date().toLocaleDateString("en-GB"),
 
-        docNo:
-          invoiceData?.invoiceNumber ||
-          invoiceData?.billNo ||
-          "Topaz340290",
+    transactionType: 1,
 
-        invType: "B2B",
+    fromGstin: invoiceData?.companyGstin || "05AAAAU1183B5ZW",
+    fromTrdName: invoiceData?.companyName || "ABC",
 
-        docDate: new Date()
-          .toLocaleDateString("en-GB")
-          .split("/")
-          .join("/"),
+    dispatchFromGstin: invoiceData?.companyGstin || "05AAAAU1183B5ZW",
+    dispatchFromTradeName: invoiceData?.companyName || "PQR",
 
-        transactionType: 1,
+    fromAddr1: invoiceData?.companyAddress || "T231",
+    fromAddr2: invoiceData?.companyAddress2 || "IIP",
+    fromPlace: invoiceData?.companyCity || "Akodiya",
+    fromPincode: invoiceData?.companyPincode || 248001,
+    fromStateCode: invoiceData?.companyStateCode || 5,
 
-        fromGstin:
-          invoiceData?.companyGstin ||
-          "05AAAAU1183B5ZW",
+    toGstin: invoiceData?.clientGstin || "05AAAAU1183B1Z0",
+    toTrdName: invoiceData?.clientCompanyName || receivedData?.invoiceData?.clientCompanyName || "",
+    toAddr1: invoiceData?.clientAddress1 || "S531",
+    toAddr2: invoiceData?.clientAddress2 || "MG Road",
+    toPlace: invoiceData?.clientCity || "Dehradun",
+    toPincode: invoiceData?.clientPincode || 248002,
+    toStateCode: invoiceData?.clientStateCode || 5,
 
-        fromTrdName:
-          invoiceData?.companyName || "ABC",
+    totInvValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.afterGSTAmount || 21000,
+    totalValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount || 20000,
+    cgstValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount || 500,
+    sgstValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount || 500,
+    igstValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount || 0,
 
-        dispatchFromGstin:
-          invoiceData?.companyGstin ||
-          "05AAAAU1183B5ZW",
+    cessValue: 0,
+    cessNonAdvolValue: 0,
+    otherValue: 0,
 
-        dispatchFromTradeName:
-          invoiceData?.companyName || "PQR",
+    transMode: 1,
+    transDistance: 10,
+    transDocNo: "1212",
+    transDocDate: new Date().toLocaleDateString("en-GB"),
 
-        fromAddr1:
-          invoiceData?.companyAddress || "T231",
+    transporterId: invoiceData?.transporterId || "05AAAAU1183B1Z0",
+    transporterName: invoiceData?.transporterName || "ACVDF",
 
-        fromAddr2:
-          invoiceData?.companyAddress2 || "IIP",
+    vehicleNo: invoiceData?.vehicleNo || receivedData?.invoiceData?.vehicleNo || "RJ14CA9999",
+    vehicleType: "R",
 
-        fromPlace:
-          invoiceData?.companyCity || "Akodiya",
+    actFromStateCode: invoiceData?.companyStateCode || "5",
+    actToStateCode: invoiceData?.clientStateCode || "5",
 
-        fromPincode:
-          invoiceData?.companyPincode || 248001,
+    itemList: [
+      {
+        productName: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.itemName || "",
+        productDesc: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.description || "",
+        hsnCode: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.hsncode || "",
 
-        fromStateCode:
-          invoiceData?.companyStateCode || 5,
+        quantity: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.quantity || 1,
+        qtyUnit: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.uom || "",
 
-        toGstin:
-          invoiceData?.clientGstin ||
-          "05AAAAU1183B1Z0",
+        taxableAmount: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount || 20000,
 
-        toTrdName:
-          invoiceData?.clientCompanyName ||
-          receivedData ?.invoiceData.clientCompanyName ||
-          "",
+        sgstRate: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstPer || 2.5,
+        cgstRate: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstPer || 2.5,
+        igstRate: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstPer || 0,
 
-        toAddr1:
-          invoiceData?.clientAddress1 ||
-          "S531, SSB Towers",
+        iamt: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount || 0,
+        camt: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount || 500,
+        samt: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount || 500,
 
-        toAddr2:
-          invoiceData?.clientAddress2 ||
-          "MG Road",
+        csamt: 0,
+        txp: "T",
+      },
+    ],
 
-        toPlace:
-          invoiceData?.clientCity || "Dehradun",
-
-        toPincode:
-          invoiceData?.clientPincode || 248002,
-
-        toStateCode:
-          invoiceData?.clientStateCode || 5,
-
-        totInvValue:
-          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.afterGSTAmount || 21000,
-
-        totalValue:
-          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount || 20000,
-
-        cgstValue:
-          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount || 500,
-
-        sgstValue:
-          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount || 500,
-
-        igstValue:
-          receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount || 0,
-
-        cessValue: 0,
-        cessNonAdvolValue: 0,
-        otherValue: 0,
-
-        transMode: 1,
-        transDistance: 10,
-
-        transDocNo: "1212",
-
-        transDocDate: new Date()
-          .toLocaleDateString("en-GB")
-          .split("/")
-          .join("/"),
-
-        transporterId:
-          invoiceData?.transporterId ||
-          "05AAAAU1183B1Z0",
-
-        transporterName:
-          invoiceData?.transporterName ||
-          "ACVDF",
-
-        vehicleNo:
-          invoiceData?.vehicleNo ||
-          receivedData ?.invoiceData?.vehicleNo ||
-          "RJ14CA9999",
-
-        vehicleType: "R",
-
-        actFromStateCode:
-          invoiceData?.companyStateCode || "5",
-
-        actToStateCode:
-          invoiceData?.clientStateCode || "5",
-
-        itemList: [
-          {
-            productName:
-              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.itemName|| "",
-
-            productDesc:
-               receivedData?.invoiceData?.invoiceProductDetails?.[0]?.description ||
-              "",
-
-            hsnCode:
-              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.hsncode || "",
-
-            quantity:
-              receivedData?.quantity || 1,
-
-            qtyUnit:
-             receivedData?.invoiceData?.invoiceProductDetails?.[0]?.uom || "",
-
-            taxableAmount:
-              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount ||
-              20000,
-
-            sgstRate:
-              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstPer || 2.5,
-
-            cgstRate:
-              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstPer || 2.5,
-
-            igstRate:
-              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstPer || 0,
-
-            cessRate: 0,
-            cessNonAdvol: 0,
-
-            iamt:
-              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount || 0,
-
-            camt:
-             receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount || 500,
-
-            samt:
-              receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount || 500,
-
-            csamt: 0,
-
-            txp: "T",
-          },
-        ],
-
-        companyId: "",
-        userGstin:
-          invoiceData?.companyGstin ||
-          "05AAAAU1183B5ZW",
-
-        forceDuplicateCheck: true,
-      };
-  const [formData, setFormData] = useState(DEFAULT_FORM);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [apiResponse, setApiResponse] = useState(null);
-  const [ewbNos, setEwbNos] = useState([]);
-   const [invoiceApiData, setInvoiceApiData] =useState(null);
-  const [loadingInvoice, setLoadingInvoice] =useState(false);
-
-
-  /* ---------------------------
-     Auth from localStorage
-  --------------------------- */
-  const getAuth = () => {
-    const cfg = getLS(STORAGE_KEY00);
-    return {
-      token: cfg?.fullResponse?.response?.token,
-      companyId: cfg?.fullResponse?.response?.companyid
-    };
+    companyId: "",
+    userGstin: invoiceData?.companyGstin || "05AAAAU1183B5ZW",
+    forceDuplicateCheck: true,
   };
 
-  const auth = getAuth();
+  // =========================
+  // STATE
+  // =========================
+  const [formData, setFormData] = useState(DEFAULT_FORM);
+  const [loadingInvoice, setLoadingInvoice] = useState(false);
+  const [apiResponse, setApiResponse] = useState(null);
+  const [error, setError] = useState("");
 
-
-  /* ====================================================
-     FETCH INVOICE
-  ==================================================== */
+  // =========================
+  // FETCH INVOICE
+  // =========================
   useEffect(() => {
-    if (dynamicId) fetchInvoiceData();
+    if (!dynamicId) return;
+    fetchInvoiceData();
   }, [dynamicId]);
 
   const fetchInvoiceData = async () => {
@@ -281,21 +152,53 @@ console.log("product name", receivedData?.invoiceData?.invoiceProductDetails?.[0
       );
 
       const apiData = res.data?.data;
-      setInvoiceApiData(apiData);
+      const invoice = apiData?.response || apiData || {};
+      const item = invoice?.invoiceProductDetails?.[0] || {};
 
-      const invoice =
-        apiData?.response || apiData || {};
+      // =========================
+      // MERGE FORM DATA (FIX HERE)
+      // =========================
+      const mergedForm = {
+        ...DEFAULT_FORM,
 
-      const firstItem =
-        invoice?.invoiceProductDetails?.[0] ||
-        {};
+        docNo: invoice?.invoiceNumber || invoice?.billNo || DEFAULT_FORM.docNo,
+        fromGstin: invoice?.companyGstin || DEFAULT_FORM.fromGstin,
+        fromTrdName: invoice?.companyName || DEFAULT_FORM.fromTrdName,
 
-      /* ====================================================
-         COMBINED DEFAULT + API FORM
-      ==================================================== */
-     
+        toGstin: invoice?.clientGstin || DEFAULT_FORM.toGstin,
+        toTrdName:
+          invoice?.clientCompanyName ||
+          receivedData?.invoiceData?.clientCompanyName ||
+          DEFAULT_FORM.toTrdName,
 
-      setFormData(DEFAULT_FORM);
+        vehicleNo:
+          invoice?.vehicleNo ||
+          receivedData?.invoiceData?.vehicleNo ||
+          DEFAULT_FORM.vehicleNo,
+
+        totInvValue: item?.afterGSTAmount || DEFAULT_FORM.totInvValue,
+        totalValue: item?.totalAmount || DEFAULT_FORM.totalValue,
+        cgstValue: item?.cgstAmount || DEFAULT_FORM.cgstValue,
+        sgstValue: item?.sgstAmount || DEFAULT_FORM.sgstValue,
+        igstValue: item?.igstAmount || DEFAULT_FORM.igstValue,
+
+        itemList: [
+          {
+            ...DEFAULT_FORM.itemList[0],
+            productName: item?.itemName || "",
+            productDesc: item?.description || "",
+            hsnCode: item?.hsncode || "",
+            quantity: item?.quantity || 1,
+            qtyUnit: item?.uom || "",
+            taxableAmount: item?.totalAmount || 0,
+            iamt: item?.igstAmount || 0,
+            camt: item?.cgstAmount || 0,
+            samt: item?.sgstAmount || 0,
+          },
+        ],
+      };
+
+      setFormData(mergedForm);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -303,262 +206,37 @@ console.log("product name", receivedData?.invoiceData?.invoiceProductDetails?.[0
     }
   };
 
-
-  /* ---------------------------
-     Generate EWB
-  --------------------------- */
- const handleGenerate = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
-
-  try {
-    if (!auth.token || !auth.companyId) {
-      throw new Error("Auth missing in localStorage");
-    }
-
-    const res = await axios.post(
-      "http://localhost:3001/proxy/topaz/ewb/generate",
-      formData,
-      {
-        headers: {
-          "X-Auth-Token": auth.token,
-          companyId: auth.companyId,
-          product: "TOPAZ",
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (res.data?.status !== "SUCCESS") {
-      throw new Error(res.data?.message || "Generation failed");
-    }
-
-    // ✅ Set API response and EWB number
-    setApiResponse(res.data);
-    setEwbNos([res.data.response.ewbNo]);
-
-    // ✅ Store the API response in LATEST_EWB_KEY for future auto-population
-    const latestDataToSave = {
-      ewbNo: res.data.response.ewbNo,
-      fromGstin: formData.fromGstin,
-      response: res.data.response,
-      companyId: auth.companyId,
-      token: auth.token,
-    };
-    localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(latestDataToSave));
-    console.log("Response data saved:", latestDataToSave);
-
-    // ✅ Update EWB history (last 10 entries)
-    const hist = getLS(EWB_HISTORY_KEY, []);
-    hist.unshift({ ewbNo: res.data.response.ewbNo, time: new Date().toLocaleString() });
-    setLS(EWB_HISTORY_KEY, hist.slice(0, 10));
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  /* ---------------------------
-     PRINT PDF
-  --------------------------- */
-  const handlePrint = async () => {
+  // =========================
+  // GENERATE EWB
+  // =========================
+  const handleGenerate = async (e) => {
+    e.preventDefault();
     try {
-      if (!ewbNos.length) throw new Error("EWB No missing");
+      setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:3001/proxy/topaz/ewb/printDetails",
-        { ewbNo: ewbNos },
+        "http://localhost:3001/proxy/topaz/ewb/generate",
+        formData,
         {
           headers: {
-            "X-Auth-Token": auth.token,
-            companyId: auth.companyId,
-            product: "TOPAZ",
-            Accept: "application/pdf"
+            "Content-Type": "application/json",
           },
-          responseType: "blob"
         }
       );
 
-      const blob = new Blob([res.data], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${ewbNos[0]}_EWB.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      setApiResponse(res.data);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* ---------------------------
-     UI
-  --------------------------- */
-  /* ---------------------------
-   UI (BOXED STYLE – SAME AS PREVIOUS)
---------------------------- */
-return (
-  <div style={{ maxWidth: 1200, margin: "20px auto", padding: 20, fontFamily: "Arial" }}>
-    <h1 style={{ textAlign: "center", color: "#2c3e50" }}>
-      Generate & Print E-Way Bill
-    </h1>
-
-    {/* HEADERS BOX */}
-    <div style={{ background: "#f1f2f6", padding: 20, borderRadius: 10, marginBottom: 25 }}>
-      <h2>🔐 Request Headers</h2>
-      <pre style={{ background: "#dfe4ea", padding: 15, borderRadius: 8 }}>
-{JSON.stringify({
-  "X-Auth-Token": auth.token ? auth.token.slice(0, 15) + "..." : "MISSING",
-  companyId: auth.companyId || "MISSING",
-  product: "TOPAZ"
-}, null, 2)}
-      </pre>
+  return (
+    <div>
+      <h1>EWB Generator</h1>
     </div>
-
-    {/* PAYLOAD PREVIEW BOX */}
-    <div style={{ background: "#f1f2f6", padding: 20, borderRadius: 10, marginBottom: 25 }}>
-      <h2>📦 Payload Preview</h2>
-      <pre style={{ background: "#dfe4ea", padding: 15, borderRadius: 8, overflowX: "auto" }}>
-        {JSON.stringify(formData, null, 2)}
-      </pre>
-    </div>
-
-    {/* FORM */}
-    <form onSubmit={handleGenerate}>
-      <div style={{ background: "#ffffff", padding: 20, borderRadius: 10, border: "1px solid #ccc" }}>
-        <h2>✏️ Editable Payload Fields</h2>
-
-        {Object.keys(formData)
-          .filter(k => k !== "itemList" && typeof formData[k] !== "object")
-          .map(key => (
-            <div key={key} style={{ display: "flex", marginBottom: 10 }}>
-              <label style={{ width: 220, fontWeight: "bold" }}>{key}</label>
-              <input
-                name={key}
-                value={formData[key]}
-                onChange={e =>
-                  setFormData(prev => ({ ...prev, [key]: e.target.value }))
-                }
-                style={{ flex: 1, padding: 8 }}
-              />
-            </div>
-          ))}
-      </div>
-
-      {/* ITEM LIST */}
-      <h2 style={{ marginTop: 30 }}>📦 Item List</h2>
-
-      {formData.itemList.map((item, idx) => (
-        <div
-          key={idx}
-          style={{
-            border: "2px dashed #95a5a6",
-            padding: 20,
-            marginBottom: 20,
-            borderRadius: 10,
-            background: "#ecf0f1"
-          }}
-        >
-          <h3>Item #{idx + 1}</h3>
-
-          {Object.keys(item).map(attr => (
-            <div key={attr} style={{ display: "flex", marginBottom: 8 }}>
-              <label style={{ width: 200 }}>{attr}</label>
-              <input
-                value={item[attr]}
-                onChange={e => {
-                  const v = e.target.value;
-                  setFormData(prev => {
-                    const items = [...prev.itemList];
-                    items[idx] = { ...items[idx], [attr]: v };
-                    return { ...prev, itemList: items };
-                  });
-                }}
-                style={{ flex: 1, padding: 6 }}
-              />
-            </div>
-          ))}
-        </div>
-      ))}
-
-      {/* ACTION BUTTON */}
-      <button
-        type="submit"
-        disabled={loading}
-        style={{
-          width: "100%",
-          padding: 18,
-          fontSize: 18,
-          background: loading ? "#95a5a6" : "#27ae60",
-          color: "#fff",
-          border: "none",
-          borderRadius: 8,
-          marginTop: 20
-        }}
-      >
-        {loading ? "Generating..." : "Generate E-Way Bill"}
-      </button>
-    </form>
-
-    {/* PRINT BUTTON */}
-    <button
-      onClick={handlePrint}
-      disabled={!ewbNos.length}
-      style={{
-        width: "100%",
-        padding: 16,
-        fontSize: 18,
-        marginTop: 15,
-        background: "#1A73E8",
-        color: "#fff",
-        border: "none",
-        borderRadius: 8
-      }}
-    >
-      Print PDF
-    </button>
-
-    {/* SUCCESS BOX */}
-    {apiResponse && (
-      <div
-        style={{
-          marginTop: 40,
-          padding: 30,
-          background: "#f8f9fa",
-          border: "3px solid #27ae60",
-          borderRadius: 12
-        }}
-      >
-        <h2 style={{ color: "#27ae60", textAlign: "center" }}>
-          ✅ E-Way Bill Generated Successfully
-        </h2>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 15 }}>
-          <div><b>EWB No:</b> {apiResponse.response.ewbNo}</div>
-          <div><b>Valid Upto:</b> {apiResponse.response.validUpto}</div>
-          <div><b>Invoice No:</b> {apiResponse.response.docNo}</div>
-          <div><b>Total Value:</b> ₹{apiResponse.response.totInvValue}</div>
-        </div>
-
-        <details style={{ marginTop: 20 }}>
-          <summary style={{ cursor: "pointer", fontWeight: "bold" }}>
-            Full API Response
-          </summary>
-          <pre style={{ marginTop: 10 }}>
-            {JSON.stringify(apiResponse, null, 2)}
-          </pre>
-        </details>
-      </div>
-    )}
-
-    {error && <p style={{ color: "red", marginTop: 20 }}>❌ {error}</p>}
-  </div>
-);
-
+  );
 };
 
 export default EwbGenerateAndPrint;
