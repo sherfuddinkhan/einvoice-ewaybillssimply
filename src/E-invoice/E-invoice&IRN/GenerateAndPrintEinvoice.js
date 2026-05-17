@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback,useRef } from "react";
 import axios from "axios";
 import { useAuth } from "../../components/AuthContext";
 import { useLocation } from "react-router-dom";
@@ -148,96 +148,63 @@ const createBasePayload = (
   const formatDate = (date) => {
     if (!date) {
       const d = new Date();
-      const dd = String(d.getDate()).padStart(2, "0");
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const yyyy = d.getFullYear();
-      return `${dd}-${mm}-${yyyy}`;
+      return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
     }
     if (typeof date === "string" && date.includes("-")) return date;
-
     const d = new Date(date);
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yyyy = d.getFullYear();
-    return `${dd}-${mm}-${yyyy}`;
+    return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
   };
 
   const isExport = selectedCatg === "EXP";
   const selectedTrnTyp = inv?.transactionType || "REG";
 
-  // Buyer GSTIN Logic
   let buyerGstin = "URP";
-  if (selectedCatg === "B2B") {
-    buyerGstin = inv?.buyerClients?.gstin?.length === 15 
-      ? inv.buyerClients.gstin 
-      : "27ABCDE1234F1Z5";
+  if (selectedCatg === "B2B" && inv?.buyerClients?.gstin) {
+    buyerGstin = inv.buyerClients.gstin;
   }
 
-  const buyerStateCode = buyerGstin !== "URP" 
-    ? buyerGstin.substring(0, 2) 
-    : inv?.buyerClients?.stateXid || "27";
-
-  const sellerStateCode = inv?.companyBranches?.stateXid || "29";
+  const sellerStateCode = inv?.companyBranches?.stateXid || "36";
+  const buyerStateCode = buyerGstin !== "URP" ? buyerGstin.substring(0, 2) : "27";
   const isInterState = sellerStateCode !== buyerStateCode;
 
-  // Products & Totals
-  const productList = inv?.invoiceProductDetails?.length > 0 
-    ? inv.invoiceProductDetails 
-    : [{}];
+  const productList = inv?.invoiceProductDetails?.length > 0 ? inv.invoiceProductDetails : [];
 
+  // Totals Calculation...
   const totTxVal = Number(productList.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0).toFixed(2));
   const totIgst = Number(productList.reduce((sum, item) => sum + Number(item.igstAmount || 0), 0).toFixed(2));
   const totCgst = Number(productList.reduce((sum, item) => sum + Number(item.cgstAmount || 0), 0).toFixed(2));
   const totSgst = Number(productList.reduce((sum, item) => sum + Number(item.sgstAmount || 0), 0).toFixed(2));
+  const totalInvVal = totTxVal + totIgst + totCgst + totSgst;
 
-  const totalDiscount = Number(inv?.totalDiscount || 0);
-  const otherCharges = Number(inv?.otherCharges || 0);
-  const totalInvVal = Number((totTxVal + totIgst + totCgst + totSgst + otherCharges - totalDiscount).toFixed(2));
-
-  const transportDistance = Number(inv?.transportDistance || 120);
-
-  // ====================== FINAL PAYLOAD ======================
   return {
     id: String(inv?.refID || dynamicId || "1001"),
-    userGstin: inv?.companyBranches?.gstin || null,
-    pobCode: null,
-
-    supplyType: isExport ? "EXP" : "Outward",
+    userGstin: inv?.companyBranches?.gstin,
+    supplyType: "Outward",
     ntr: isInterState ? "Inter" : "Intra",
     docType: "RI",
-    catg: selectedCatg === "B2C" ? "B2CS" : selectedCatg,
-    dst: "O",
+    catg: selectedCatg,
     trnTyp: selectedTrnTyp,
-
     no: inv?.refID ? `INV-${inv.refID}` : null,
     dt: formatDate(inv?.dateofIssue),
-    refinum: null,
-    refidt: null,
     pos: inv?.buyerClients?.stateXid,
-    diffprcnt: null,
-    etin: null,
     rchrg: "N",
     fy: inv?.tYear || "26-27",
 
-    // ==================== SELLER ====================
+    // ==================== SELLER (Fixed) ====================
     sgstin: inv?.companyBranches?.gstin,
-    strdNm: inv?.companyBranches?.companyTallyName || inv?.companyBranches?.name,
-    slglNm: inv?.companyBranches?.nameEng || inv?.companyBranches?.companyName,
-    sbnm: inv?.companyBranches?.companySignature,
-    sflno: null,
+    strdNm: inv?.companyBranches?.companyTallyName,
+    slglNm: inv?.companyBranches?.nameEng,
     sloc: inv?.companyBranches?.poBox,
-    sdst: inv?.companyBranches?.stateNames?.stateName || inv?.companyBranches?.state,   // Fixed
-    sstcd: inv?.companyBranches?.stateXid,
-    spin: inv?.companyBranches?.pincode || "",                                           // Fixed
-    sph: inv?.companyBranches?.mobile || inv?.companyBranches?.phone,
+    sdst: inv?.companyBranches?.poBox ? inv.companyBranches.poBox.split(',')[1]?.trim() : "Telangana",
+    sstcd: inv?.companyBranches?.stateXid || "36",
+    spin: "",
+    sph: inv?.companyBranches?.mobile,
     sem: inv?.companyBranches?.email,
 
     // ==================== BUYER ====================
-    bgstin: buyerGstin,                                                                   // Fixed
+    bgstin: buyerGstin,
     btrdNm: inv?.buyerClients?.companyName,
     blglNm: inv?.buyerClients?.companyName,
-    bbnm: inv?.buyerClients?.poBox,
-    bflno: null,
     bloc: inv?.buyerClients?.officeAddress,
     bdst: inv?.buyerClients?.masterStateNames?.stateName,
     bstcd: inv?.buyerClients?.stateXid,
@@ -245,122 +212,60 @@ const createBasePayload = (
     bph: inv?.buyerClients?.mobile,
     bem: inv?.buyerClients?.email,
 
+    // ==================== SHIP TO ====================
+    togstin: inv?.buyerClients?.gstin || buyerGstin,
+    totrdNm: inv?.buyerClients?.companyName,
+    tolglNm: inv?.buyerClients?.companyName,
+    toloc: inv?.buyerClients?.officeAddress,
+    tostcd: inv?.buyerClients?.stateXid,
+    topin: inv?.buyerClients?.poBox,
+
     // ==================== DISPATCH ====================
     dgstin: inv?.companyBranches?.gstin,
     dtrdNm: inv?.companyBranches?.companyTallyName,
     dlglNm: inv?.companyBranches?.nameEng,
-    dbnm: inv?.companyBranches?.poBox || inv?.companyBranches?.companySignature,        // Building Name
-    dflno: null,
+    dbnm: inv?.companyBranches?.poBox,
     dloc: inv?.companyBranches?.poBox,
-    ddst: null,
     dstcd: inv?.companyBranches?.stateXid,
-    dpin: inv?.companyBranches?.pincode || "",                                            // Fixed
-    dph: inv?.companyBranches?.mobile,
-    dem: inv?.companyBranches?.email,
+    dpin: "",
 
-    // ==================== SHIP TO ====================
-   togstin: inv?.buyerClients?.gstin || buyerGstin,                                                    // Fixed
-    totrdNm: inv?.buyerClients?.companyName,
-    tolglNm: inv?.buyerClients?.companyName,
-    tobnm: inv?.buyerClients?.poBox,
-    toflno: null,
-    toloc: inv?.buyerClients?.officeAddress,
-    todst: inv?.buyerClients?.masterStateNames?.stateName,
-    tostcd: inv?.buyerClients?.stateXid,
-    topin: inv?.buyerClients?.poBox,
-    toph: inv?.buyerClients?.mobile,
-    toem: inv?.buyerClients?.email,
+    // ==================== TRANSPORT ====================
+    vehNo: inv?.vehicleNo || "",
+    transName: "FastTrack Logistics",
+    transId: inv?.companyBranches?.gstin,
+    transMode: "1",
+    vehTyp: "R",
+    transDist: 120,
+    transDocNo: `DOC${inv?.refID || "001"}`,
+    transDocDate: formatDate(inv?.dateofIssue),
+    subSplyTyp: "Supply",
 
-    // ==================== EXPORT ====================
-    sbnum: isExport ? `SB${inv?.refID || "000001"}` : null,
-    sbdt: isExport ? formatDate(inv?.dateofIssue) : null,
-    port: isExport ? "INMAA1" : null,
-    expduty: isExport ? 0 : null,
-    cntcd: isExport ? "IN" : null,
-    forCur: isExport ? "INR" : null,
-    invForCur: isExport ? totalInvVal : null,
-
-    // ==================== TOTALS ====================
-    taxSch: "GST",
-    totinvval: totalInvVal,
-    totdisc: totalDiscount,
-    totfrt: 0,
-    totins: 0,
-    totpkg: 0,
-    totothchrg: otherCharges,
+    // ==================== TOTALS & ITEMS (with HSN fix) ====================
     tottxval: totTxVal,
     totiamt: totIgst,
     totcamt: totCgst,
     totsamt: totSgst,
-    totcsamt: 0,
-    totstcsamt: 0,
-    rndOffAmt: 0,
+    totinvval: totalInvVal,
 
-    // ==================== PAYMENT ====================
-    payNm: inv?.companyBranchesBank?.[0]?.bankName,
-    acctdet: inv?.companyBranchesBank?.[0]?.accountNo,
-    pa: null,
-    mc: null,
-    mode: "1",
-    ifsc: inv?.companyBranchesBank?.[0]?.ifscCode,
-    paidAmt: totalInvVal,
-    balAmt: 0,
+    itemList: productList.map((item, index) => ({
+      num: String(index + 1).padStart(5, "0"),
+      hsnCd: item?.hsnCode || item?.hsncode || item?.hsn || "",
+      prdNm: item?.itemName || "",
+      qty: Number(item?.quantity || 1),
+      unit: item?.uom || "NOS",
+      unitPrice: Number(item?.quantityAmount || 0),
+      txval: Number(item?.totalAmount || 0),
+      rt: Number(item?.gstPer || 18),
+      irt: isInterState ? Number(item?.gstPer || 18) : 0,
+      iamt: isInterState ? Number(item?.igstAmount || 0) : 0,
+      camt: !isInterState ? Number(item?.cgstAmount || 0) : 0,
+      samt: !isInterState ? Number(item?.sgstAmount || 0) : 0,
+      itmVal: Number(item?.totalAmount || 0) + Number(item?.igstAmount || 0),
+    })),
 
-    // ==================== TRANSPORT / EWAY BILL ====================
-    transId: inv?.companyBranches?.gstin,
-    subSplyTyp: "Supply",
-    subSplyDes: null,
-    transMode: "1",
-    vehTyp: "R",
-    transDist: transportDistance,
-    transName: "FastTrack Logistics",
-    transDocNo: `DOC${inv?.refID || "001"}`,
-    transDocDate: formatDate(inv?.dateofIssue),
-    vehNo: inv?.vehicleNo || "",
-
-    // ==================== FLAGS ====================
     genIrn: true,
     genewb: "Y",
     signedDataReq: true,
-
-    // ==================== ITEMS ====================
-    itemList: productList.map((item, index) => {
-      const txVal = Number(item?.totalAmount || 0);
-      const rate = Number(item?.gstPer || 18);
-
-      return {
-        num: String(index + 1).padStart(5, "0"),
-   hsnCd: item?.hsnCode || item?.hsncode || item?.hsn || "",
-        prdNm: item?.itemName,
-        prdDesc: item?.description,
-        qty: Number(item?.quantity || 1),
-        freeQty: 0,
-        unit: item?.uom,
-        unitPrice: Number(item?.quantityAmount || 0),
-        totAmt: txVal,
-        discount: 0,
-        preTaxVal: txVal,
-        assAmt: txVal,
-        txval: txVal,
-        rt: rate,
-        irt: isInterState ? rate : 0,
-        crt: !isInterState ? rate / 2 : 0,
-        srt: !isInterState ? rate / 2 : 0,
-        iamt: isInterState ? Number(item?.igstAmount || 0) : 0,
-        camt: !isInterState ? Number(item?.cgstAmount || 0) : 0,
-        samt: !isInterState ? Number(item?.sgstAmount || 0) : 0,
-        csamt: 0,
-        othChrg: 0,
-        itmVal: Number((txVal + (item?.igstAmount || 0) + (item?.cgstAmount || 0) + (item?.sgstAmount || 0)).toFixed(2)),
-        isServc: "N",
-        orgCntry: "IN",
-      };
-    }),
-
-    // Optional Sections
-    invOthDocDtls: [{ url: "https://www.google.com", docs: "Tax Invoice", infoDtls: "System Generated" }],
-    invRefPreDtls: [{ oinum: null, oidt: null, othRefNo: null }],
-    invRefContDtls: [{ raref: null, radt: null, tendref: null, contref: null, extref: null, projref: null, poref: null, porefdt: null }],
   };
 };
 
@@ -474,13 +379,35 @@ const GenerateAndPrintEinvoice = () => {
   };
 
   // ==================== INITIAL PAYLOAD SETUP ====================
-  useEffect(() => {
-    const dataToUse = invoiceApiData || invoiceData;
-    if (dataToUse) {
-      const basePayload = createBasePayload(dataToUse, "B2B");
-      setPayload(recalculateTotals(basePayload));
-    }
-  }, [invoiceApiData, invoiceData, createBasePayload, recalculateTotals]);
+const initializedRef = useRef(false);
+
+useEffect(() => {
+  const dataToUse = invoiceApiData || invoiceData;
+
+  if (!dataToUse) return;
+
+  // Prevent overwriting edited fields
+  if (initializedRef.current) return;
+
+  const basePayload = createBasePayload(
+    dataToUse,
+    dynamicId,
+    selectedCategory
+  );
+
+  const finalPayload =
+    recalculateTotals(basePayload);
+
+  setPayload(finalPayload);
+
+  initializedRef.current = true;
+
+}, [
+  invoiceApiData,
+  invoiceData,
+  dynamicId,
+  selectedCategory,
+]);
 
    // ==================== ITEM MANAGEMENT ====================
   const addItem = () => {
@@ -985,30 +912,116 @@ const downloadPDF = async () => {
     )}
 
     {/* Item List */}
+        {/* ==================== ITEM LIST - ALL FIELDS VISIBLE ==================== */}
     <h3 style={{ marginTop: "40px" }}>Item Line Execution List</h3>
+    
     {payload.itemList.map((item, idx) => (
       <div key={idx} style={tableStyles.itemCard}>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", gap: "12px" }}>
-          <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
-          <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
-          <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
-          <LabeledInput label="Unit Price" type="number" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
-          <LabeledInput label="Unit" value={item.unit} onChange={(v) => updateItem(idx, "unit", v)} />
-          <LabeledInput label="GST Rate (%)" type="number" value={item.rt} onChange={(v) => updateItem(idx, "rt", v)} />
+        <div style={{ 
+          display: "grid", 
+          gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr 1fr", 
+          gap: "12px" 
+        }}>
+          <LabeledInput 
+            label="Product Name" 
+            value={item.prdNm} 
+            onChange={(v) => updateItem(idx, "prdNm", v)} 
+          />
+          <LabeledInput 
+            label="HSN Code" 
+            value={item.hsnCd} 
+            onChange={(v) => updateItem(idx, "hsnCd", v)} 
+          />
+          <LabeledInput 
+            label="Quantity" 
+            type="number" 
+            value={item.qty} 
+            onChange={(v) => updateItem(idx, "qty", v)} 
+          />
+          <LabeledInput 
+            label="Unit Price" 
+            type="number" 
+            value={item.unitPrice} 
+            onChange={(v) => updateItem(idx, "unitPrice", v)} 
+          />
+          <LabeledInput 
+            label="Unit" 
+            value={item.unit} 
+            onChange={(v) => updateItem(idx, "unit", v)} 
+          />
+          <LabeledInput 
+            label="GST Rate (%)" 
+            type="number" 
+            value={item.rt} 
+            onChange={(v) => updateItem(idx, "rt", v)} 
+          />
         </div>
+
+        {/* Second Row - Tax & Value Details */}
+        <div style={{ 
+          display: "grid", 
+          gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr", 
+          gap: "12px", 
+          marginTop: "15px" 
+        }}>
+          <LabeledInput 
+            label="Taxable Value" 
+            type="number" 
+            value={item.txval} 
+            onChange={(v) => updateItem(idx, "txval", v)} 
+          />
+          <LabeledInput 
+            label="IGST Amount" 
+            type="number" 
+            value={item.iamt} 
+            onChange={(v) => updateItem(idx, "iamt", v)} 
+          />
+          <LabeledInput 
+            label="CGST Amount" 
+            type="number" 
+            value={item.camt} 
+            onChange={(v) => updateItem(idx, "camt", v)} 
+          />
+          <LabeledInput 
+            label="SGST Amount" 
+            type="number" 
+            value={item.samt} 
+            onChange={(v) => updateItem(idx, "samt", v)} 
+          />
+          <LabeledInput 
+            label="Item Total Value" 
+            type="number" 
+            value={item.itmVal} 
+            onChange={(v) => updateItem(idx, "itmVal", v)} 
+          />
+          <LabeledInput 
+            label="Discount" 
+            type="number" 
+            value={item.discount || 0} 
+            onChange={(v) => updateItem(idx, "discount", v)} 
+          />
+        </div>
+
         <div style={tableStyles.itemFooter}>
-          <span>
-            Taxable: ₹{item.txval} | IGST: ₹{item.iamt} | CGST: ₹{item.camt} | SGST: ₹{item.samt} | Total: ₹{item.itmVal}
-          </span>
+          <strong>Summary:</strong> Taxable ₹{Number(item.txval || 0).toFixed(2)} | 
+          IGST ₹{Number(item.iamt || 0).toFixed(2)} | 
+          CGST ₹{Number(item.camt || 0).toFixed(2)} | 
+          SGST ₹{Number(item.samt || 0).toFixed(2)} | 
+          <strong>Total: ₹{Number(item.itmVal || 0).toFixed(2)}</strong>
+          
           {payload.itemList.length > 1 && (
-            <button style={tableStyles.btnRed} onClick={() => removeItem(idx)}>Remove</button>
+            <button style={tableStyles.btnRed} onClick={() => removeItem(idx)}>
+              Remove Item
+            </button>
           )}
         </div>
       </div>
     ))}
+
     <button style={{ ...tableStyles.btnGreen, marginBottom: "30px" }} onClick={addItem}>
       + Add Additional Item Row
     </button>
+    
 
     {/* Financial Summary */}
     <table style={tableStyles.table}>
