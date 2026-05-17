@@ -143,10 +143,8 @@ const createBasePayload = (
   dynamicId,
   selectedCatg = "B2B"
 ) => {
-  // =========================================================
-  // HELPERS
-  // =========================================================
-  const inv = invoiceData;   // ← Use this instead of 'invoice'
+  const inv = invoiceData;
+
   const formatDate = (date) => {
     if (!date) {
       const d = new Date();
@@ -155,437 +153,215 @@ const createBasePayload = (
       const yyyy = d.getFullYear();
       return `${dd}-${mm}-${yyyy}`;
     }
-
-    if (typeof date === "string" && date.includes("-")) {
-      return date;
-    }
+    if (typeof date === "string" && date.includes("-")) return date;
 
     const d = new Date(date);
     const dd = String(d.getDate()).padStart(2, "0");
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const yyyy = d.getFullYear();
-
     return `${dd}-${mm}-${yyyy}`;
   };
 
-  const sellerStateCode = "29";
-
-  const invoiceDate = formatDate(
-    invoiceData?.invoiceDate || new Date()
-  );
-
-  const transportDocDate = formatDate(
-    invoiceData?.transportDocDate ||
-      invoiceData?.invoiceDate ||
-      new Date()
-  );
-
   const isExport = selectedCatg === "EXP";
+  const selectedTrnTyp = inv?.transactionType || "REG";
 
-  // =========================================================
-  // TRANSACTION TYPES
-  // =========================================================
-  // REG
-  // BILLTO_SHIPTO
-  // BILLFROM_DISPATCHFROM
-  // =========================================================
-
-  const selectedTrnTyp =
-    invoiceData?.transactionType || "REG";
-
-  const isRegular = selectedTrnTyp === "REG";
-
-  const isBillToShipTo =
-    selectedTrnTyp === "BILLTO_SHIPTO";
-
-  const isBillFromDispatchFrom =
-    selectedTrnTyp === "BILLFROM_DISPATCHFROM";
-
-  // =========================================================
-  // BUYER GSTIN
-  // =========================================================
-
+  // Buyer GSTIN Logic
   let buyerGstin = "URP";
-
   if (selectedCatg === "B2B") {
-    buyerGstin =
-      invoiceData?.gstin?.length === 15
-        ? invoiceData.gstin
-        : "27ABCDE1234F1Z5";
+    buyerGstin = inv?.buyerClients?.gstin?.length === 15 
+      ? inv.buyerClients.gstin 
+      : "27ABCDE1234F1Z5";
   }
 
-  const buyerStateCode =
-    buyerGstin !== "URP"
-      ? buyerGstin.substring(0, 2)
-      : invoiceData?.buyerStateCode || "27";
-
-  const isInterState =
-    sellerStateCode !== buyerStateCode;
-
-  // =========================================================
-  // PRODUCTS
-  // =========================================================
-
-  const productList =
-    invoiceData?.invoiceProductDetails?.length > 0
-      ? invoiceData.invoiceProductDetails
-      : [
-          {
-            hsnCode: "73041190",
-            itemName: "SEAMLESS STEEL TUBE",
-            quantity: 1,
-            totalAmount: 3322.45,
-            igstAmount: 598.04,
-            cgstAmount: 0,
-            sgstAmount: 0,
-            gstPer: 18,
-            uom: "NOS",
-            discount: 0,
-          },
-        ];
-
-  // =========================================================
-  // TOTALS
-  // =========================================================
-
-  const totTxVal = Number(
-    productList
-      .reduce(
-        (sum, item) =>
-          sum + Number(item.totalAmount || 0),
-        0
-      )
-      .toFixed(2)
-  );
-
-  const totIgst = Number(
-    productList
-      .reduce(
-        (sum, item) =>
-          sum + Number(item.igstAmount || 0),
-        0
-      )
-      .toFixed(2)
-  );
-
-  const totCgst = Number(
-    productList
-      .reduce(
-        (sum, item) =>
-          sum + Number(item.cgstAmount || 0),
-        0
-      )
-      .toFixed(2)
-  );
-
-  const totSgst = Number(
-    productList
-      .reduce(
-        (sum, item) =>
-          sum + Number(item.sgstAmount || 0),
-        0
-      )
-      .toFixed(2)
-  );
-
-  const totalDiscount = Number(
-    invoiceData?.totalDiscount || 0
-  );
-
-  const otherCharges = Number(
-    invoiceData?.otherCharges || 0
-  );
-
-  const totalInvVal = Number(
-    (
-      totTxVal +
-      totIgst +
-      totCgst +
-      totSgst +
-      otherCharges -
-      totalDiscount
-    ).toFixed(2)
-  );
-
-  // =========================================================
-  // SAFE EWB DISTANCE
-  // =========================================================
-
-  let transportDistance = Number(
-    invoiceData?.transportDistance || 120
-  );
-
-  if (transportDistance <= 0) {
-    transportDistance = 120;
-  }
-
-  if (transportDistance > 4000) {
-    transportDistance = 4000;
-  }
-
-  // =========================================================
-  // PAYLOAD
-  // =========================================================
-
-return {
-  // =====================================================
-  // BASIC
-  // =====================================================
-
-  id: String(inv?.refID || dynamicId || "1001"),
-
-  userGstin: inv?.companyBranches?.gstin || null,
-
-  pobCode: null,
-
-  supplyType: isExport
-    ? "EXP"
-    : inv?.transactionStatusXid === 2
-      ? "Outward"
-      : "Outward",
-
-  ntr: isInterState ? "Inter" : "Intra",
-
-  docType: "RI",
-
-  catg: selectedCatg === "B2C" ? "B2CS" : selectedCatg,
-
-  dst: "O",
-
-  trnTyp: selectedTrnTyp,
-
-  no: inv?.refID ? `INV-${inv.refID}` : null,
-
-  dt: inv?.dateofIssue,
-
-  refinum: null,
-  refidt: null,
-
-  pos: inv?.buyerClients?.stateXid,
-
-  diffprcnt: null,
-  etin: null,
-
-  rchrg: "N",
-
-  // =====================================================
-  // SELLER
-  // =====================================================
-
-  sgstin: inv?.companyBranches?.gstin,
-  strdNm: inv?.companyBranches?.companyTallyName,
-  slglNm: inv?.companyBranches?.nameEng,
-  sbnm: inv?.companyBranches?.companySignature,
-  sflno: null,
-  sloc: inv?.companyBranches?.poBox,
-  sdst: inv?.companyBranches?.stateNames?.stateName,
-  sstcd: inv?.companyBranches?.stateXid,
-  spin: null,
-  sph: inv?.companyBranches?.mobile,
-  sem: inv?.companyBranches?.email,
-
-  // =====================================================
-  // BUYER
-  // =====================================================
-
-  bgstin: inv?.buyerClients?.gstin,
-  btrdNm: inv?.buyerClients?.companyName,
-  blglNm: inv?.buyerClients?.companyName,
-  bbnm: inv?.buyerClients?.poBox,
-  bflno: null,
-  bloc: inv?.buyerClients?.officeAddress,
-  bdst: inv?.buyerClients?.masterStateNames?.stateName,
-  bstcd: inv?.buyerClients?.stateXid,
-  bpin: inv?.buyerClients?.poBox,
-  bph: inv?.buyerClients?.mobile,
-  bem: inv?.buyerClients?.email,
-
-  // =====================================================
-  // DISPATCH
-  // =====================================================
-
-  dgstin: inv?.companyBranches?.gstin,
-  dtrdNm: inv?.companyBranches?.companyTallyName,
-  dlglNm: inv?.companyBranches?.nameEng,
-  dbnm: null,
-  dflno: null,
-  dloc: inv?.companyBranches?.poBox,
-  ddst: null,
-  dstcd: inv?.companyBranches?.stateXid,
-  dpin: null,
-  dph: inv?.companyBranches?.mobile,
-  dem: inv?.companyBranches?.email,
-
-  // =====================================================
-  // SHIP TO
-  // =====================================================
-
-  togstin: inv?.buyerClients?.gstin,
-  totrdNm: inv?.buyerClients?.companyName,
-  tolglNm: inv?.buyerClients?.companyName,
-  tobnm: inv?.buyerClients?.poBox,
-  toflno: null,
-  toloc: inv?.buyerClients?.officeAddress,
-  todst: inv?.buyerClients?.masterStateNames?.stateName,
-  tostcd: inv?.buyerClients?.stateXid,
-  topin: inv?.buyerClients?.poBox,
-  toph: inv?.buyerClients?.mobile,
-  toem: inv?.buyerClients?.email,
-
-  // =====================================================
-  // EXPORT
-  // =====================================================
-
-  sbnum: isExport ? `SB${inv?.refID || "000001"}` : null,
-  sbdt: isExport ? inv?.dateofIssue : null,
-  port: isExport ? "INMAA1" : null,
-  expduty: isExport ? 0 : null,
-  cntcd: isExport ? "IN" : null,
-  forCur: isExport ? "INR" : null,
-  invForCur: isExport ? totalInvVal : null,
-
-  // =====================================================
-  // TOTALS
-  // =====================================================
-
-  taxSch: "GST",
-  totinvval: totalInvVal,
-  totdisc: totalDiscount,
-  totfrt: 0,
-  totins: 0,
-  totpkg: 0,
-  totothchrg: otherCharges,
-  tottxval: totTxVal,
-  totiamt: totIgst,
-  totcamt: totCgst,
-  totsamt: totSgst,
-  totcsamt: 0,
-  totstcsamt: 0,
-  rndOffAmt: 0,
-
-  // =====================================================
-  // PAYMENT
-  // =====================================================
-
-  payNm: inv?.companyBranchesBank?.[0]?.bankName,
-  acctdet: inv?.companyBranchesBank?.[0]?.accountNo,
-  pa: null,
-  mc: null,
-  mode: "1",
-  ifsc: inv?.companyBranchesBank?.[0]?.ifscCode,
-
-  paidAmt: totalInvVal,
-  balAmt: 0,
-
-  // =====================================================
-  // TRANSPORT / EWAY BILL
-  // =====================================================
-
-  transId: inv?.companyBranches?.gstin,
-  subSplyTyp: "Supply",
-  subSplyDes: null,
-
-  transMode: "1",
-  vehTyp: "R",
-  transDist: transportDistance,
-
-  transName: "FastTrack Logistics",
-
-  transDocNo: inv?.invoiceProductDetails?.[0]?.pid
-    ? `DOC${inv.invoiceProductDetails[0].pid}`
-    : "DOC001",
-
-  transDocDate: transportDocDate,
-
-  vehNo: inv?.vehicleNo,
-
-  // =====================================================
-  // FLAGS
-  // =====================================================
-
-  fy: inv?.tYear || "2025-26",
-  genIrn: true,
-  genewb: "Y",
-  signedDataReq: true,
-
-  // =====================================================
-  // ITEMS
-  // =====================================================
-
-  itemList: (inv?.invoiceProductDetails || []).map((item, index) => {
-    const txVal = Number(item?.totalAmount || 0);
-    const rate = Number(item?.gstPer || 18);
-
-    return {
-      num: String(index + 1).padStart(5, "0"),
-      hsnCd: item?.hsncode || "0000",
-      prdNm: item?.itemName,
-      prdDesc: item?.description,
-      qty: Number(item?.quantity || 1),
-      freeQty: 0,
-      unit: item?.uom,
-      unitPrice: Number(item?.quantityAmount || 0),
-
-      totAmt: txVal,
-      discount: 0,
-      preTaxVal: txVal,
-      assAmt: txVal,
-      txval: txVal,
-
-      rt: rate,
-
-      irt: isInterState ? rate : 0,
-      crt: !isInterState ? rate / 2 : 0,
-      srt: !isInterState ? rate / 2 : 0,
-
-      iamt: isInterState ? item?.igstAmount : 0,
-      camt: !isInterState ? item?.cgstAmount : 0,
-      samt: !isInterState ? item?.sgstAmount : 0,
-
-      csamt: 0,
-      othChrg: 0,
-
-      itmVal: Number(
-        (
-          txVal +
-          (item?.igstAmount || 0) +
-          (item?.cgstAmount || 0) +
-          (item?.sgstAmount || 0)
-        ).toFixed(2)
-      ),
-
-      isServc: "N",
-      orgCntry: "IN",
-    };
-  }),
-
-  // =====================================================
-  // OPTIONAL
-  // =====================================================
-
-  invOthDocDtls: [
-    {
-      url: "https://www.google.com",
-      docs: "Tax Invoice",
-      infoDtls: "System Generated",
-    },
-  ],
-
-  invRefPreDtls: [{ oinum: null, oidt: null, othRefNo: null }],
-
-  invRefContDtls: [
-    {
-      raref: null,
-      radt: null,
-      tendref: null,
-      contref: null,
-      extref: null,
-      projref: null,
-      poref: null,
-      porefdt: null,
-    },
-  ],
-};
+  const buyerStateCode = buyerGstin !== "URP" 
+    ? buyerGstin.substring(0, 2) 
+    : inv?.buyerClients?.stateXid || "27";
+
+  const sellerStateCode = inv?.companyBranches?.stateXid || "29";
+  const isInterState = sellerStateCode !== buyerStateCode;
+
+  // Products & Totals
+  const productList = inv?.invoiceProductDetails?.length > 0 
+    ? inv.invoiceProductDetails 
+    : [{}];
+
+  const totTxVal = Number(productList.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0).toFixed(2));
+  const totIgst = Number(productList.reduce((sum, item) => sum + Number(item.igstAmount || 0), 0).toFixed(2));
+  const totCgst = Number(productList.reduce((sum, item) => sum + Number(item.cgstAmount || 0), 0).toFixed(2));
+  const totSgst = Number(productList.reduce((sum, item) => sum + Number(item.sgstAmount || 0), 0).toFixed(2));
+
+  const totalDiscount = Number(inv?.totalDiscount || 0);
+  const otherCharges = Number(inv?.otherCharges || 0);
+  const totalInvVal = Number((totTxVal + totIgst + totCgst + totSgst + otherCharges - totalDiscount).toFixed(2));
+
+  const transportDistance = Number(inv?.transportDistance || 120);
+
+  // ====================== FINAL PAYLOAD ======================
+  return {
+    id: String(inv?.refID || dynamicId || "1001"),
+    userGstin: inv?.companyBranches?.gstin || null,
+    pobCode: null,
+
+    supplyType: isExport ? "EXP" : "Outward",
+    ntr: isInterState ? "Inter" : "Intra",
+    docType: "RI",
+    catg: selectedCatg === "B2C" ? "B2CS" : selectedCatg,
+    dst: "O",
+    trnTyp: selectedTrnTyp,
+
+    no: inv?.refID ? `INV-${inv.refID}` : null,
+    dt: formatDate(inv?.dateofIssue),
+    refinum: null,
+    refidt: null,
+    pos: inv?.buyerClients?.stateXid,
+    diffprcnt: null,
+    etin: null,
+    rchrg: "N",
+    fy: inv?.tYear || "26-27",
+
+    // ==================== SELLER ====================
+    sgstin: inv?.companyBranches?.gstin,
+    strdNm: inv?.companyBranches?.companyTallyName || inv?.companyBranches?.name,
+    slglNm: inv?.companyBranches?.nameEng || inv?.companyBranches?.companyName,
+    sbnm: inv?.companyBranches?.companySignature,
+    sflno: null,
+    sloc: inv?.companyBranches?.poBox,
+    sdst: inv?.companyBranches?.stateNames?.stateName || inv?.companyBranches?.state,   // Fixed
+    sstcd: inv?.companyBranches?.stateXid,
+    spin: inv?.companyBranches?.pincode || "",                                           // Fixed
+    sph: inv?.companyBranches?.mobile || inv?.companyBranches?.phone,
+    sem: inv?.companyBranches?.email,
+
+    // ==================== BUYER ====================
+    bgstin: buyerGstin,                                                                   // Fixed
+    btrdNm: inv?.buyerClients?.companyName,
+    blglNm: inv?.buyerClients?.companyName,
+    bbnm: inv?.buyerClients?.poBox,
+    bflno: null,
+    bloc: inv?.buyerClients?.officeAddress,
+    bdst: inv?.buyerClients?.masterStateNames?.stateName,
+    bstcd: inv?.buyerClients?.stateXid,
+    bpin: inv?.buyerClients?.poBox,
+    bph: inv?.buyerClients?.mobile,
+    bem: inv?.buyerClients?.email,
+
+    // ==================== DISPATCH ====================
+    dgstin: inv?.companyBranches?.gstin,
+    dtrdNm: inv?.companyBranches?.companyTallyName,
+    dlglNm: inv?.companyBranches?.nameEng,
+    dbnm: inv?.companyBranches?.poBox || inv?.companyBranches?.companySignature,        // Building Name
+    dflno: null,
+    dloc: inv?.companyBranches?.poBox,
+    ddst: null,
+    dstcd: inv?.companyBranches?.stateXid,
+    dpin: inv?.companyBranches?.pincode || "",                                            // Fixed
+    dph: inv?.companyBranches?.mobile,
+    dem: inv?.companyBranches?.email,
+
+    // ==================== SHIP TO ====================
+   togstin: inv?.buyerClients?.gstin || buyerGstin,                                                    // Fixed
+    totrdNm: inv?.buyerClients?.companyName,
+    tolglNm: inv?.buyerClients?.companyName,
+    tobnm: inv?.buyerClients?.poBox,
+    toflno: null,
+    toloc: inv?.buyerClients?.officeAddress,
+    todst: inv?.buyerClients?.masterStateNames?.stateName,
+    tostcd: inv?.buyerClients?.stateXid,
+    topin: inv?.buyerClients?.poBox,
+    toph: inv?.buyerClients?.mobile,
+    toem: inv?.buyerClients?.email,
+
+    // ==================== EXPORT ====================
+    sbnum: isExport ? `SB${inv?.refID || "000001"}` : null,
+    sbdt: isExport ? formatDate(inv?.dateofIssue) : null,
+    port: isExport ? "INMAA1" : null,
+    expduty: isExport ? 0 : null,
+    cntcd: isExport ? "IN" : null,
+    forCur: isExport ? "INR" : null,
+    invForCur: isExport ? totalInvVal : null,
+
+    // ==================== TOTALS ====================
+    taxSch: "GST",
+    totinvval: totalInvVal,
+    totdisc: totalDiscount,
+    totfrt: 0,
+    totins: 0,
+    totpkg: 0,
+    totothchrg: otherCharges,
+    tottxval: totTxVal,
+    totiamt: totIgst,
+    totcamt: totCgst,
+    totsamt: totSgst,
+    totcsamt: 0,
+    totstcsamt: 0,
+    rndOffAmt: 0,
+
+    // ==================== PAYMENT ====================
+    payNm: inv?.companyBranchesBank?.[0]?.bankName,
+    acctdet: inv?.companyBranchesBank?.[0]?.accountNo,
+    pa: null,
+    mc: null,
+    mode: "1",
+    ifsc: inv?.companyBranchesBank?.[0]?.ifscCode,
+    paidAmt: totalInvVal,
+    balAmt: 0,
+
+    // ==================== TRANSPORT / EWAY BILL ====================
+    transId: inv?.companyBranches?.gstin,
+    subSplyTyp: "Supply",
+    subSplyDes: null,
+    transMode: "1",
+    vehTyp: "R",
+    transDist: transportDistance,
+    transName: "FastTrack Logistics",
+    transDocNo: `DOC${inv?.refID || "001"}`,
+    transDocDate: formatDate(inv?.dateofIssue),
+    vehNo: inv?.vehicleNo || "",
+
+    // ==================== FLAGS ====================
+    genIrn: true,
+    genewb: "Y",
+    signedDataReq: true,
+
+    // ==================== ITEMS ====================
+    itemList: productList.map((item, index) => {
+      const txVal = Number(item?.totalAmount || 0);
+      const rate = Number(item?.gstPer || 18);
+
+      return {
+        num: String(index + 1).padStart(5, "0"),
+   hsnCd: item?.hsnCode || item?.hsncode || item?.hsn || "",
+        prdNm: item?.itemName,
+        prdDesc: item?.description,
+        qty: Number(item?.quantity || 1),
+        freeQty: 0,
+        unit: item?.uom,
+        unitPrice: Number(item?.quantityAmount || 0),
+        totAmt: txVal,
+        discount: 0,
+        preTaxVal: txVal,
+        assAmt: txVal,
+        txval: txVal,
+        rt: rate,
+        irt: isInterState ? rate : 0,
+        crt: !isInterState ? rate / 2 : 0,
+        srt: !isInterState ? rate / 2 : 0,
+        iamt: isInterState ? Number(item?.igstAmount || 0) : 0,
+        camt: !isInterState ? Number(item?.cgstAmount || 0) : 0,
+        samt: !isInterState ? Number(item?.sgstAmount || 0) : 0,
+        csamt: 0,
+        othChrg: 0,
+        itmVal: Number((txVal + (item?.igstAmount || 0) + (item?.cgstAmount || 0) + (item?.sgstAmount || 0)).toFixed(2)),
+        isServc: "N",
+        orgCntry: "IN",
+      };
+    }),
+
+    // Optional Sections
+    invOthDocDtls: [{ url: "https://www.google.com", docs: "Tax Invoice", infoDtls: "System Generated" }],
+    invRefPreDtls: [{ oinum: null, oidt: null, othRefNo: null }],
+    invRefContDtls: [{ raref: null, radt: null, tendref: null, contref: null, extref: null, projref: null, poref: null, porefdt: null }],
+  };
 };
 
 const GenerateAndPrintEinvoice = () => {
@@ -667,31 +443,6 @@ const GenerateAndPrintEinvoice = () => {
   const [payload, setPayload] = useState({ 
     itemList: [] 
   });
-
-  // ==================== INITIALIZE PAYLOAD ====================
-  useEffect(() => {
-    const dataToUse = invoiceApiData || invoiceData;
-    
-    if (!dataToUse) return;
-
-    try {
-      const basePayload = createBasePayload(dataToUse, selectedCategory || "B2B");
-      const initializedPayload = recalculateTotals(basePayload);
-      
-      setPayload(initializedPayload);
-    } catch (err) {
-      console.error("Error initializing payload:", err);
-    }
-  }, [
-    invoiceApiData, 
-    invoiceData, 
-    selectedCategory, 
-    createBasePayload, 
-    recalculateTotals
-  ]);
-
-
-
   // ==================== HELPER FUNCTIONS ====================
   const setField = (field, value) => {
     setPayload((prev) => ({ ...prev, [field]: value }));
@@ -864,72 +615,125 @@ const GenerateAndPrintEinvoice = () => {
     );
   };
   // ==================== FETCH INVOICE DATA ====================
-  const fetchInvoiceData = useCallback(async () => {
-    if (!dynamicId) return;
+const fetchInvoiceData = useCallback(async () => {
+  if (!dynamicId) return;
 
-    setLoadingInvoice(true);
-    setError("");
+  setLoadingInvoice(true);
+  setError("");
+
+  try {
+    console.log("🔄 Fetching invoice data for ID:", dynamicId);
+
+    const res = await axios.get(
+      `http://localhost:3001/api/invoice/${dynamicId}`
+    );
+
+    console.log("✅ Raw API Response:", res.data);
+
+    const encryptedData = res?.data?.data?.data;
+
+    if (!encryptedData) {
+      throw new Error("Invoice encrypted data not found");
+    }
+
+    // =====================================================
+    // BASE64 DECODE
+    // =====================================================
+
+    let decodedString = "";
 
     try {
-      console.log("🔄 Fetching invoice data for ID:", dynamicId);
+      decodedString = atob(encryptedData);
 
-      const res = await axios.get(`http://localhost:3001/api/invoice/${dynamicId}`);
+      console.log("✅ Decoded String:", decodedString);
+    } catch (decodeError) {
+      console.error("❌ Base64 Decode Failed:", decodeError);
 
-      const encryptedData = res?.data?.data?.data;
+      throw new Error("Failed to decode encrypted invoice data");
+    }
 
-      if (!encryptedData) {
-        throw new Error("Invoice encrypted data not found");
-      }
+    // =====================================================
+    // JSON PARSE
+    // =====================================================
 
-      // Base64 URL Decode Function
-      const base64UrlDecode = (data) => {
-        try {
-          let decoded = data.replace(/-/g, "+").replace(/_/g, "/");
-          while (decoded.length % 4) decoded += "=";
-          return atob(decoded);
-        } catch (err) {
-          console.warn("Base64 decode failed:", err);
-          return null;
-        }
+    let actualInvoiceData = {};
+
+    try {
+      actualInvoiceData = JSON.parse(decodedString);
+
+      console.log(
+        "✅ Parsed Invoice Data:",
+        actualInvoiceData
+      );
+    } catch (parseError) {
+      console.warn(
+        "⚠ JSON parse failed, storing raw decoded data"
+      );
+
+      actualInvoiceData = {
+        rawEncrypted: encryptedData,
+        decodedRaw: decodedString,
       };
-
-      const decodedString = base64UrlDecode(encryptedData);
-
-      let actualInvoiceData;
-      try {
-        actualInvoiceData = JSON.parse(decodedString);
-      } catch (err) {
-        console.warn("JSON parse failed, storing raw data");
-        actualInvoiceData = {
-          rawEncrypted: encryptedData,
-          decodedRaw: decodedString,
-        };
-      }
-
-      setInvoiceApiData(actualInvoiceData);
-
-      // Create and set payload
-      const basePayload = createBasePayload(actualInvoiceData, selectedCategory);
-      const finalPayload = recalculateTotals(basePayload);
-
-      setPayload(finalPayload);
-
-      console.log("✅ Invoice data loaded successfully");
-
-    } catch (err) {
-      console.error("❌ Fetch Invoice Error:", err);
-      setError(err.message || "Error fetching invoice data");
-    } finally {
-      setLoadingInvoice(false);
     }
-  }, [dynamicId, selectedCategory, createBasePayload, recalculateTotals]);
 
-  // ==================== INITIAL DATA LOAD ====================
-  useEffect(() => {
-    if (dynamicId) {
-      fetchInvoiceData();
+    // =====================================================
+    // STORE API DATA
+    // =====================================================
+
+    setInvoiceApiData(actualInvoiceData);
+
+    // =====================================================
+    // CREATE PAYLOAD
+    // =====================================================
+
+    const basePayload = createBasePayload(
+      actualInvoiceData,
+      dynamicId,
+      selectedCategory
+    );
+
+    const finalPayload =
+      recalculateTotals(basePayload);
+
+    // =====================================================
+    // SET PAYLOAD
+    // =====================================================
+
+    setPayload(finalPayload);
+
+    console.log(
+      "✅ Invoice payload generated successfully"
+    );
+  } catch (err) {
+    console.error("❌ Fetch Invoice Error:", err);
+
+    if (err.response) {
+      console.log(
+        "❌ Server Response:",
+        err.response.data
+      );
     }
-  }, [dynamicId, fetchInvoiceData]);
+
+    if (err.request) {
+      console.log(
+        "❌ No response received from backend"
+      );
+    }
+
+    setError(
+      err?.message || "Error fetching invoice data"
+    );
+  } finally {
+    setLoadingInvoice(false);
+  }
+}, [
+  dynamicId,
+  selectedCategory,
+  createBasePayload,
+  recalculateTotals,
+]);
+
+
 
   // ==================== HANDLE GENERATE E-INVOICE ====================
   const handleGenerate = async () => {
@@ -1050,138 +854,316 @@ const downloadPDF = async () => {
   }
 };
 
-  return (
-    <div style={tableStyles.container}>
-      <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
+ return (
+  <div style={tableStyles.container}>
+    <h1 style={tableStyles.header}>
+      Dynamic E-Invoice Generator ({selectedCategory} Mode)
+    </h1>
 
-      {/* Configuration & Meta Context Section */}
+    {/* ==================== META CONFIGURATION ==================== */}
+    <table style={tableStyles.table}>
+      <thead>
+        <tr>
+          <th colSpan={4} style={tableStyles.th}>Document Meta Configuration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style={tableStyles.td}>
+            <LabeledSelect 
+              label="Invoice Scenario Category" 
+              value={selectedCategory} 
+              options={["B2B", "B2C", "EXP"]} 
+              onChange={handleCategorySelectionChange} 
+            />
+          </td>
+          <td style={tableStyles.td}>
+            <LabeledSelect 
+              label="Transaction Type" 
+              value={payload.trnTyp} 
+              options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]} 
+              onChange={(v) => setField("trnTyp", v)} 
+            />
+          </td>
+          <td style={tableStyles.td}>
+            <LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} />
+          </td>
+          <td style={tableStyles.td}>
+            <LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} />
+          </td>
+        </tr>
+        <tr>
+          <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} onChange={(v) => setField("no", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
+          <td style={tableStyles.td}>
+            <LabeledSelect label="Supply Type" value={payload.supplyType} options={["Outward", "Inward", "EXP"]} onChange={(v) => setField("supplyType", v)} />
+          </td>
+          <td style={tableStyles.td}>
+            <LabeledSelect label="Nature" value={payload.ntr} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} />
+          </td>
+        </tr>
+        <tr>
+          <td style={tableStyles.td}><LabeledInput label="Place of Supply (POS)" value={payload.pos} onChange={(v) => setField("pos", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Financial Year" value={payload.fy} onChange={(v) => setField("fy", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Reverse Charge" value={payload.rchrg} onChange={(v) => setField("rchrg", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="ID / Ref ID" value={payload.id} onChange={(v) => setField("id", v)} /></td>
+        </tr>
+      </tbody>
+    </table>
+
+    {/* Seller & Buyer Information */}
+    <div style={tableStyles.twoColGrid}>
+      <div style={tableStyles.col}>
+        <h3>Seller Information</h3>
+        <LabeledInput label="GSTIN" value={payload.sgstin} onChange={(v) => setField("sgstin", v)} />
+        <LabeledInput label="Trade Name" value={payload.strdNm} onChange={(v) => setField("strdNm", v)} />
+        <LabeledInput label="Legal Name" value={payload.slglNm} onChange={(v) => setField("slglNm", v)} />
+        <LabeledInput label="Building Name" value={payload.sbnm} onChange={(v) => setField("sbnm", v)} />
+        <LabeledInput label="Floor No" value={payload.sflno} onChange={(v) => setField("sflno", v)} />
+        <LabeledInput label="Location" value={payload.sloc} onChange={(v) => setField("sloc", v)} />
+        <LabeledInput label="State" value={payload.sdst} onChange={(v) => setField("sdst", v)} />
+        <LabeledInput label="State Code" value={payload.sstcd} onChange={(v) => setField("sstcd", v)} />
+        <LabeledInput label="Pincode" value={payload.spin} onChange={(v) => setField("spin", v)} />
+        <LabeledInput label="Phone" value={payload.sph} onChange={(v) => setField("sph", v)} />
+        <LabeledInput label="Email" value={payload.sem} onChange={(v) => setField("sem", v)} />
+      </div>
+
+      <div style={tableStyles.col}>
+        <h3>Buyer Information</h3>
+        <LabeledInput label="GSTIN" value={payload.bgstin} onChange={(v) => setField("bgstin", v)} />
+        <LabeledInput label="Trade Name" value={payload.btrdNm} onChange={(v) => setField("btrdNm", v)} />
+        <LabeledInput label="Legal Name" value={payload.blglNm} onChange={(v) => setField("blglNm", v)} />
+        <LabeledInput label="Building Name" value={payload.bbnm} onChange={(v) => setField("bbnm", v)} />
+        <LabeledInput label="Floor No" value={payload.bflno} onChange={(v) => setField("bflno", v)} />
+        <LabeledInput label="Location" value={payload.bloc} onChange={(v) => setField("bloc", v)} />
+        <LabeledInput label="State" value={payload.bdst} onChange={(v) => setField("bdst", v)} />
+        <LabeledInput label="State Code" value={payload.bstcd} onChange={(v) => setField("bstcd", v)} />
+        <LabeledInput label="Pincode" value={payload.bpin} onChange={(v) => setField("bpin", v)} />
+        <LabeledInput label="Phone" value={payload.bph} onChange={(v) => setField("bph", v)} />
+        <LabeledInput label="Email" value={payload.bem} onChange={(v) => setField("bem", v)} />
+      </div>
+    </div>
+
+    {/* Dispatch & Ship To */}
+    <div style={{ ...tableStyles.twoColGrid, marginTop: "30px" }}>
+      <div style={tableStyles.col}>
+        <h3>Dispatch From</h3>
+        <LabeledInput label="GSTIN" value={payload.dgstin} onChange={(v) => setField("dgstin", v)} />
+        <LabeledInput label="Trade Name" value={payload.dtrdNm} onChange={(v) => setField("dtrdNm", v)} />
+        <LabeledInput label="Legal Name" value={payload.dlglNm} onChange={(v) => setField("dlglNm", v)} />
+        <LabeledInput label="Building Name" value={payload.dbnm} onChange={(v) => setField("dbnm", v)} />
+        <LabeledInput label="Location" value={payload.dloc} onChange={(v) => setField("dloc", v)} />
+        <LabeledInput label="State Code" value={payload.dstcd} onChange={(v) => setField("dstcd", v)} />
+        <LabeledInput label="Pincode" value={payload.dpin} onChange={(v) => setField("dpin", v)} />
+      </div>
+
+      <div style={tableStyles.col}>
+        <h3>Ship To</h3>
+        <LabeledInput label="GSTIN" value={payload.togstin} onChange={(v) => setField("togstin", v)} />
+        <LabeledInput label="Trade Name" value={payload.totrdNm} onChange={(v) => setField("totrdNm", v)} />
+        <LabeledInput label="Legal Name" value={payload.tolglNm} onChange={(v) => setField("tolglNm", v)} />
+        <LabeledInput label="Building Name" value={payload.tobnm} onChange={(v) => setField("tobnm", v)} />
+        <LabeledInput label="Location" value={payload.toloc} onChange={(v) => setField("toloc", v)} />
+        <LabeledInput label="State Code" value={payload.tostcd} onChange={(v) => setField("tostcd", v)} />
+        <LabeledInput label="Pincode" value={payload.topin} onChange={(v) => setField("topin", v)} />
+      </div>
+    </div>
+
+    {/* Export Details */}
+    {selectedCategory === "EXP" && (
+      <table style={tableStyles.table}>
+        <thead><tr><th colSpan={4} style={tableStyles.th}>Export Details</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style={tableStyles.td}><LabeledInput label="Shipping Bill No" value={payload.sbnum} onChange={(v) => setField("sbnum", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Shipping Bill Date" value={payload.sbdt} onChange={(v) => setField("sbdt", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Port Code" value={payload.port} onChange={(v) => setField("port", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Country Code" value={payload.cntcd} onChange={(v) => setField("cntcd", v)} /></td>
+          </tr>
+        </tbody>
+      </table>
+    )}
+
+    {/* Item List */}
+    <h3 style={{ marginTop: "40px" }}>Item Line Execution List</h3>
+    {payload.itemList.map((item, idx) => (
+      <div key={idx} style={tableStyles.itemCard}>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", gap: "12px" }}>
+          <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
+          <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
+          <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
+          <LabeledInput label="Unit Price" type="number" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
+          <LabeledInput label="Unit" value={item.unit} onChange={(v) => updateItem(idx, "unit", v)} />
+          <LabeledInput label="GST Rate (%)" type="number" value={item.rt} onChange={(v) => updateItem(idx, "rt", v)} />
+        </div>
+        <div style={tableStyles.itemFooter}>
+          <span>
+            Taxable: ₹{item.txval} | IGST: ₹{item.iamt} | CGST: ₹{item.camt} | SGST: ₹{item.samt} | Total: ₹{item.itmVal}
+          </span>
+          {payload.itemList.length > 1 && (
+            <button style={tableStyles.btnRed} onClick={() => removeItem(idx)}>Remove</button>
+          )}
+        </div>
+      </div>
+    ))}
+    <button style={{ ...tableStyles.btnGreen, marginBottom: "30px" }} onClick={addItem}>
+      + Add Additional Item Row
+    </button>
+
+    {/* Financial Summary */}
+    <table style={tableStyles.table}>
+      <thead>
+        <tr><th colSpan={5} style={tableStyles.th}>Financial Summary</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style={tableStyles.td}><LabeledInput label="Total Taxable Value" type="number" value={payload.tottxval} onChange={(v) => setField("tottxval", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Total IGST" type="number" value={payload.totiamt} onChange={(v) => setField("totiamt", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Total CGST" type="number" value={payload.totcamt} onChange={(v) => setField("totcamt", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Total SGST" type="number" value={payload.totsamt} onChange={(v) => setField("totsamt", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Total Invoice Value" type="number" value={payload.totinvval} onChange={(v) => setField("totinvval", v)} /></td>
+        </tr>
+        <tr>
+          <td style={tableStyles.td}><LabeledInput label="Total Discount" type="number" value={payload.totdisc} onChange={(v) => setField("totdisc", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Other Charges" type="number" value={payload.totothchrg} onChange={(v) => setField("totothchrg", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Round Off" type="number" value={payload.rndOffAmt} onChange={(v) => setField("rndOffAmt", v)} /></td>
+        </tr>
+      </tbody>
+    </table>
+
+    {/* Transport Details */}
+        {/* ==================== TRANSPORT / E-WAY BILL ==================== */}
+    <div style={{ marginTop: "40px" }}>
+      <h3>Transport / E-Way Bill Details</h3>
+      
       <table style={tableStyles.table}>
         <thead>
           <tr>
-            <th colSpan={3} style={tableStyles.th}>Document Meta Configuration</th>
+            <th colSpan={4} style={tableStyles.th}>Transportation & E-Way Bill Information</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td style={tableStyles.td}>
-              <LabeledSelect 
-                label="Invoice Scenario Category" 
-                value={selectedCategory} 
-                options={["B2B", "B2C", "EXP"]} 
-                onChange={handleCategorySelectionChange} 
+              <LabeledInput 
+                label="Transporter Name" 
+                value={payload.transName} 
+                onChange={(v) => setField("transName", v)} 
               />
             </td>
-            <td style={tableStyles.td}><LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} /></td>
+            <td style={tableStyles.td}>
+              <LabeledInput 
+                label="Transporter GSTIN" 
+                value={payload.transId} 
+                onChange={(v) => setField("transId", v)} 
+              />
+            </td>
+            <td style={tableStyles.td}>
+              <LabeledInput 
+                label="Vehicle Number" 
+                value={payload.vehNo} 
+                onChange={(v) => setField("vehNo", v)} 
+              />
+            </td>
+            <td style={tableStyles.td}>
+              <LabeledInput 
+                label="Vehicle Type" 
+                value={payload.vehTyp} 
+                onChange={(v) => setField("vehTyp", v)} 
+                placeholder="R = Regular" 
+              />
+            </td>
           </tr>
+
           <tr>
-            <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} onChange={(v) => setField("no", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Supply Type" value={payload.supplyType} onChange={(v) => setField("supplyType", v)} /></td>
+            <td style={tableStyles.td}>
+              <LabeledInput 
+                label="Transport Mode" 
+                value={payload.transMode} 
+                onChange={(v) => setField("transMode", v)} 
+                placeholder="1=Road, 2=Rail, 3=Air, 4=Ship" 
+              />
+            </td>
+            <td style={tableStyles.td}>
+              <LabeledInput 
+                label="Distance (KM)" 
+                type="number" 
+                value={payload.transDist} 
+                onChange={(v) => setField("transDist", v)} 
+              />
+            </td>
+            <td style={tableStyles.td}>
+              <LabeledInput 
+                label="Transport Doc No" 
+                value={payload.transDocNo} 
+                onChange={(v) => setField("transDocNo", v)} 
+              />
+            </td>
+            <td style={tableStyles.td}>
+              <LabeledInput 
+                label="Transport Doc Date" 
+                value={payload.transDocDate} 
+                onChange={(v) => setField("transDocDate", v)} 
+              />
+            </td>
+          </tr>
+
+          <tr>
+            <td style={tableStyles.td}>
+              <LabeledInput 
+                label="Sub Supply Type" 
+                value={payload.subSplyTyp} 
+                onChange={(v) => setField("subSplyTyp", v)} 
+              />
+            </td>
+            <td style={tableStyles.td} colSpan={3}>
+              <LabeledInput 
+                label="Sub Supply Description" 
+                value={payload.subSplyDes} 
+                onChange={(v) => setField("subSplyDes", v)} 
+              />
+            </td>
           </tr>
         </tbody>
       </table>
-
-      {/* Core Operational Details Layer */}
-      <div style={tableStyles.twoColGrid}>
-        <div style={tableStyles.col}>
-          <h3>Seller Information</h3>
-          <LabeledInput label="Seller GSTIN" value={payload.sgstin} onChange={(v) => setField("sgstin", v)} />
-          <LabeledInput label="Trade Name" value={payload.strdNm} onChange={(v) => setField("strdNm", v)} />
-          <LabeledInput label="Legal Name" value={payload.slglNm} onChange={(v) => setField("slglNm", v)} />
-          <LabeledInput label="Location" value={payload.sloc} onChange={(v) => setField("sloc", v)} />
-          <LabeledInput label="Pincode" value={payload.spin} onChange={(v) => setField("spin", v)} />
-        </div>
-
-        <div style={tableStyles.col}>
-          <h3>Buyer Information</h3>
-          <LabeledInput label="Buyer GSTIN" value={payload.bgstin} onChange={(v) => setField("bgstin", v)} />
-          <LabeledInput label="Trade Name" value={payload.btrdNm} onChange={(v) => setField("btrdNm", v)} />
-          <LabeledInput label="Legal Name" value={payload.blglNm} onChange={(v) => setField("blglNm", v)} />
-          <LabeledInput label="Location" value={payload.bloc} onChange={(v) => setField("bloc", v)} />
-          <LabeledInput label="Pincode" value={payload.bpin} onChange={(v) => setField("bpin", v)} />
-        </div>
-      </div>
-
-      {/* Conditional UI Sub-systems Blocks Based on Scenario Selection */}
-      {selectedCategory === "B2B" && (
-        <div style={{ ...tableStyles.twoColGrid, marginTop: "30px" }}>
-          <div style={tableStyles.col}>
-            <h3>Dispatch Address Details</h3>
-            <LabeledInput label="Dispatch GSTIN" value={payload.dgstin} onChange={(v) => setField("dgstin", v)} />
-            <LabeledInput label="Legal Name" value={payload.dlglNm} onChange={(v) => setField("dlglNm", v)} />
-            <LabeledInput label="Location" value={payload.dloc} onChange={(v) => setField("dloc", v)} />
-            <LabeledInput label="Pincode" value={payload.dpin} onChange={(v) => setField("dpin", v)} />
-          </div>
-
-          <div style={tableStyles.col}>
-            <h3>Ship To Address Details</h3>
-            <LabeledInput label="Ship To GSTIN" value={payload.togstin} onChange={(v) => setField("togstin", v)} />
-            <LabeledInput label="Legal Name" value={payload.tolglNm} onChange={(v) => setField("tolglNm", v)} />
-            <LabeledInput label="Location" value={payload.toloc} onChange={(v) => setField("toloc", v)} />
-            <LabeledInput label="Pincode" value={payload.topin} onChange={(v) => setField("topin", v)} />
-          </div>
-        </div>
-      )}
-
-      {/* Universal Dynamic Item Configuration Panel */}
-      <h3 style={{ marginTop: "40px" }}>Item Line Execution List</h3>
-      {payload.itemList.map((item, idx) => (
-        <div key={idx} style={tableStyles.itemCard}>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", gap: "15px" }}>
-            <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
-            <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
-            <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
-            <LabeledInput label="Unit Price" type="number" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
-            <LabeledInput label="IGST Rate (%)" type="number" value={item.irt} onChange={(v) => updateItem(idx, "irt", v)} />
-          </div>
-          <div style={tableStyles.itemFooter}>
-            <span>Taxable Value: ₹{item.txval} | Calculated Tax: ₹{item.iamt} | Unit: {item.unit}</span>
-            {payload.itemList.length > 1 && (
-              <button style={tableStyles.btnRed} onClick={() => removeItem(idx)}>Remove Item</button>
-            )}
-          </div>
-        </div>
-      ))}
-      <button style={{ ...tableStyles.btnGreen, marginBottom: "30px" }} onClick={addItem}>+ Add Additional Item Row</button>
-
-      {/* Financial Matrix Summary Section */}
-      <table style={tableStyles.table}>
-        <thead>
-          <tr><th colSpan={4} style={tableStyles.th}>Invoice Values Calculations Matrix Summary</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style={tableStyles.td}><LabeledInput label="Total Taxable Value" type="number" value={payload.tottxval} onChange={(v) => setField("tottxval", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Total IGST Amount" type="number" value={payload.totiamt} onChange={(v) => setField("totiamt", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Other Charges" type="number" value={payload.totothchrg} onChange={(v) => setField("totothchrg", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Total Invoice Value" type="number" value={payload.totinvval} onChange={(v) => setField("totinvval", v)} /></td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* Primary Control Call to Action */}
-      <div style={{ textAlign: "center", margin: "40px 0" }}>
-        <button style={tableStyles.btnGenerate(loading, token)} disabled={loading || !token} onClick={handleGenerate}>
-          {loading ? "Processing Payload..." : "Generate & Post E-Invoice"}
-        </button>
-      </div>
-
-      {response && (
-        <div style={{ marginTop: "30px" }}>
-          <h3>System Transaction Response Object Log</h3>
-          <pre style={tableStyles.responseBox(response?.status)}>{JSON.stringify(response, null, 2)}</pre>
-          {response?.status === "SUCCESS" && (
-            <div style={{ marginTop: "20px", display: "flex", gap: "15px" }}>
-              <button style={tableStyles.btnGreen} onClick={downloadPDF}>Print Standard Template</button>
-              <LabeledSelect label="Active PDF Template" value={template} options={["STANDARD", "MINIMALIST"]} onChange={setTemplate} />
-            </div>
-          )}
-          {pdfMessage && <p style={{ color: colors.primary, marginTop: "10px" }}>{pdfMessage}</p>}
-        </div>
-      )}
     </div>
-  );
+
+    {/* Generate Button */}
+    <div style={{ textAlign: "center", margin: "40px 0" }}>
+      <button style={tableStyles.btnGenerate(loading, token)} disabled={loading || !token} onClick={handleGenerate}>
+        {loading ? "Processing Payload..." : "Generate & Post E-Invoice"}
+      </button>
+    </div>
+
+    {/* ==================== RESPONSE & PDF SECTION ==================== */}
+    {response && (
+      <div style={{ marginTop: "30px" }}>
+        <h3>System Transaction Response Object Log</h3>
+        <pre style={tableStyles.responseBox(response?.status)}>
+          {JSON.stringify(response, null, 2)}
+        </pre>
+
+        {response?.status === "SUCCESS" && (
+          <div style={{ marginTop: "20px", display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
+            <button style={tableStyles.btnGreen} onClick={downloadPDF}>
+              Print Standard Template
+            </button>
+            <LabeledSelect 
+              label="Active PDF Template" 
+              value={template} 
+              options={["STANDARD", "MINIMALIST"]} 
+              onChange={setTemplate} 
+            />
+          </div>
+        )}
+
+        {pdfMessage && (
+          <p style={{ color: colors.primary, marginTop: "10px" }}>{pdfMessage}</p>
+        )}
+      </div>
+    )}
+  </div>
+);
 };
 
 export default GenerateAndPrintEinvoice;
