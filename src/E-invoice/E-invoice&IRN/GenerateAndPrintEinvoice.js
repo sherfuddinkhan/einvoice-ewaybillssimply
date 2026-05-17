@@ -146,7 +146,7 @@ const createBasePayload = (
   // =========================================================
   // HELPERS
   // =========================================================
-
+  const inv = invoiceData;   // ← Use this instead of 'invoice'
   const formatDate = (date) => {
     if (!date) {
       const d = new Date();
@@ -327,523 +327,265 @@ const createBasePayload = (
   // PAYLOAD
   // =========================================================
 
-  return {
-    // =====================================================
-    // BASIC
-    // =====================================================
-
-    id: String(dynamicId || "1001"),
-
-    userGstin:
-      selectedCatg === "B2C"
-        ? "29ABCDE1234F1Z5"
-        : "29ABCDE1234F1Z5",
-
-    pobCode: null,
-
-    supplyType: isExport
-      ? "EXP"
-      : invoiceData?.supplyType || "O",
-
-    ntr: isInterState ? "Inter" : "Intra",
-
-    docType: "RI",
-
-    catg:
-      selectedCatg === "B2C"
-        ? "B2CS"
-        : selectedCatg,
-
-    dst: "O",
-
-    trnTyp: selectedTrnTyp,
-
-    no:
-      invoiceData?.invoiceNo ||
-      `INV-${Date.now()}`,
-
-    dt: invoiceDate,
-
-    refinum: null,
-    refidt: null,
-
-    pos: buyerStateCode,
-
-    diffprcnt: null,
-    etin: null,
-
-    rchrg: "N",
-
-    // =====================================================
-    // SELLER
-    // =====================================================
-
-    sgstin: "29ABCDE1234F1Z5",
-
-    strdNm:
-      invoiceData?.sellerTradeName ||
-      "TEST Company",
-
-    slglNm:
-      invoiceData?.sellerLegalName ||
-      "TEST PROD",
-
-    sbnm:
-      invoiceData?.sellerBuildingName ||
-      "Testing",
-
-    sflno:
-      invoiceData?.sellerFloorNo || "ABC",
-
-    sloc:
-      invoiceData?.sellerLocation ||
-      "BANGALORE",
-
-    sdst:
-      invoiceData?.sellerDistrict ||
-      "BENGALURU",
-
-    sstcd: sellerStateCode,
-
-    spin:
-      invoiceData?.sellerPincode || "560001",
-
-    sph:
-      invoiceData?.sellerPhone ||
-      "9876543210",
-
-    sem:
-      invoiceData?.sellerEmail ||
-      "abc123@gmail.com",
-
-    // =====================================================
-    // BUYER
-    // =====================================================
-
-    bgstin: buyerGstin,
-
-    btrdNm:
-      invoiceData?.buyerTradeName ||
-      "TEST ENTERPRISES",
-
-    blglNm:
-      invoiceData?.buyerLegalName ||
-      "TEST PRODUCT",
-
-    bbnm:
-      invoiceData?.buyerBuildingName ||
-      "ABCD12345",
-
-    bflno:
-      invoiceData?.buyerFloorNo || "abc",
-
-    bloc:
-      invoiceData?.buyerLocation ||
-      "Mumbai",
-
-    bdst:
-      invoiceData?.buyerDistrict ||
-      "Mumbai",
-
-    bstcd: buyerStateCode,
-
-    bpin:
-      invoiceData?.buyerPincode || "400001",
-
-    bph:
-      invoiceData?.buyerPhone ||
-      "9898989898",
-
-    bem:
-      invoiceData?.buyerEmail ||
-      "buyer@gmail.com",
-
-    // =====================================================
-    // DISPATCH FROM
-    // ONLY FOR BILLFROM_DISPATCHFROM
-    // =====================================================
-
-    dgstin: isBillFromDispatchFrom
-      ? invoiceData?.dispatchGstin ||
-        "29ABCDE1234F1Z5"
-      : null,
-
-    dtrdNm: isBillFromDispatchFrom
-      ? invoiceData?.dispatchTradeName ||
-        "ABC Traders"
-      : null,
-
-    dlglNm: isBillFromDispatchFrom
-      ? invoiceData?.dispatchLegalName ||
-        "ABC Traders Pvt Ltd"
-      : null,
-
-    dbnm: isBillFromDispatchFrom
-      ? invoiceData?.dispatchBuildingName ||
-        "ABC Tower"
-      : null,
-
-    dflno: isBillFromDispatchFrom
-      ? invoiceData?.dispatchFloorNo ||
-        "2nd Floor"
-      : null,
-
-    dloc: isBillFromDispatchFrom
-      ? invoiceData?.dispatchLocation ||
-        "MG Road"
-      : null,
-
-    ddst: isBillFromDispatchFrom
-      ? invoiceData?.dispatchDistrict ||
-        "Bengaluru"
-      : null,
-
-    dstcd: isBillFromDispatchFrom
-      ? invoiceData?.dispatchStateCode ||
-        "29"
-      : null,
-
-    dpin: isBillFromDispatchFrom
-      ? invoiceData?.dispatchPincode ||
-        "560001"
-      : null,
-
-    dph: isBillFromDispatchFrom
-      ? invoiceData?.dispatchPhone ||
-        "9876543210"
-      : null,
-
-    dem: isBillFromDispatchFrom
-      ? invoiceData?.dispatchEmail ||
-        "dispatch@test.com"
-      : null,
-
-    // =====================================================
-    // SHIP TO
-    // ONLY FOR BILLTO_SHIPTO
-    // =====================================================
-
-    togstin: isBillToShipTo
-      ? invoiceData?.shipToGstin ||
-        "27ABCDE1234F1Z5"
-      : null,
-
-    totrdNm: isBillToShipTo
-      ? invoiceData?.shipToTradeName ||
-        "XYZ Enterprises"
-      : null,
-
-    tolglNm: isBillToShipTo
-      ? invoiceData?.shipToLegalName ||
-        "XYZ Enterprises LLP"
-      : null,
-
-    tobnm: isBillToShipTo
-      ? invoiceData?.shipToBuildingName ||
-        "XYZ Business Park"
-      : null,
-
-    toflno: isBillToShipTo
-      ? invoiceData?.shipToFloorNo ||
-        "5th Floor"
-      : null,
-
-    toloc: isBillToShipTo
-      ? invoiceData?.shipToLocation ||
-        "Andheri East"
-      : null,
-
-    todst: isBillToShipTo
-      ? invoiceData?.shipToDistrict ||
-        "Mumbai"
-      : null,
-
-    tostcd: isBillToShipTo
-      ? invoiceData?.shipToStateCode ||
-        "27"
-      : null,
-
-    topin: isBillToShipTo
-      ? invoiceData?.shipToPincode ||
-        "400069"
-      : null,
-
-    toph: isBillToShipTo
-      ? invoiceData?.shipToPhone ||
-        "9123456780"
-      : null,
-
-    toem: isBillToShipTo
-      ? invoiceData?.shipToEmail ||
-        "warehouse@test.com"
-      : null,
-
-    // =====================================================
-    // EXPORT
-    // =====================================================
-
-    sbnum: isExport ? "SB123456" : null,
-
-    sbdt: isExport ? invoiceDate : null,
-
-    port: isExport ? "INMAA1" : null,
-
-    expduty: isExport ? 0 : null,
-
-    cntcd: isExport ? "US" : null,
-
-    forCur: isExport ? "USD" : null,
-
-    invForCur: isExport ? totalInvVal : null,
-
-    // =====================================================
-    // TOTALS
-    // =====================================================
-
-    taxSch: "GST",
-
-    totinvval: totalInvVal,
-
-    totdisc: totalDiscount,
-
-    totfrt: Number(
-      invoiceData?.freight || 0
-    ),
-
-    totins: Number(
-      invoiceData?.insurance || 0
-    ),
-
-    totpkg: Number(
-      invoiceData?.packingCharges || 0
-    ),
-
-    totothchrg: otherCharges,
-
-    tottxval: totTxVal,
-
-    totiamt: totIgst,
-
-    totcamt: totCgst,
-
-    totsamt: totSgst,
-
-    totcsamt: 0,
-
-    totstcsamt: 0,
-
-    rndOffAmt: Number(
-      invoiceData?.roundOff || 0
-    ),
-
-    // =====================================================
-    // PAYMENT
-    // =====================================================
-
-    payNm:
-      invoiceData?.payeeName || "Rahul S",
-
-    acctdet:
-      invoiceData?.accountDetails ||
-      "123456789012",
-
-    pa: "919876543210@federal",
-
-    mc: "8888",
-
-    mode: "1",
-
-    ifsc:
-      invoiceData?.ifsc || "FDRL0001757",
-
-    paidAmt: totalInvVal,
-
-    balAmt: 0,
-
-    // =====================================================
-    // EWAY BILL
-    // =====================================================
-
-    transId: "29ABCDE1234F1Z5",
-
-    subSplyTyp: "Supply",
-
-    subSplyDes: null,
-
-    transMode: "1",
-
-    vehTyp: "R",
-
-    transDist: transportDistance,
-
-    transName: "FastTrack Logistics",
-
-    transDocNo:
-      invoiceData?.transportDocNo || "DOC001",
-
-    transDocDate: transportDocDate,
-
-    vehNo:
-      invoiceData?.vehicleNo || "KA01AB1234",
-
-    // =====================================================
-    // FLAGS
-    // =====================================================
-
-    fy: "2025-26",
-
-    genIrn: true,
-
-    genewb: "Y",
-
-    signedDataReq: true,
-
-    // =====================================================
-    // ITEMS
-    // =====================================================
-
-    itemList: productList.map((item, index) => {
-      const txVal = Number(
-        item.totalAmount || 0
-      );
-
-      const itemRate =
-        item.gstPer === 12 ||
-        item.gstPer === 28
-          ? 18
-          : Number(item.gstPer || 18);
-
-      const igstAmt = Number(
-        item.igstAmount || 0
-      );
-
-      const cgstAmt = Number(
-        item.cgstAmount || 0
-      );
-
-      const sgstAmt = Number(
-        item.sgstAmount || 0
-      );
-
-      return {
-        num: String(index + 1).padStart(
-          5,
-          "0"
-        ),
-
-        hsnCd:
-          item.hsnCode || "73041190",
-
-        prdNm:
-          item.itemName ||
-          "SEAMLESS STEEL TUBE",
-
-        prdDesc:
-          item.description ||
-          "SEAMLESS STEEL TUBE",
-
-        qty: Number(item.quantity || 1),
-
-        freeQty: 0,
-
-        unit: sanitizeUQC(
-          item.uom || "NOS"
-        ),
-
-        unitPrice: Number(
-          item.unitPrice || txVal
-        ),
-
-        totAmt: txVal,
-
-        discount: Number(
-          item.discount || 0
-        ),
-
-        preTaxVal: txVal,
-
-        assAmt: txVal,
-
-        txval: txVal,
-
-        rt: itemRate,
-
-        irt: isInterState
-          ? itemRate
-          : 0,
-
-        crt: !isInterState
-          ? itemRate / 2
-          : 0,
-
-        srt: !isInterState
-          ? itemRate / 2
-          : 0,
-
-        iamt: isInterState
-          ? igstAmt
-          : 0,
-
-        camt: !isInterState
-          ? cgstAmt
-          : 0,
-
-        samt: !isInterState
-          ? sgstAmt
-          : 0,
-
-        csamt: 0,
-
-        othChrg: 0,
-
-        itmVal: Number(
-          (
-            txVal +
-            igstAmt +
-            cgstAmt +
-            sgstAmt
-          ).toFixed(2)
-        ),
-
-        isServc: "N",
-
-        orgCntry: "IN",
-      };
-    }),
-
-    // =====================================================
-    // OPTIONAL
-    // =====================================================
-
-    invOthDocDtls: [
-      {
-        url: "https://www.google.com",
-        docs: "Tax Invoice",
-        infoDtls: "System Generated",
-      },
-    ],
-
-    invRefPreDtls: [
-      {
-        oinum: null,
-        oidt: null,
-        othRefNo: null,
-      },
-    ],
-
-    invRefContDtls: [
-      {
-        raref: null,
-        radt: null,
-        tendref: null,
-        contref: null,
-        extref: null,
-        projref: null,
-        poref: null,
-        porefdt: null,
-      },
-    ],
-  };
+return {
+  // =====================================================
+  // BASIC
+  // =====================================================
+
+  id: String(inv?.refID || dynamicId || "1001"),
+
+  userGstin: inv?.companyBranches?.gstin || null,
+
+  pobCode: null,
+
+  supplyType: isExport
+    ? "EXP"
+    : inv?.transactionStatusXid === 2
+      ? "O"
+      : "O",
+
+  ntr: isInterState ? "Inter" : "Intra",
+
+  docType: "RI",
+
+  catg: selectedCatg === "B2C" ? "B2CS" : selectedCatg,
+
+  dst: "O",
+
+  trnTyp: selectedTrnTyp,
+
+  no: inv?.refID ? `INV-${inv.refID}` : null,
+
+  dt: inv?.dateofIssue,
+
+  refinum: null,
+  refidt: null,
+
+  pos: inv?.buyerClients?.stateXid,
+
+  diffprcnt: null,
+  etin: null,
+
+  rchrg: "N",
+
+  // =====================================================
+  // SELLER
+  // =====================================================
+
+  sgstin: inv?.companyBranches?.gstin,
+  strdNm: inv?.companyBranches?.companyTallyName,
+  slglNm: inv?.companyBranches?.nameEng,
+  sbnm: inv?.companyBranches?.companySignature,
+  sflno: null,
+  sloc: inv?.companyBranches?.poBox,
+  sdst: inv?.companyBranches?.stateNames?.stateName,
+  sstcd: inv?.companyBranches?.stateXid,
+  spin: null,
+  sph: inv?.companyBranches?.mobile,
+  sem: inv?.companyBranches?.email,
+
+  // =====================================================
+  // BUYER
+  // =====================================================
+
+  bgstin: inv?.buyerClients?.gstin,
+  btrdNm: inv?.buyerClients?.companyName,
+  blglNm: inv?.buyerClients?.companyName,
+  bbnm: inv?.buyerClients?.poBox,
+  bflno: null,
+  bloc: inv?.buyerClients?.officeAddress,
+  bdst: inv?.buyerClients?.masterStateNames?.stateName,
+  bstcd: inv?.buyerClients?.stateXid,
+  bpin: inv?.buyerClients?.poBox,
+  bph: inv?.buyerClients?.mobile,
+  bem: inv?.buyerClients?.email,
+
+  // =====================================================
+  // DISPATCH
+  // =====================================================
+
+  dgstin: inv?.companyBranches?.gstin,
+  dtrdNm: inv?.companyBranches?.companyTallyName,
+  dlglNm: inv?.companyBranches?.nameEng,
+  dbnm: null,
+  dflno: null,
+  dloc: inv?.companyBranches?.poBox,
+  ddst: null,
+  dstcd: inv?.companyBranches?.stateXid,
+  dpin: null,
+  dph: inv?.companyBranches?.mobile,
+  dem: inv?.companyBranches?.email,
+
+  // =====================================================
+  // SHIP TO
+  // =====================================================
+
+  togstin: inv?.buyerClients?.gstin,
+  totrdNm: inv?.buyerClients?.companyName,
+  tolglNm: inv?.buyerClients?.companyName,
+  tobnm: inv?.buyerClients?.poBox,
+  toflno: null,
+  toloc: inv?.buyerClients?.officeAddress,
+  todst: inv?.buyerClients?.masterStateNames?.stateName,
+  tostcd: inv?.buyerClients?.stateXid,
+  topin: inv?.buyerClients?.poBox,
+  toph: inv?.buyerClients?.mobile,
+  toem: inv?.buyerClients?.email,
+
+  // =====================================================
+  // EXPORT
+  // =====================================================
+
+  sbnum: isExport ? `SB${inv?.refID || "000001"}` : null,
+  sbdt: isExport ? inv?.dateofIssue : null,
+  port: isExport ? "INMAA1" : null,
+  expduty: isExport ? 0 : null,
+  cntcd: isExport ? "IN" : null,
+  forCur: isExport ? "INR" : null,
+  invForCur: isExport ? totalInvVal : null,
+
+  // =====================================================
+  // TOTALS
+  // =====================================================
+
+  taxSch: "GST",
+  totinvval: totalInvVal,
+  totdisc: totalDiscount,
+  totfrt: 0,
+  totins: 0,
+  totpkg: 0,
+  totothchrg: otherCharges,
+  tottxval: totTxVal,
+  totiamt: totIgst,
+  totcamt: totCgst,
+  totsamt: totSgst,
+  totcsamt: 0,
+  totstcsamt: 0,
+  rndOffAmt: 0,
+
+  // =====================================================
+  // PAYMENT
+  // =====================================================
+
+  payNm: inv?.companyBranchesBank?.[0]?.bankName,
+  acctdet: inv?.companyBranchesBank?.[0]?.accountNo,
+  pa: null,
+  mc: null,
+  mode: "1",
+  ifsc: inv?.companyBranchesBank?.[0]?.ifscCode,
+
+  paidAmt: totalInvVal,
+  balAmt: 0,
+
+  // =====================================================
+  // TRANSPORT / EWAY BILL
+  // =====================================================
+
+  transId: inv?.companyBranches?.gstin,
+  subSplyTyp: "Supply",
+  subSplyDes: null,
+
+  transMode: "1",
+  vehTyp: "R",
+  transDist: transportDistance,
+
+  transName: "FastTrack Logistics",
+
+  transDocNo: inv?.invoiceProductDetails?.[0]?.pid
+    ? `DOC${inv.invoiceProductDetails[0].pid}`
+    : "DOC001",
+
+  transDocDate: transportDocDate,
+
+  vehNo: inv?.vehicleNo,
+
+  // =====================================================
+  // FLAGS
+  // =====================================================
+
+  fy: inv?.tYear || "2025-26",
+  genIrn: true,
+  genewb: "Y",
+  signedDataReq: true,
+
+  // =====================================================
+  // ITEMS
+  // =====================================================
+
+  itemList: (inv?.invoiceProductDetails || []).map((item, index) => {
+    const txVal = Number(item?.totalAmount || 0);
+    const rate = Number(item?.gstPer || 18);
+
+    return {
+      num: String(index + 1).padStart(5, "0"),
+      hsnCd: item?.hsncode || "0000",
+      prdNm: item?.itemName,
+      prdDesc: item?.description,
+      qty: Number(item?.quantity || 1),
+      freeQty: 0,
+      unit: item?.uom,
+      unitPrice: Number(item?.quantityAmount || 0),
+
+      totAmt: txVal,
+      discount: 0,
+      preTaxVal: txVal,
+      assAmt: txVal,
+      txval: txVal,
+
+      rt: rate,
+
+      irt: isInterState ? rate : 0,
+      crt: !isInterState ? rate / 2 : 0,
+      srt: !isInterState ? rate / 2 : 0,
+
+      iamt: isInterState ? item?.igstAmount : 0,
+      camt: !isInterState ? item?.cgstAmount : 0,
+      samt: !isInterState ? item?.sgstAmount : 0,
+
+      csamt: 0,
+      othChrg: 0,
+
+      itmVal: Number(
+        (
+          txVal +
+          (item?.igstAmount || 0) +
+          (item?.cgstAmount || 0) +
+          (item?.sgstAmount || 0)
+        ).toFixed(2)
+      ),
+
+      isServc: "N",
+      orgCntry: "IN",
+    };
+  }),
+
+  // =====================================================
+  // OPTIONAL
+  // =====================================================
+
+  invOthDocDtls: [
+    {
+      url: "https://www.google.com",
+      docs: "Tax Invoice",
+      infoDtls: "System Generated",
+    },
+  ],
+
+  invRefPreDtls: [{ oinum: null, oidt: null, othRefNo: null }],
+
+  invRefContDtls: [
+    {
+      raref: null,
+      radt: null,
+      tendref: null,
+      contref: null,
+      extref: null,
+      projref: null,
+      poref: null,
+      porefdt: null,
+    },
+  ],
+};
 };
 
 const GenerateAndPrintEinvoice = () => {
@@ -862,23 +604,22 @@ const GenerateAndPrintEinvoice = () => {
   const invoiceData = receivedData.invoiceData || {};
   const dynamicId = receivedData.id || invoiceData.pid;
 
-  const recalculateTotals = (currentPayload, idx, fieldChanged, value) => {
-    const items = [...currentPayload.itemList];
-
-    if (idx !== undefined && fieldChanged) {
-      items[idx] = { ...items[idx], [fieldChanged]: value };
+    // ==================== RECALCULATE TOTALS ====================
+  const recalculateTotals = (currentPayload) => {
+    if (!currentPayload?.itemList) {
+      return currentPayload;
     }
 
     let totalTaxableValue = 0;
     let totalIGST = 0;
 
-    const updatedItems = items.map(item => {
+    const updatedItems = currentPayload.itemList.map((item) => {
       const qty = Number(item.qty) || 0;
-      const price = Number(item.unitPrice) || 0;
-      const rate = (Number(item.irt) || 0) / 100;
+      const unitPrice = Number(item.unitPrice) || 0;
+      const igstRate = Number(item.irt) || 0;
 
-      const txval = Number((qty * price).toFixed(2));
-      const iamt = Number((txval * rate).toFixed(2));
+      const txval = Number((qty * unitPrice).toFixed(2));
+      const iamt = Number((txval * (igstRate / 100)).toFixed(2));
       const itmVal = Number((txval + iamt).toFixed(2));
 
       totalTaxableValue += txval;
@@ -886,25 +627,35 @@ const GenerateAndPrintEinvoice = () => {
 
       return {
         ...item,
-        txval: txval,
-        sval: txval,
-        iamt: iamt,
-        itmVal: itmVal,
+        txval,
+        sval: txval,           // alias for taxable value
+        iamt,
+        itmVal,
+        // Reset other tax fields (as per your original logic)
+        camt: 0,
+        samt: 0,
+        csamt: 0,
       };
     });
 
-    const disc = Number(currentPayload.totdisc) || 0;
-    const othchrg = Number(currentPayload.totothchrg) || 0;
-    const totTxval = Number(totalTaxableValue.toFixed(2));
-    const totIamt = Number(totalIGST.toFixed(2));
-    const totInvVal = Number((totTxval + totIamt + othchrg - disc).toFixed(2));
+    const discount = Number(currentPayload.totdisc) || 0;
+    const otherCharges = Number(currentPayload.totothchrg) || 0;
+
+    const tottxval = Number(totalTaxableValue.toFixed(2));
+    const totiamt = Number(totalIGST.toFixed(2));
+    const totinvval = Number((
+      tottxval +
+      totiamt +
+      otherCharges -
+      discount
+    ).toFixed(2));
 
     return {
       ...currentPayload,
       itemList: updatedItems,
-      tottxval: totTxval,
-      totiamt: totIamt,
-      totinvval: totInvVal,
+      tottxval,
+      totiamt,
+      totinvval,
       totcamt: 0,
       totsamt: 0,
       totcsamt: 0,
@@ -912,23 +663,75 @@ const GenerateAndPrintEinvoice = () => {
     };
   };
 
-  const [payload, setPayload] = useState(() => {
-    const basePayload = createBasePayload(invoiceData, dynamicId, "B2B");
-    return recalculateTotals(basePayload);
+   // ==================== PAYLOAD STATE ====================
+  const [payload, setPayload] = useState({ 
+    itemList: [] 
   });
 
-  const setField = (field, value) => setPayload((prev) => ({ ...prev, [field]: value }));
+  // ==================== INITIALIZE PAYLOAD ====================
+  useEffect(() => {
+    const dataToUse = invoiceApiData || invoiceData;
+    
+    if (!dataToUse) return;
+
+    try {
+      const basePayload = createBasePayload(dataToUse, selectedCategory || "B2B");
+      const initializedPayload = recalculateTotals(basePayload);
+      
+      setPayload(initializedPayload);
+    } catch (err) {
+      console.error("Error initializing payload:", err);
+    }
+  }, [
+    invoiceApiData, 
+    invoiceData, 
+    selectedCategory, 
+    createBasePayload, 
+    recalculateTotals
+  ]);
+
+
+
+  // ==================== HELPER FUNCTIONS ====================
+  const setField = (field, value) => {
+    setPayload((prev) => ({ ...prev, [field]: value }));
+  };
 
   const updateItem = (idx, field, value) => {
-    setPayload((prev) => recalculateTotals(prev, idx, field, value));
+    setPayload((prev) => {
+      if (!prev.itemList || !prev.itemList[idx]) return prev;
+
+      const newPayload = { ...prev };
+      newPayload.itemList = [...prev.itemList];
+      newPayload.itemList[idx] = { 
+        ...newPayload.itemList[idx], 
+        [field]: value 
+      };
+
+      return recalculateTotals(newPayload);
+    });
   };
 
   const handleCategorySelectionChange = (category) => {
     setSelectedCategory(category);
-    const configuredBase = createBasePayload(invoiceApiData || invoiceData, dynamicId, category);
-    setPayload(recalculateTotals(configuredBase));
+
+    const dataToUse = invoiceApiData || invoiceData;
+    if (!dataToUse) return;
+
+    const basePayload = createBasePayload(dataToUse, category);
+    setPayload(recalculateTotals(basePayload));
   };
 
+  // ==================== INITIAL PAYLOAD SETUP ====================
+  useEffect(() => {
+    const dataToUse = invoiceApiData || invoiceData;
+    if (dataToUse) {
+      const basePayload = createBasePayload(dataToUse, "B2B");
+      setPayload(recalculateTotals(basePayload));
+    }
+  }, [invoiceApiData, invoiceData, createBasePayload, recalculateTotals]);
+
+   // ==================== ITEM MANAGEMENT ====================
   const addItem = () => {
     setPayload((prev) => {
       const newItem = {
@@ -940,271 +743,208 @@ const GenerateAndPrintEinvoice = () => {
         unitPrice: 100,
         irt: 18,
         rt: 18,
-        txval: 0, sval: 0, iamt: 0, itmVal: 0,
-        discount: 0, othChrg: 0, camt: 0, csamt: 0, srt: 0, crt: 0,
-        freeQty: 0, preTaxVal: 0, isServc: "N", orgCntry: "IN"
+        txval: 0,
+        iamt: 0,
+        itmVal: 0,
+        discount: 0,
+        othChrg: 0,
+        camt: 0,
+        csamt: 0,
+        srt: 0,
+        crt: 0,
+        freeQty: 0,
+        preTaxVal: 0,
+        isServc: "N",
+        orgCntry: "IN",
       };
 
-      const updatedPayload = { ...prev, itemList: [...prev.itemList, newItem] };
+      const updatedPayload = {
+        ...prev,
+        itemList: [...prev.itemList, newItem],
+      };
+
       return recalculateTotals(updatedPayload);
     });
   };
 
   const removeItem = (idx) => {
     setPayload((prev) => {
-      const items = prev.itemList.filter((_, i) => i !== idx);
-      const updatedPayload = { ...prev, itemList: items };
+      if (!prev.itemList || prev.itemList.length <= 1) return prev; // Prevent removing last item
+
+      const updatedPayload = {
+        ...prev,
+        itemList: prev.itemList.filter((_, i) => i !== idx),
+      };
+
       return recalculateTotals(updatedPayload);
     });
   };
 
+  // ==================== STORAGE & RESPONSE HANDLERS ====================
   const storeEinv = (apiResponse) => {
     if (!apiResponse?.id || !payload?.no) return;
+
     const entry = {
       docNo: payload.no?.trim(),
       einvId: String(apiResponse.id),
       createdAt: new Date().toISOString(),
     };
+
     const existing = JSON.parse(localStorage.getItem(EINV_DOC_KEY)) || [];
-    const filtered = existing.filter(e => e.docNo !== entry.docNo && e.einvId !== entry.einvId);
+    const filtered = existing.filter(
+      (e) => e.docNo !== entry.docNo && e.einvId !== entry.einvId
+    );
+
     localStorage.setItem(EINV_DOC_KEY, JSON.stringify([...filtered, entry]));
   };
 
   const saveResponseForAutoPopulate = (data) => {
     if (!data?.response) return;
+
     const responseData = data.response;
+
+    // Save Last Generated ID
     if (responseData.id) {
       localStorage.setItem(LAST_GENERATED_ID_KEY, String(responseData.id));
     }
-    const sharedData = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
-    sharedData.companyId = '24';
+
+    // Save Shared Config
+    const sharedData = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
+    sharedData.companyId = "24";
     sharedData.token = token;
     sharedData.irn = responseData.irn;
     sharedData.companyUniqueCode = payload.userGstin;
     sharedData.lastGeneratedResponse = responseData;
     sharedData.lastGeneratedAt = new Date().toISOString();
+
     localStorage.setItem(STORAGE_KEY1, JSON.stringify(sharedData));
 
-    localStorage.setItem(LAST_DOC_DETAILS_KEY, JSON.stringify({
-      docNum: payload.no.trim(),
-      docDate: payload.dt.trim(),
-      docType: payload.docType,
-      timestamp: new Date().toISOString()
-    }));
+    // Save Document Details
+    localStorage.setItem(
+      LAST_DOC_DETAILS_KEY,
+      JSON.stringify({
+        docNum: payload.no?.trim(),
+        docDate: payload.dt?.trim(),
+        docType: payload.docType,
+        timestamp: new Date().toISOString(),
+      })
+    );
 
-    localStorage.setItem(LAST_IRN_KEY, JSON.stringify({ irn: responseData.irn, timestamp: new Date().toISOString() }));
+    // Save IRN
+    localStorage.setItem(
+      LAST_IRN_KEY,
+      JSON.stringify({
+        irn: responseData.irn,
+        timestamp: new Date().toISOString(),
+      })
+    );
+
+    // Save Signed QR (if available)
     if (responseData.signedQrCode) {
       localStorage.setItem(LAST_SIGNED_QR_JWT_KEY, responseData.signedQrCode);
     }
-    localStorage.setItem(LAST_EWB_DETAILS_KEY, JSON.stringify({
-      ewbNo: responseData.ewbNo || '',
-      ewbDate: responseData.ewbDate || '',
-      timestamp: new Date().toISOString()
-    }));
-    setLastInvoice?.(responseData.irn, payload.userGstin, payload.no, payload.dt, payload.docType);
+
+    // Save EWB Details
+    localStorage.setItem(
+      LAST_EWB_DETAILS_KEY,
+      JSON.stringify({
+        ewbNo: responseData.ewbNo || "",
+        ewbDate: responseData.ewbDate || "",
+        timestamp: new Date().toISOString(),
+      })
+    );
+
+    // Update Auth Context
+    setLastInvoice?.(
+      responseData.irn,
+      payload.userGstin,
+      payload.no,
+      payload.dt,
+      payload.docType
+    );
   };
-const fetchInvoiceData = useCallback(async () => {
-
-  try {
-
-    // ==================================================
-    // START LOADING
-    // ==================================================
+  // ==================== FETCH INVOICE DATA ====================
+  const fetchInvoiceData = useCallback(async () => {
+    if (!dynamicId) return;
 
     setLoadingInvoice(true);
-
     setError("");
 
-    console.log(
-      "=========== FETCHING INVOICE DATA ==========="
-    );
+    try {
+      console.log("🔄 Fetching invoice data for ID:", dynamicId);
 
-    console.log("Dynamic ID:", dynamicId);
+      const res = await axios.get(`http://localhost:3001/api/invoice/${dynamicId}`);
 
-    // ==================================================
-    // API CALL
-    // ==================================================
+      const encryptedData = res?.data?.data?.data;
 
-    const res = await axios.get(
-      `http://localhost:3001/api/invoice/${dynamicId}`
-    );
+      if (!encryptedData) {
+        throw new Error("Invoice encrypted data not found");
+      }
 
-    // ==================================================
-    // FULL RESPONSE DEBUG
-    // ==================================================
+      // Base64 URL Decode Function
+      const base64UrlDecode = (data) => {
+        try {
+          let decoded = data.replace(/-/g, "+").replace(/_/g, "/");
+          while (decoded.length % 4) decoded += "=";
+          return atob(decoded);
+        } catch (err) {
+          console.warn("Base64 decode failed:", err);
+          return null;
+        }
+      };
 
-    console.log(
-      "=========== FULL API RESPONSE ==========="
-    );
+      const decodedString = base64UrlDecode(encryptedData);
 
-    console.log(res);
+      let actualInvoiceData;
+      try {
+        actualInvoiceData = JSON.parse(decodedString);
+      } catch (err) {
+        console.warn("JSON parse failed, storing raw data");
+        actualInvoiceData = {
+          rawEncrypted: encryptedData,
+          decodedRaw: decodedString,
+        };
+      }
 
-    console.log(
-      "=========== RESPONSE DATA ==========="
-    );
+      setInvoiceApiData(actualInvoiceData);
 
-    console.log(res.data);
+      // Create and set payload
+      const basePayload = createBasePayload(actualInvoiceData, selectedCategory);
+      const finalPayload = recalculateTotals(basePayload);
 
-    console.log(
-      "=========== RESPONSE DATA TYPE ==========="
-    );
+      setPayload(finalPayload);
 
-    console.log(typeof res.data);
+      console.log("✅ Invoice data loaded successfully");
 
-    console.log(
-      "=========== RESPONSE.DATA.DATA ==========="
-    );
-
-    console.log(res?.data?.data);
-
-    // ==================================================
-    // EXTRACT INVOICE DATA
-    // ==================================================
-
-    const actualInvoiceData =
-      res?.data?.data ||
-      res?.data ||
-      null;
- console.log(" invoice data", actualInvoiceData)
-    // ==================================================
-    // CHECK DATA
-    // ==================================================
-
-    if (!actualInvoiceData) {
-
-      console.log(
-        "Invoice data is empty or undefined"
-      );
-
-      throw new Error("Invoice data not found");
-
+    } catch (err) {
+      console.error("❌ Fetch Invoice Error:", err);
+      setError(err.message || "Error fetching invoice data");
+    } finally {
+      setLoadingInvoice(false);
     }
+  }, [dynamicId, selectedCategory, createBasePayload, recalculateTotals]);
 
-    // ==================================================
-    // FINAL DEBUG
-    // ==================================================
-
-    console.log(
-      "=========== FETCHED INVOICE DATA ==========="
-    );
-
-    console.log(actualInvoiceData);
-
-    console.log("actualInvoiceData",
-      JSON.stringify(
-        actualInvoiceData,
-        null,
-        2
-      )
-    );
-
-    // ==================================================
-    // STORE API DATA
-    // ==================================================
-
-    setInvoiceApiData(actualInvoiceData);
-
-    // ==================================================
-    // CREATE BASE PAYLOAD
-    // ==================================================
-
-    const formattedPayload =
-      createBasePayload(
-        actualInvoiceData,
-        dynamicId,
-        selectedCategory
-      );
-
-    console.log(
-      "=========== FORMATTED PAYLOAD ==========="
-    );
-
-    console.log(formattedPayload);
-
-    // ==================================================
-    // RECALCULATE TOTALS
-    // ==================================================
-
-    const finalPayload =
-      recalculateTotals(formattedPayload);
-
-    console.log(
-      "=========== FINAL PAYLOAD ==========="
-    );
-
-    console.log(finalPayload);
-
-    // ==================================================
-    // SET FINAL PAYLOAD
-    // ==================================================
-
-    setPayload(finalPayload);
-
-  } catch (err) {
-
-    // ==================================================
-    // ERROR LOGS
-    // ==================================================
-
-    console.log(
-      "=========== FETCH INVOICE ERROR ==========="
-    );
-
-    console.log("Error Object:", err);
-
-    console.log("Error Message:", err.message);
-
-    console.log(
-      "Error Status:",
-      err.response?.status
-    );
-
-    console.log(
-      "Error Response:",
-      err.response?.data
-    );
-
-    setError(
-      err.message || "Error fetching invoice"
-    );
-
-  } finally {
-
-    // ==================================================
-    // STOP LOADING
-    // ==================================================
-
-    setLoadingInvoice(false);
-
-  }
-
-}, [dynamicId, selectedCategory]);
+  // ==================== INITIAL DATA LOAD ====================
   useEffect(() => {
-      console.log("USE EFFECT RUNNING");
-
-  console.log("dynamicId:", dynamicId);
     if (dynamicId) {
       fetchInvoiceData();
     }
   }, [dynamicId, fetchInvoiceData]);
 
- const handleGenerate = async () => {
-  if (!token) {
-    alert("Login required!");
-    return;
-  }
+  // ==================== HANDLE GENERATE E-INVOICE ====================
+  const handleGenerate = async () => {
+    if (!token) {
+      alert("Login required!");
+      return;
+    }
 
-  setLoading(true);
-  setResponse(null);
+    setLoading(true);
+    setResponse(null);
 
-  try {
-    const finalPayload = recalculateTotals(payload);
+    try {
+      const finalPayload = recalculateTotals(payload);
 
-    setPayload(finalPayload);
-
-    const res = await fetch(
-      "http://localhost:3001/proxy/irn/addInvoice",
-      {
+      const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1213,67 +953,49 @@ const fetchInvoiceData = useCallback(async () => {
           product: "ONYX",
         },
         body: JSON.stringify(finalPayload),
+      });
+
+      const data = await res.json();
+      setResponse(data);
+
+      // Extract generated ID
+      const generatedId =
+        data?.response?.id ||
+        data?.response?.Id ||
+        data?.response?.irn ||
+        data?.response?.Irn ||
+        data?.response?.invoiceId;
+
+      if (generatedId) {
+        setPayload((prev) => ({
+          ...prev,
+          lastGeneratedId: generatedId,
+        }));
       }
-    );
 
-    const data = await res.json();
+      if (data?.status === "SUCCESS" && data?.response?.irn) {
+        saveResponseForAutoPopulate(data);
+        storeEinv(data.response);
 
-    console.log("FULL GENERATE RESPONSE:", data);
+        localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
 
-    setResponse(data);
-
-    // ===================================================
-    // STORE GENERATED IRN/ID FOR PDF DOWNLOAD
-    // ===================================================
-
-    const generatedId =
-      data?.response?.id ||
-      data?.response?.Id ||
-      data?.response?.irn ||
-      data?.response?.Irn ||
-      data?.response?.invoiceId;
-
-    console.log("GENERATED ID:", generatedId);
-
-    setPayload((prev) => ({
-      ...prev,
-      lastGeneratedId: generatedId,
-    }));
-
-    // ===================================================
-
-    if (data?.status === "SUCCESS" && data?.response?.irn) {
-      saveResponseForAutoPopulate(data);
-
-      storeEinv(data.response);
-
-      localStorage.setItem(
-        STORAGE_KEY2,
-        JSON.stringify(data)
-      );
-
-      alert(
-        `IRN Generated Successfully!\nIRN: ${data.response.irn}`
-      );
-    } else if (data?.status === "FAILURE") {
-      const errorMsg =
-        data?.errors?.[0]?.msg || "Unknown error";
-
-      alert(`Generation Failed: ${errorMsg}`);
+        alert(`✅ IRN Generated Successfully!\nIRN: ${data.response.irn}`);
+      } 
+      else if (data?.status === "FAILURE") {
+        const errorMsg = data?.errors?.[0]?.msg || "Unknown error";
+        alert(`❌ Generation Failed: ${errorMsg}`);
+      } 
+      else {
+        alert("Unexpected response from server");
+      }
+    } catch (err) {
+      console.error("Generate Error:", err);
+      setResponse({ status: "ERROR", error: err.message });
+      alert("Network error: " + err.message);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Generate Error:", err);
-
-    setResponse({
-      status: "ERROR",
-      error: err.message,
-    });
-
-    alert("Network error: " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 const downloadPDF = async () => {
   console.log("DOWNLOAD CLICKED");
