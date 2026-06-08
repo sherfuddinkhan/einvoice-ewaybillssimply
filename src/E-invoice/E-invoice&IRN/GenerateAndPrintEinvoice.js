@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback,useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "../../components/AuthContext";
 import { useLocation } from "react-router-dom";
@@ -64,16 +64,11 @@ const LAST_SIGNED_QR_JWT_KEY = "iris_last_signed_qr_jwt";
 const LAST_EWB_DETAILS_KEY = "iris_last_ewb_details";
 
 // ==================== SANITIZERS ====================
-// ==================== SANITIZERS ====================
-const sanitizeSubSupplyType = (type, supplyType = "Outward") => {
+const sanitizeSubSupplyType = (type, supplyType = "O") => {
   let clean = String(type || "").trim();
-  
-  // If already a valid number string
   if (/^(1[0-2]|[1-9])$/.test(clean)) {
-    return clean;                    // Return as STRING
+    return clean;
   }
-
-  // Common mappings
   const mapping = {
     "SUPPLY": "1",
     "EXPORT": "3",
@@ -82,12 +77,10 @@ const sanitizeSubSupplyType = (type, supplyType = "Outward") => {
     "OWN USE": "5",
     "SALES RETURN": "7",
   };
-
   clean = clean.toUpperCase();
   if (mapping[clean]) return mapping[clean];
   if (supplyType === "EXP") return "3";
-
-  return "1";   // Default: Supply
+  return "1";
 };
 
 const sanitizeUQC = (uom) => {
@@ -103,7 +96,7 @@ const sanitizeUQC = (uom) => {
 const LabeledInput = ({ label, id, value, onChange, type = "text", step }) => {
   const [focused, setFocused] = useState(false);
   return (
-    <label htmlFor={id}>
+    <label htmlFor={id} style={{ display: "block", width: "100%" }}>
       <span style={tableStyles.labelText}>{label}</span>
       <input
         id={id}
@@ -120,7 +113,7 @@ const LabeledInput = ({ label, id, value, onChange, type = "text", step }) => {
 };
 
 const LabeledSelect = ({ label, id, value, options, onChange }) => (
-  <label htmlFor={id}>
+  <label htmlFor={id} style={{ display: "block", width: "100%" }}>
     <span style={tableStyles.labelText}>{label}</span>
     <select id={id} value={value} onChange={(e) => onChange(e.target.value)} style={tableStyles.select}>
       {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -128,148 +121,169 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
   </label>
 );
 
-const formatDateToDDMMYYYY = (dateString) => {
-  if (!dateString) return null;
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return null;
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
-const createBasePayload = (
-  invoiceData = {},
-  dynamicId,
-  selectedCatg = "B2B"
-) => {
+const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") => {
   const inv = invoiceData;
-
-  const formatDate = (date) => {
-    if (!date) {
-      const d = new Date();
-      return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
-    }
-    if (typeof date === "string" && date.includes("-")) return date;
-    const d = new Date(date);
-    return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
-  };
-
-  const isExport = selectedCatg === "EXP";
   const selectedTrnTyp = inv?.transactionType || "REG";
 
-  let buyerGstin = "URP";
-  if (selectedCatg === "B2B" && inv?.buyerClients?.gstin) {
-    buyerGstin = inv.buyerClients.gstin;
+  const sellerGstin = inv?.companyBranches?.gstin || "01AAACI9260R002";
+  const sellerStateCode = sellerGstin.substring(0, 2);
+
+  let buyerGstin = inv?.buyerClients?.gstin || "";
+  if (selectedCatg === "B2B" && (!buyerGstin || buyerGstin === "URP")) {
+    buyerGstin = "02AAACI9260R002";
+  } else if (selectedCatg === "B2C") {
+    buyerGstin = "URP";
   }
+  const buyerStateCode = buyerGstin !== "URP" ? buyerGstin.substring(0, 2) : "02";
 
-  const sellerStateCode = inv?.companyBranches?.stateXid || "36";
-  const buyerStateCode = buyerGstin !== "URP" ? buyerGstin.substring(0, 2) : "27";
   const isInterState = sellerStateCode !== buyerStateCode;
-
   const productList = inv?.invoiceProductDetails?.length > 0 ? inv.invoiceProductDetails : [];
 
-  // Totals Calculation...
   const totTxVal = Number(productList.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0).toFixed(2));
   const totIgst = Number(productList.reduce((sum, item) => sum + Number(item.igstAmount || 0), 0).toFixed(2));
   const totCgst = Number(productList.reduce((sum, item) => sum + Number(item.cgstAmount || 0), 0).toFixed(2));
   const totSgst = Number(productList.reduce((sum, item) => sum + Number(item.sgstAmount || 0), 0).toFixed(2));
   const totalInvVal = totTxVal + totIgst + totCgst + totSgst;
 
+   const formatDate = (dateInput) => {
+  if (!dateInput) return null;
+
+  const date = new Date(dateInput);
+
+  // Invalid date check
+  if (isNaN(date.getTime())) return null;
+
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+
+  return `${dd}-${mm}-${yyyy}`;
+};
+
+const formatHSNCode = (hsn) => {
+  if (!hsn) return "73041190";
+
+  return String(hsn)
+    .replace(/\D/g, "")   // remove letters & symbols
+    .trim()
+    .slice(0, 8);         // HSN max length (4–8 digits allowed)
+};
+
   return {
     id: String(inv?.refID || dynamicId || "1001"),
-    userGstin: inv?.companyBranches?.gstin,
-    supplyType: "Outward",
+    userGstin: sellerGstin,
+    pobCode: null,
+    supplyType: "O",
     ntr: isInterState ? "Inter" : "Intra",
     docType: "RI",
-    catg: selectedCatg,
+    catg: selectedCatg || "B2B",
+    dst: "O",
     trnTyp: selectedTrnTyp,
-    no: inv?.refID ? `INV-${inv.refID}` : null,
-    dt: formatDate(inv?.dateofIssue),
-    pos: inv?.buyerClients?.stateXid,
+    no: inv?.refID ? `INV-${inv.refID}` : "INV-001",
+    dt: formatDate(inv?.dateofIssue || new Date()),
+    pos: buyerStateCode,
     rchrg: "N",
+    taxSch: "GST",
     fy: inv?.tYear || "26-27",
 
-    // ==================== SELLER (Fixed) ====================
-    sgstin: inv?.companyBranches?.gstin,
-    strdNm: inv?.companyBranches?.companyTallyName,
-    slglNm: inv?.companyBranches?.nameEng,
-    sloc: inv?.companyBranches?.poBox,
-    sdst: inv?.companyBranches?.poBox ? inv.companyBranches.poBox.split(',')[1]?.trim() : "Telangana",
-    sstcd: inv?.companyBranches?.stateXid || "36",
-    spin: "",
-    sph: inv?.companyBranches?.mobile,
-    sem: inv?.companyBranches?.email,
+    // ================= SELLER =================
+    sgstin: sellerGstin,
+    strdNm: inv?.companyBranches?.companyTallyName || "TEST Company",
+    slglNm: inv?.companyBranches?.nameEng || "TEST PROD",
+    sbnm: inv?.companyBranches?.companyTallyName || "Testing",
+    sflno: "ABC",
+    sloc: inv?.companyBranches?.poBox || "BANGALOR32",
+    sdst: inv?.companyBranches?.poBox?.split(",")?.[1]?.trim() || "BENGALURU",
+    sstcd: sellerStateCode,
+    spin: inv?.companyBranches?.pinCode || inv?.companyBranches?.poBoxCode || "500016",
+    sph: inv?.companyBranches?.mobile || "123456111111",
+    sem: inv?.companyBranches?.email || "abc123@gmail.com",
 
-    // ==================== BUYER ====================
+    // ================= BUYER =================
     bgstin: buyerGstin,
-    btrdNm: inv?.buyerClients?.companyName,
-    blglNm: inv?.buyerClients?.companyName,
-    bloc: inv?.buyerClients?.officeAddress,
-    bdst: inv?.buyerClients?.masterStateNames?.stateName,
-    bstcd: inv?.buyerClients?.stateXid,
-    bpin: inv?.buyerClients?.poBox,
-    bph: inv?.buyerClients?.mobile,
-    bem: inv?.buyerClients?.email,
+    btrdNm: inv?.buyerClients?.companyName || "TEST ENTERPRISES",
+    blglNm: inv?.buyerClients?.companyName || "TEST PRODUCT",
+    bbnm: inv?.buyerClients?.companyName || "ABCD12345",
+    bflno: "abc",
+    bloc: inv?.buyerClients?.officeAddress || "Jijamat",
+    bdst: inv?.buyerClients?.masterStateNames?.stateName || "BANGALORE",
+    bstcd: buyerStateCode,
+    bpin: inv?.buyerClients?.poBox || "174001",
+    bph: inv?.buyerClients?.mobile || "989898111111",
+    bem: inv?.buyerClients?.email || "abc123@gmail.com",
 
-    // ==================== SHIP TO ====================
-    togstin: inv?.buyerClients?.gstin || buyerGstin,
-    totrdNm: inv?.buyerClients?.companyName,
-    tolglNm: inv?.buyerClients?.companyName,
-    toloc: inv?.buyerClients?.officeAddress,
-    tostcd: inv?.buyerClients?.stateXid,
-    topin: inv?.buyerClients?.poBox,
+    // ================= SHIP TO =================
+    togstin: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.gstin || buyerGstin) : null,
+    totrdNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || "TEST SHIP") : null,
+    tolglNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || "TEST SHIP") : null,
+    tobnm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? "TEST SHIP" : null,
+    toloc: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.officeAddress || "MUMBAI") : null,
+    tostcd: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? buyerStateCode : null,
+    topin: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.poBox || "174001") : null,
 
-    // ==================== DISPATCH ====================
-    dgstin: inv?.companyBranches?.gstin,
-    dtrdNm: inv?.companyBranches?.companyTallyName,
-    dlglNm: inv?.companyBranches?.nameEng,
-    dbnm: inv?.companyBranches?.poBox,
-    dloc: inv?.companyBranches?.poBox,
-    dstcd: inv?.companyBranches?.stateXid,
-    dpin: "",
+    // ================= DISPATCH =================
+    dgstin: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? sellerGstin : null,
+    dtrdNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.companyTallyName || "TEST DISP") : null,
+    dlglNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.nameEng || "TEST DISP") : null,
+    dbnm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? "TEST DISP" : null,
+    dflno: null,
+    dloc: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.poBox || "BANGALOR32") : null,
+    ddst: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? "BENGALURU" : null,
+    dstcd: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? sellerStateCode : null,
+    dpin: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.pinCode || "192233") : null,
 
-    // ==================== TRANSPORT ====================
-    vehNo: inv?.vehicleNo || "",
-    transName: "FastTrack Logistics",
-    transId: inv?.companyBranches?.gstin,
-    transMode: "1",
-    vehTyp: "R",
-    transDist: 120,
-    transDocNo: `DOC${inv?.refID || "001"}`,
-    transDocDate: formatDate(inv?.dateofIssue),
+    // ================= TRANSPORT =================
     subSplyTyp: "Supply",
+    transId: "01AAACI9260R002",
+    transMode: "1",
+    transDist: 0,
+    transName: "TEST TRANSPORT",
+    transDocNo: `DOC${inv?.refID || "001"}`,
+    transDocDate: formatDate(inv?.dateofIssue || new Date()),
+    vehNo: inv?.vehicleNo || "KA01AB1234",
+    vehTyp: "R",
 
-    // ==================== TOTALS & ITEMS (with HSN fix) ====================
+    // ================= TOTALS =================
     tottxval: totTxVal,
     totiamt: totIgst,
     totcamt: totCgst,
     totsamt: totSgst,
     totinvval: totalInvVal,
+    totdisc: 0,
+    totothchrg: 0,
+    totcsamt: 0,
+    totstcsamt: 0,
+    rndOffAmt: 0,
 
+    // ================= ITEMS =================
     itemList: productList.map((item, index) => ({
       num: String(index + 1).padStart(5, "0"),
-      hsnCd: item?.hsnCode || item?.hsncode || item?.hsn || "",
-      prdNm: item?.itemName || "",
+      prdNm: item?.itemName || "Product Line Name",
+      prdDesc: item?.itemName || "Product Line Description",
+      hsnCd: formatHSNCode(item?.hsnCode || item?.hsn || "73041190"),
       qty: Number(item?.quantity || 1),
-      unit: item?.uom || "NOS",
+      unit: sanitizeUQC(item?.uom),
       unitPrice: Number(item?.quantityAmount || 0),
       txval: Number(item?.totalAmount || 0),
+      sval: Number(item?.totalAmount || 0),
       rt: Number(item?.gstPer || 18),
       irt: isInterState ? Number(item?.gstPer || 18) : 0,
       iamt: isInterState ? Number(item?.igstAmount || 0) : 0,
       camt: !isInterState ? Number(item?.cgstAmount || 0) : 0,
       samt: !isInterState ? Number(item?.sgstAmount || 0) : 0,
       itmVal: Number(item?.totalAmount || 0) + Number(item?.igstAmount || 0),
+      invItmOtherDtls: []
     })),
-
+    invOthDocDtls: [],
+    invRefPreDtls: [{ oinum: null, oidt: null, othRefNo: null }],
+    invRefContDtls: [{ raref: null, radt: null, tendref: null, contref: null, extref: null, projref: null, poref: null, porefdt: null }],
     genIrn: true,
     genewb: "Y",
-    signedDataReq: true,
+    signedDataReq: true
   };
 };
 
-const GenerateAndPrintEinvoice = () => {
+export const GenerateAndPrintEinvoice = () => {
   const { token, setLastInvoice } = useAuth();
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
@@ -285,131 +299,139 @@ const GenerateAndPrintEinvoice = () => {
   const invoiceData = receivedData.invoiceData || {};
   const dynamicId = receivedData.id || invoiceData.pid;
 
-    // ==================== RECALCULATE TOTALS ====================
-  const recalculateTotals = (currentPayload) => {
-    if (!currentPayload?.itemList) {
-      return currentPayload;
+  const [payload, setPayload] = useState({ itemList: [] });
+  const initializedRef = useRef(false);
+
+  const recalculateTotals = useCallback((currentPayload) => {
+  if (!currentPayload?.itemList) return currentPayload;
+
+  let totalTaxableValue = 0;
+  let totalIGST = 0;
+  let totalCGST = 0;
+  let totalSGST = 0;
+
+  const sellerCode = String(currentPayload.sstcd || "36");
+  const buyerCode = String(currentPayload.bstcd || "36");
+
+  const isInter = sellerCode !== buyerCode;
+
+  const updatedItems = currentPayload.itemList.map((item) => {
+    const qty = Number(item.qty) || 0;
+    const unitPrice = Number(item.unitPrice) || 0;
+    const rate = Number(item.rt) || 18;
+
+    const txval = Number((qty * unitPrice).toFixed(2));
+
+    let iamt = 0, camt = 0, samt = 0;
+    let irt = 0, crt = 0, srt = 0;
+
+    if (isInter) {
+      irt = rate;
+      iamt = Number((txval * (rate / 100)).toFixed(2));
+    } else {
+      crt = rate / 2;
+      srt = rate / 2;
+
+      camt = Number((txval * (crt / 100)).toFixed(2));
+      samt = Number((txval * (srt / 100)).toFixed(2));
     }
 
-    let totalTaxableValue = 0;
-    let totalIGST = 0;
+    const itmVal = Number((txval + iamt + camt + samt).toFixed(2));
 
-    const updatedItems = currentPayload.itemList.map((item) => {
-      const qty = Number(item.qty) || 0;
-      const unitPrice = Number(item.unitPrice) || 0;
-      const igstRate = Number(item.irt) || 0;
-
-      const txval = Number((qty * unitPrice).toFixed(2));
-      const iamt = Number((txval * (igstRate / 100)).toFixed(2));
-      const itmVal = Number((txval + iamt).toFixed(2));
-
-      totalTaxableValue += txval;
-      totalIGST += iamt;
-
-      return {
-        ...item,
-        txval,
-        sval: txval,           // alias for taxable value
-        iamt,
-        itmVal,
-        // Reset other tax fields (as per your original logic)
-        camt: 0,
-        samt: 0,
-        csamt: 0,
-      };
-    });
-
-    const discount = Number(currentPayload.totdisc) || 0;
-    const otherCharges = Number(currentPayload.totothchrg) || 0;
-
-    const tottxval = Number(totalTaxableValue.toFixed(2));
-    const totiamt = Number(totalIGST.toFixed(2));
-    const totinvval = Number((
-      tottxval +
-      totiamt +
-      otherCharges -
-      discount
-    ).toFixed(2));
+    totalTaxableValue += txval;
+    totalIGST += iamt;
+    totalCGST += camt;
+    totalSGST += samt;
 
     return {
-      ...currentPayload,
-      itemList: updatedItems,
-      tottxval,
-      totiamt,
-      totinvval,
-      totcamt: 0,
-      totsamt: 0,
-      totcsamt: 0,
-      totstcsamt: 0,
-    };
-  };
+      ...item,
+      txval,
+      sval: txval,
 
-   // ==================== PAYLOAD STATE ====================
-  const [payload, setPayload] = useState({ 
-    itemList: [] 
+      rt: rate,
+
+      irt,
+      crt,
+      srt,
+
+      iamt,
+      camt,
+      samt,
+
+      itmVal,
+      csamt: 0,
+    };
   });
-  // ==================== HELPER FUNCTIONS ====================
+
+  const discount = Number(currentPayload.totdisc) || 0;
+  const otherCharges = Number(currentPayload.totothchrg) || 0;
+
+  const tottxval = Number(totalTaxableValue.toFixed(2));
+  const totiamt = Number(totalIGST.toFixed(2));
+  const totcamt = Number(totalCGST.toFixed(2));
+  const totsamt = Number(totalSGST.toFixed(2));
+
+  const totinvval = Number(
+    (tottxval + totiamt + totcamt + totsamt + otherCharges - discount).toFixed(2)
+  );
+
+  return {
+    ...currentPayload,
+
+    ntr: isInter ? "Inter" : "Intra",
+
+    // ⚠️ POS should remain buyer state code (keep GST rule safe)
+    pos: buyerCode,
+
+    itemList: updatedItems,
+
+    tottxval,
+    totiamt,
+    totcamt,
+    totsamt,
+    totinvval,
+
+    totcsamt: 0,
+    totstcsamt: 0,
+  };
+}, []);
+
   const setField = (field, value) => {
-    setPayload((prev) => ({ ...prev, [field]: value }));
+    setPayload((prev) => {
+      const updated = { ...prev, [field]: value };
+      if (field === "sgstin" && value?.length >= 2) updated.sstcd = value.substring(0, 2);
+      if (field === "bgstin" && value?.length >= 2 && value !== "URP") updated.bstcd = value.substring(0, 2);
+      return recalculateTotals(updated);
+    });
   };
 
   const updateItem = (idx, field, value) => {
     setPayload((prev) => {
       if (!prev.itemList || !prev.itemList[idx]) return prev;
-
       const newPayload = { ...prev };
       newPayload.itemList = [...prev.itemList];
-      newPayload.itemList[idx] = { 
-        ...newPayload.itemList[idx], 
-        [field]: value 
-      };
-
+      newPayload.itemList[idx] = { ...newPayload.itemList[idx], [field]: value };
       return recalculateTotals(newPayload);
     });
   };
 
   const handleCategorySelectionChange = (category) => {
     setSelectedCategory(category);
-
     const dataToUse = invoiceApiData || invoiceData;
     if (!dataToUse) return;
-
-    const basePayload = createBasePayload(dataToUse, category);
+    const basePayload = createBasePayload(dataToUse, dynamicId, category);
     setPayload(recalculateTotals(basePayload));
   };
 
-  // ==================== INITIAL PAYLOAD SETUP ====================
-const initializedRef = useRef(false);
+  useEffect(() => {
+    const dataToUse = invoiceApiData || invoiceData;
+    if (!dataToUse || initializedRef.current) return;
 
-useEffect(() => {
-  const dataToUse = invoiceApiData || invoiceData;
+    const basePayload = createBasePayload(dataToUse, dynamicId, selectedCategory);
+    setPayload(recalculateTotals(basePayload));
+    initializedRef.current = true;
+  }, [invoiceApiData, invoiceData, dynamicId, selectedCategory, recalculateTotals]);
 
-  if (!dataToUse) return;
-
-  // Prevent overwriting edited fields
-  if (initializedRef.current) return;
-
-  const basePayload = createBasePayload(
-    dataToUse,
-    dynamicId,
-    selectedCategory
-  );
-
-  const finalPayload =
-    recalculateTotals(basePayload);
-
-  setPayload(finalPayload);
-
-  initializedRef.current = true;
-
-}, [
-  invoiceApiData,
-  invoiceData,
-  dynamicId,
-  selectedCategory,
-]);
-
-   // ==================== ITEM MANAGEMENT ====================
   const addItem = () => {
     setPayload((prev) => {
       const newItem = {
@@ -419,14 +441,15 @@ useEffect(() => {
         qty: 1,
         unit: "NOS",
         unitPrice: 100,
-        irt: 18,
         rt: 18,
+        irt: prev.sstcd !== prev.bstcd ? 18 : 0,
         txval: 0,
         iamt: 0,
+        camt: 0,
+        samt: 0,
         itmVal: 0,
         discount: 0,
         othChrg: 0,
-        camt: 0,
         csamt: 0,
         srt: 0,
         crt: 0,
@@ -435,58 +458,32 @@ useEffect(() => {
         isServc: "N",
         orgCntry: "IN",
       };
-
-      const updatedPayload = {
-        ...prev,
-        itemList: [...prev.itemList, newItem],
-      };
-
+      const updatedPayload = { ...prev, itemList: [...prev.itemList, newItem] };
       return recalculateTotals(updatedPayload);
     });
   };
 
   const removeItem = (idx) => {
     setPayload((prev) => {
-      if (!prev.itemList || prev.itemList.length <= 1) return prev; // Prevent removing last item
-
-      const updatedPayload = {
-        ...prev,
-        itemList: prev.itemList.filter((_, i) => i !== idx),
-      };
-
+      if (!prev.itemList || prev.itemList.length <= 1) return prev;
+      const updatedPayload = { ...prev, itemList: prev.itemList.filter((_, i) => i !== idx) };
       return recalculateTotals(updatedPayload);
     });
   };
 
-  // ==================== STORAGE & RESPONSE HANDLERS ====================
   const storeEinv = (apiResponse) => {
     if (!apiResponse?.id || !payload?.no) return;
-
-    const entry = {
-      docNo: payload.no?.trim(),
-      einvId: String(apiResponse.id),
-      createdAt: new Date().toISOString(),
-    };
-
+    const entry = { docNo: payload.no?.trim(), einvId: String(apiResponse.id), createdAt: new Date().toISOString() };
     const existing = JSON.parse(localStorage.getItem(EINV_DOC_KEY)) || [];
-    const filtered = existing.filter(
-      (e) => e.docNo !== entry.docNo && e.einvId !== entry.einvId
-    );
-
+    const filtered = existing.filter((e) => e.docNo !== entry.docNo && e.einvId !== entry.einvId);
     localStorage.setItem(EINV_DOC_KEY, JSON.stringify([...filtered, entry]));
   };
 
   const saveResponseForAutoPopulate = (data) => {
     if (!data?.response) return;
-
     const responseData = data.response;
+    if (responseData.id) localStorage.setItem(LAST_GENERATED_ID_KEY, String(responseData.id));
 
-    // Save Last Generated ID
-    if (responseData.id) {
-      localStorage.setItem(LAST_GENERATED_ID_KEY, String(responseData.id));
-    }
-
-    // Save Shared Config
     const sharedData = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
     sharedData.companyId = "24";
     sharedData.token = token;
@@ -494,187 +491,52 @@ useEffect(() => {
     sharedData.companyUniqueCode = payload.userGstin;
     sharedData.lastGeneratedResponse = responseData;
     sharedData.lastGeneratedAt = new Date().toISOString();
-
     localStorage.setItem(STORAGE_KEY1, JSON.stringify(sharedData));
 
-    // Save Document Details
-    localStorage.setItem(
-      LAST_DOC_DETAILS_KEY,
-      JSON.stringify({
-        docNum: payload.no?.trim(),
-        docDate: payload.dt?.trim(),
-        docType: payload.docType,
-        timestamp: new Date().toISOString(),
-      })
-    );
+    localStorage.setItem(LAST_DOC_DETAILS_KEY, JSON.stringify({ docNum: payload.no?.trim(), docDate: payload.dt?.trim(), docType: payload.docType, timestamp: new Date().toISOString() }));
+    localStorage.setItem(LAST_IRN_KEY, JSON.stringify({ irn: responseData.irn, timestamp: new Date().toISOString() }));
+    if (responseData.signedQrCode) localStorage.setItem(LAST_SIGNED_QR_JWT_KEY, responseData.signedQrCode);
+    localStorage.setItem(LAST_EWB_DETAILS_KEY, JSON.stringify({ ewbNo: responseData.ewbNo || "", ewbDate: responseData.ewbDate || "", timestamp: new Date().toISOString() }));
 
-    // Save IRN
-    localStorage.setItem(
-      LAST_IRN_KEY,
-      JSON.stringify({
-        irn: responseData.irn,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    // Save Signed QR (if available)
-    if (responseData.signedQrCode) {
-      localStorage.setItem(LAST_SIGNED_QR_JWT_KEY, responseData.signedQrCode);
-    }
-
-    // Save EWB Details
-    localStorage.setItem(
-      LAST_EWB_DETAILS_KEY,
-      JSON.stringify({
-        ewbNo: responseData.ewbNo || "",
-        ewbDate: responseData.ewbDate || "",
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    // Update Auth Context
-    setLastInvoice?.(
-      responseData.irn,
-      payload.userGstin,
-      payload.no,
-      payload.dt,
-      payload.docType
-    );
+    setLastInvoice?.(responseData.irn, payload.userGstin, payload.no, payload.dt, payload.docType);
   };
-  // ==================== FETCH INVOICE DATA ====================
-const fetchInvoiceData = useCallback(async () => {
-  if (!dynamicId) return;
 
-  setLoadingInvoice(true);
-  setError("");
-
-  try {
-    console.log("🔄 Fetching invoice data for ID:", dynamicId);
-
-    const res = await axios.get(
-      `http://localhost:3001/api/invoice/${dynamicId}`
-    );
-
-    console.log("✅ Raw API Response:", res.data);
-
-    const encryptedData = res?.data?.data?.data;
-
-    if (!encryptedData) {
-      throw new Error("Invoice encrypted data not found");
-    }
-
-    // =====================================================
-    // BASE64 DECODE
-    // =====================================================
-
-    let decodedString = "";
-
+  const fetchInvoiceData = useCallback(async () => {
+    if (!dynamicId) return;
+    setLoadingInvoice(true);
+    setError("");
     try {
-      decodedString = atob(encryptedData);
+      const res = await axios.get(`http://localhost:3001/api/invoice/${dynamicId}`);
+      const encryptedData = res?.data?.data?.data;
+      if (!encryptedData) throw new Error("Invoice encrypted data not found");
 
-      console.log("✅ Decoded String:", decodedString);
-    } catch (decodeError) {
-      console.error("❌ Base64 Decode Failed:", decodeError);
+      let decodedString = atob(encryptedData);
+      let actualInvoiceData = {};
+      try {
+        actualInvoiceData = JSON.parse(decodedString);
+      } catch (e) {
+        actualInvoiceData = { rawEncrypted: encryptedData, decodedRaw: decodedString };
+      }
 
-      throw new Error("Failed to decode encrypted invoice data");
+      setInvoiceApiData(actualInvoiceData);
+      const basePayload = createBasePayload(actualInvoiceData, dynamicId, selectedCategory);
+      setPayload(recalculateTotals(basePayload));
+    } catch (err) {
+      setError(err?.message || "Error fetching invoice data");
+    } finally {
+      setLoadingInvoice(false);
     }
+  }, [dynamicId, selectedCategory, recalculateTotals]);
 
-    // =====================================================
-    // JSON PARSE
-    // =====================================================
-
-    let actualInvoiceData = {};
-
-    try {
-      actualInvoiceData = JSON.parse(decodedString);
-
-      console.log(
-        "✅ Parsed Invoice Data:",
-        actualInvoiceData
-      );
-    } catch (parseError) {
-      console.warn(
-        "⚠ JSON parse failed, storing raw decoded data"
-      );
-
-      actualInvoiceData = {
-        rawEncrypted: encryptedData,
-        decodedRaw: decodedString,
-      };
-    }
-
-    // =====================================================
-    // STORE API DATA
-    // =====================================================
-
-    setInvoiceApiData(actualInvoiceData);
-
-    // =====================================================
-    // CREATE PAYLOAD
-    // =====================================================
-
-    const basePayload = createBasePayload(
-      actualInvoiceData,
-      dynamicId,
-      selectedCategory
-    );
-
-    const finalPayload =
-      recalculateTotals(basePayload);
-
-    // =====================================================
-    // SET PAYLOAD
-    // =====================================================
-
-    setPayload(finalPayload);
-
-    console.log(
-      "✅ Invoice payload generated successfully"
-    );
-  } catch (err) {
-    console.error("❌ Fetch Invoice Error:", err);
-
-    if (err.response) {
-      console.log(
-        "❌ Server Response:",
-        err.response.data
-      );
-    }
-
-    if (err.request) {
-      console.log(
-        "❌ No response received from backend"
-      );
-    }
-
-    setError(
-      err?.message || "Error fetching invoice data"
-    );
-  } finally {
-    setLoadingInvoice(false);
-  }
-}, [
-  dynamicId,
-  selectedCategory,
-  createBasePayload,
-  recalculateTotals,
-]);
-
-
-
-  // ==================== HANDLE GENERATE E-INVOICE ====================
   const handleGenerate = async () => {
     if (!token) {
       alert("Login required!");
       return;
     }
-
     setLoading(true);
     setResponse(null);
-
     try {
       const finalPayload = recalculateTotals(payload);
-
       const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
         method: "POST",
         headers: {
@@ -689,38 +551,22 @@ const fetchInvoiceData = useCallback(async () => {
       const data = await res.json();
       setResponse(data);
 
-      // Extract generated ID
-      const generatedId =
-        data?.response?.id ||
-        data?.response?.Id ||
-        data?.response?.irn ||
-        data?.response?.Irn ||
-        data?.response?.invoiceId;
-
+      const generatedId = data?.response?.id || data?.response?.Id || data?.response?.irn || data?.response?.invoiceId;
       if (generatedId) {
-        setPayload((prev) => ({
-          ...prev,
-          lastGeneratedId: generatedId,
-        }));
+        setPayload((prev) => ({ ...prev, lastGeneratedId: generatedId }));
       }
 
       if (data?.status === "SUCCESS" && data?.response?.irn) {
         saveResponseForAutoPopulate(data);
         storeEinv(data.response);
-
         localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
-
         alert(`✅ IRN Generated Successfully!\nIRN: ${data.response.irn}`);
-      } 
-      else if (data?.status === "FAILURE") {
-        const errorMsg = data?.errors?.[0]?.msg || "Unknown error";
-        alert(`❌ Generation Failed: ${errorMsg}`);
-      } 
-      else {
+      } else if (data?.status === "FAILURE") {
+        alert(`❌ Generation Failed: ${data?.errors?.[0]?.msg || "Unknown error"}`);
+      } else {
         alert("Unexpected response from server");
       }
     } catch (err) {
-      console.error("Generate Error:", err);
       setResponse({ status: "ERROR", error: err.message });
       alert("Network error: " + err.message);
     } finally {
@@ -728,455 +574,212 @@ const fetchInvoiceData = useCallback(async () => {
     }
   };
 
-const downloadPDF = async () => {
-  console.log("DOWNLOAD CLICKED");
-  console.log("lastGeneratedId:", payload?.lastGeneratedId);
-
-  if (!payload?.lastGeneratedId) {
-    console.log("No Generated ID Found");
-    return;
-  }
-
-  try {
-    setPdfMessage("Generating PDF...");
-
-    const resp = await axios.get(
-      `http://localhost:3001/proxy/einvoice/print`,
-      {
-        params: {
-          template: template,
-          id: payload.lastGeneratedId,
-        },
-        headers: {
-          "X-Auth-Token": token,
-          companyId: "24",
-          product: "ONYX",
-        },
+  const downloadPDF = async () => {
+    if (!payload?.lastGeneratedId) return;
+    try {
+      setPdfMessage("Generating PDF...");
+      const resp = await axios.get(`http://localhost:3001/proxy/einvoice/print`, {
+        params: { template, id: payload.lastGeneratedId },
+        headers: { "X-Auth-Token": token, companyId: "24", product: "ONYX" },
         responseType: "blob",
-      }
-    );
+      });
+      const blob = new Blob([resp.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `EInvoice_${payload.lastGeneratedId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setPdfMessage("PDF downloaded successfully.");
+    } catch (error) {
+      setPdfMessage("Failed to download PDF.");
+    }
+  };
 
-    console.log("PDF RESPONSE:", resp);
+  return (
+    <div style={tableStyles.container}>
+      <h1 style={tableStyles.header}>
+        Dynamic E-Invoice Generator ({selectedCategory} Mode)
+      </h1>
 
-    const blob = new Blob([resp.data], {
-      type: "application/pdf",
-    });
-
-    const url = window.URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `EInvoice_${payload.lastGeneratedId}.pdf`;
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    window.URL.revokeObjectURL(url);
-
-    setPdfMessage("PDF downloaded successfully.");
-  } catch (error) {
-    console.error("PDF Download Error:", error);
-    setPdfMessage("Failed to download PDF.");
-  }
-};
-
- return (
-  <div style={tableStyles.container}>
-    <h1 style={tableStyles.header}>
-      Dynamic E-Invoice Generator ({selectedCategory} Mode)
-    </h1>
-
-    {/* ==================== META CONFIGURATION ==================== */}
-    <table style={tableStyles.table}>
-      <thead>
-        <tr>
-          <th colSpan={4} style={tableStyles.th}>Document Meta Configuration</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style={tableStyles.td}>
-            <LabeledSelect 
-              label="Invoice Scenario Category" 
-              value={selectedCategory} 
-              options={["B2B", "B2C", "EXP"]} 
-              onChange={handleCategorySelectionChange} 
-            />
-          </td>
-          <td style={tableStyles.td}>
-            <LabeledSelect 
-              label="Transaction Type" 
-              value={payload.trnTyp} 
-              options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]} 
-              onChange={(v) => setField("trnTyp", v)} 
-            />
-          </td>
-          <td style={tableStyles.td}>
-            <LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} />
-          </td>
-          <td style={tableStyles.td}>
-            <LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} />
-          </td>
-        </tr>
-        <tr>
-          <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} onChange={(v) => setField("no", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
-          <td style={tableStyles.td}>
-            <LabeledSelect label="Supply Type" value={payload.supplyType} options={["Outward", "Inward", "EXP"]} onChange={(v) => setField("supplyType", v)} />
-          </td>
-          <td style={tableStyles.td}>
-            <LabeledSelect label="Nature" value={payload.ntr} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} />
-          </td>
-        </tr>
-        <tr>
-          <td style={tableStyles.td}><LabeledInput label="Place of Supply (POS)" value={payload.pos} onChange={(v) => setField("pos", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Financial Year" value={payload.fy} onChange={(v) => setField("fy", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Reverse Charge" value={payload.rchrg} onChange={(v) => setField("rchrg", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="ID / Ref ID" value={payload.id} onChange={(v) => setField("id", v)} /></td>
-        </tr>
-      </tbody>
-    </table>
-
-    {/* Seller & Buyer Information */}
-    <div style={tableStyles.twoColGrid}>
-      <div style={tableStyles.col}>
-        <h3>Seller Information</h3>
-        <LabeledInput label="GSTIN" value={payload.sgstin} onChange={(v) => setField("sgstin", v)} />
-        <LabeledInput label="Trade Name" value={payload.strdNm} onChange={(v) => setField("strdNm", v)} />
-        <LabeledInput label="Legal Name" value={payload.slglNm} onChange={(v) => setField("slglNm", v)} />
-        <LabeledInput label="Building Name" value={payload.sbnm} onChange={(v) => setField("sbnm", v)} />
-        <LabeledInput label="Floor No" value={payload.sflno} onChange={(v) => setField("sflno", v)} />
-        <LabeledInput label="Location" value={payload.sloc} onChange={(v) => setField("sloc", v)} />
-        <LabeledInput label="State" value={payload.sdst} onChange={(v) => setField("sdst", v)} />
-        <LabeledInput label="State Code" value={payload.sstcd} onChange={(v) => setField("sstcd", v)} />
-        <LabeledInput label="Pincode" value={payload.spin} onChange={(v) => setField("spin", v)} />
-        <LabeledInput label="Phone" value={payload.sph} onChange={(v) => setField("sph", v)} />
-        <LabeledInput label="Email" value={payload.sem} onChange={(v) => setField("sem", v)} />
-      </div>
-
-      <div style={tableStyles.col}>
-        <h3>Buyer Information</h3>
-        <LabeledInput label="GSTIN" value={payload.bgstin} onChange={(v) => setField("bgstin", v)} />
-        <LabeledInput label="Trade Name" value={payload.btrdNm} onChange={(v) => setField("btrdNm", v)} />
-        <LabeledInput label="Legal Name" value={payload.blglNm} onChange={(v) => setField("blglNm", v)} />
-        <LabeledInput label="Building Name" value={payload.bbnm} onChange={(v) => setField("bbnm", v)} />
-        <LabeledInput label="Floor No" value={payload.bflno} onChange={(v) => setField("bflno", v)} />
-        <LabeledInput label="Location" value={payload.bloc} onChange={(v) => setField("bloc", v)} />
-        <LabeledInput label="State" value={payload.bdst} onChange={(v) => setField("bdst", v)} />
-        <LabeledInput label="State Code" value={payload.bstcd} onChange={(v) => setField("bstcd", v)} />
-        <LabeledInput label="Pincode" value={payload.bpin} onChange={(v) => setField("bpin", v)} />
-        <LabeledInput label="Phone" value={payload.bph} onChange={(v) => setField("bph", v)} />
-        <LabeledInput label="Email" value={payload.bem} onChange={(v) => setField("bem", v)} />
-      </div>
-    </div>
-
-    {/* Dispatch & Ship To */}
-    <div style={{ ...tableStyles.twoColGrid, marginTop: "30px" }}>
-      <div style={tableStyles.col}>
-        <h3>Dispatch From</h3>
-        <LabeledInput label="GSTIN" value={payload.dgstin} onChange={(v) => setField("dgstin", v)} />
-        <LabeledInput label="Trade Name" value={payload.dtrdNm} onChange={(v) => setField("dtrdNm", v)} />
-        <LabeledInput label="Legal Name" value={payload.dlglNm} onChange={(v) => setField("dlglNm", v)} />
-        <LabeledInput label="Building Name" value={payload.dbnm} onChange={(v) => setField("dbnm", v)} />
-        <LabeledInput label="Location" value={payload.dloc} onChange={(v) => setField("dloc", v)} />
-        <LabeledInput label="State Code" value={payload.dstcd} onChange={(v) => setField("dstcd", v)} />
-        <LabeledInput label="Pincode" value={payload.dpin} onChange={(v) => setField("dpin", v)} />
-      </div>
-
-      <div style={tableStyles.col}>
-        <h3>Ship To</h3>
-        <LabeledInput label="GSTIN" value={payload.togstin} onChange={(v) => setField("togstin", v)} />
-        <LabeledInput label="Trade Name" value={payload.totrdNm} onChange={(v) => setField("totrdNm", v)} />
-        <LabeledInput label="Legal Name" value={payload.tolglNm} onChange={(v) => setField("tolglNm", v)} />
-        <LabeledInput label="Building Name" value={payload.tobnm} onChange={(v) => setField("tobnm", v)} />
-        <LabeledInput label="Location" value={payload.toloc} onChange={(v) => setField("toloc", v)} />
-        <LabeledInput label="State Code" value={payload.tostcd} onChange={(v) => setField("tostcd", v)} />
-        <LabeledInput label="Pincode" value={payload.topin} onChange={(v) => setField("topin", v)} />
-      </div>
-    </div>
-
-    {/* Export Details */}
-    {selectedCategory === "EXP" && (
-      <table style={tableStyles.table}>
-        <thead><tr><th colSpan={4} style={tableStyles.th}>Export Details</th></tr></thead>
-        <tbody>
-          <tr>
-            <td style={tableStyles.td}><LabeledInput label="Shipping Bill No" value={payload.sbnum} onChange={(v) => setField("sbnum", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Shipping Bill Date" value={payload.sbdt} onChange={(v) => setField("sbdt", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Port Code" value={payload.port} onChange={(v) => setField("port", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Country Code" value={payload.cntcd} onChange={(v) => setField("cntcd", v)} /></td>
-          </tr>
-        </tbody>
-      </table>
-    )}
-
-    {/* Item List */}
-        {/* ==================== ITEM LIST - ALL FIELDS VISIBLE ==================== */}
-    <h3 style={{ marginTop: "40px" }}>Item Line Execution List</h3>
-    
-    {payload.itemList.map((item, idx) => (
-      <div key={idx} style={tableStyles.itemCard}>
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr 1fr", 
-          gap: "12px" 
-        }}>
-          <LabeledInput 
-            label="Product Name" 
-            value={item.prdNm} 
-            onChange={(v) => updateItem(idx, "prdNm", v)} 
-          />
-          <LabeledInput 
-            label="HSN Code" 
-            value={item.hsnCd} 
-            onChange={(v) => updateItem(idx, "hsnCd", v)} 
-          />
-          <LabeledInput 
-            label="Quantity" 
-            type="number" 
-            value={item.qty} 
-            onChange={(v) => updateItem(idx, "qty", v)} 
-          />
-          <LabeledInput 
-            label="Unit Price" 
-            type="number" 
-            value={item.unitPrice} 
-            onChange={(v) => updateItem(idx, "unitPrice", v)} 
-          />
-          <LabeledInput 
-            label="Unit" 
-            value={item.unit} 
-            onChange={(v) => updateItem(idx, "unit", v)} 
-          />
-          <LabeledInput 
-            label="GST Rate (%)" 
-            type="number" 
-            value={item.rt} 
-            onChange={(v) => updateItem(idx, "rt", v)} 
-          />
-        </div>
-
-        {/* Second Row - Tax & Value Details */}
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 1fr", 
-          gap: "12px", 
-          marginTop: "15px" 
-        }}>
-          <LabeledInput 
-            label="Taxable Value" 
-            type="number" 
-            value={item.txval} 
-            onChange={(v) => updateItem(idx, "txval", v)} 
-          />
-          <LabeledInput 
-            label="IGST Amount" 
-            type="number" 
-            value={item.iamt} 
-            onChange={(v) => updateItem(idx, "iamt", v)} 
-          />
-          <LabeledInput 
-            label="CGST Amount" 
-            type="number" 
-            value={item.camt} 
-            onChange={(v) => updateItem(idx, "camt", v)} 
-          />
-          <LabeledInput 
-            label="SGST Amount" 
-            type="number" 
-            value={item.samt} 
-            onChange={(v) => updateItem(idx, "samt", v)} 
-          />
-          <LabeledInput 
-            label="Item Total Value" 
-            type="number" 
-            value={item.itmVal} 
-            onChange={(v) => updateItem(idx, "itmVal", v)} 
-          />
-          <LabeledInput 
-            label="Discount" 
-            type="number" 
-            value={item.discount || 0} 
-            onChange={(v) => updateItem(idx, "discount", v)} 
-          />
-        </div>
-
-        <div style={tableStyles.itemFooter}>
-          <strong>Summary:</strong> Taxable ₹{Number(item.txval || 0).toFixed(2)} | 
-          IGST ₹{Number(item.iamt || 0).toFixed(2)} | 
-          CGST ₹{Number(item.camt || 0).toFixed(2)} | 
-          SGST ₹{Number(item.samt || 0).toFixed(2)} | 
-          <strong>Total: ₹{Number(item.itmVal || 0).toFixed(2)}</strong>
-          
-          {payload.itemList.length > 1 && (
-            <button style={tableStyles.btnRed} onClick={() => removeItem(idx)}>
-              Remove Item
-            </button>
-          )}
-        </div>
-      </div>
-    ))}
-
-    <button style={{ ...tableStyles.btnGreen, marginBottom: "30px" }} onClick={addItem}>
-      + Add Additional Item Row
-    </button>
-    
-
-    {/* Financial Summary */}
-    <table style={tableStyles.table}>
-      <thead>
-        <tr><th colSpan={5} style={tableStyles.th}>Financial Summary</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style={tableStyles.td}><LabeledInput label="Total Taxable Value" type="number" value={payload.tottxval} onChange={(v) => setField("tottxval", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Total IGST" type="number" value={payload.totiamt} onChange={(v) => setField("totiamt", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Total CGST" type="number" value={payload.totcamt} onChange={(v) => setField("totcamt", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Total SGST" type="number" value={payload.totsamt} onChange={(v) => setField("totsamt", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Total Invoice Value" type="number" value={payload.totinvval} onChange={(v) => setField("totinvval", v)} /></td>
-        </tr>
-        <tr>
-          <td style={tableStyles.td}><LabeledInput label="Total Discount" type="number" value={payload.totdisc} onChange={(v) => setField("totdisc", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Other Charges" type="number" value={payload.totothchrg} onChange={(v) => setField("totothchrg", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Round Off" type="number" value={payload.rndOffAmt} onChange={(v) => setField("rndOffAmt", v)} /></td>
-        </tr>
-      </tbody>
-    </table>
-
-    {/* Transport Details */}
-        {/* ==================== TRANSPORT / E-WAY BILL ==================== */}
-    <div style={{ marginTop: "40px" }}>
-      <h3>Transport / E-Way Bill Details</h3>
-      
+      {/* ==================== META CONFIGURATION ==================== */}
       <table style={tableStyles.table}>
         <thead>
           <tr>
-            <th colSpan={4} style={tableStyles.th}>Transportation & E-Way Bill Information</th>
+            <th colSpan={4} style={tableStyles.th}>Document Meta Configuration</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td style={tableStyles.td}>
-              <LabeledInput 
-                label="Transporter Name" 
-                value={payload.transName} 
-                onChange={(v) => setField("transName", v)} 
+              <LabeledSelect 
+                label="Invoice Scenario Category" 
+                value={selectedCategory} 
+                options={["B2B", "B2C", "EXP"]} 
+                onChange={handleCategorySelectionChange} 
               />
             </td>
             <td style={tableStyles.td}>
-              <LabeledInput 
-                label="Transporter GSTIN" 
-                value={payload.transId} 
-                onChange={(v) => setField("transId", v)} 
+              <LabeledSelect 
+                label="Transaction Type" 
+                value={payload.trnTyp || "REG"} 
+                options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]} 
+                onChange={(v) => setField("trnTyp", v)} 
               />
             </td>
             <td style={tableStyles.td}>
-              <LabeledInput 
-                label="Vehicle Number" 
-                value={payload.vehNo} 
-                onChange={(v) => setField("vehNo", v)} 
-              />
+              <LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} />
             </td>
             <td style={tableStyles.td}>
-              <LabeledInput 
-                label="Vehicle Type" 
-                value={payload.vehTyp} 
-                onChange={(v) => setField("vehTyp", v)} 
-                placeholder="R = Regular" 
-              />
+              <LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} />
             </td>
           </tr>
-
           <tr>
+            <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} onChange={(v) => setField("no", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
             <td style={tableStyles.td}>
-              <LabeledInput 
-                label="Transport Mode" 
-                value={payload.transMode} 
-                onChange={(v) => setField("transMode", v)} 
-                placeholder="1=Road, 2=Rail, 3=Air, 4=Ship" 
-              />
+              <LabeledSelect label="Supply Type" value={payload.supplyType || "O"} options={["O", "E"]} onChange={(v) => setField("supplyType", v)} />
             </td>
             <td style={tableStyles.td}>
-              <LabeledInput 
-                label="Distance (KM)" 
-                type="number" 
-                value={payload.transDist} 
-                onChange={(v) => setField("transDist", v)} 
-              />
-            </td>
-            <td style={tableStyles.td}>
-              <LabeledInput 
-                label="Transport Doc No" 
-                value={payload.transDocNo} 
-                onChange={(v) => setField("transDocNo", v)} 
-              />
-            </td>
-            <td style={tableStyles.td}>
-              <LabeledInput 
-                label="Transport Doc Date" 
-                value={payload.transDocDate} 
-                onChange={(v) => setField("transDocDate", v)} 
-              />
+              <LabeledSelect label="Nature" value={payload.ntr || "Inter"} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} />
             </td>
           </tr>
-
           <tr>
-            <td style={tableStyles.td}>
-              <LabeledInput 
-                label="Sub Supply Type" 
-                value={payload.subSplyTyp} 
-                onChange={(v) => setField("subSplyTyp", v)} 
-              />
-            </td>
-            <td style={tableStyles.td} colSpan={3}>
-              <LabeledInput 
-                label="Sub Supply Description" 
-                value={payload.subSplyDes} 
-                onChange={(v) => setField("subSplyDes", v)} 
-              />
-            </td>
+            <td style={tableStyles.td}><LabeledInput label="Place of Supply (POS)" value={payload.pos} onChange={(v) => setField("pos", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Financial Year" value={payload.fy} onChange={(v) => setField("fy", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Reverse Charge" value={payload.rchrg} onChange={(v) => setField("rchrg", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="ID / Ref ID" value={payload.id} onChange={(v) => setField("id", v)} /></td>
           </tr>
         </tbody>
       </table>
-    </div>
 
-    {/* Generate Button */}
-    <div style={{ textAlign: "center", margin: "40px 0" }}>
-      <button style={tableStyles.btnGenerate(loading, token)} disabled={loading || !token} onClick={handleGenerate}>
-        {loading ? "Processing Payload..." : "Generate & Post E-Invoice"}
-      </button>
-    </div>
+      {/* Seller & Buyer Information */}
+      <div style={tableStyles.twoColGrid}>
+        <div style={tableStyles.col}>
+          <h3>Seller Information</h3>
+          <LabeledInput label="GSTIN" value={payload.sgstin} onChange={(v) => setField("sgstin", v)} />
+          <LabeledInput label="Trade Name" value={payload.strdNm} onChange={(v) => setField("strdNm", v)} />
+          <LabeledInput label="Legal Name" value={payload.slglNm} onChange={(v) => setField("slglNm", v)} />
+          <LabeledInput label="Building Name" value={payload.sbnm} onChange={(v) => setField("sbnm", v)} />
+          <LabeledInput label="Floor No" value={payload.sflno} onChange={(v) => setField("sflno", v)} />
+          <LabeledInput label="Location" value={payload.sloc} onChange={(v) => setField("sloc", v)} />
+          <LabeledInput label="State" value={payload.sdst} onChange={(v) => setField("sdst", v)} />
+          <LabeledInput label="State Code" value={payload.sstcd} onChange={(v) => setField("sstcd", v)} />
+          <LabeledInput label="Pincode" value={payload.spin} onChange={(v) => setField("spin", v)} />
+          <LabeledInput label="Phone" value={payload.sph} onChange={(v) => setField("sph", v)} />
+          <LabeledInput label="Email" value={payload.sem} onChange={(v) => setField("sem", v)} />
+        </div>
 
-    {/* ==================== RESPONSE & PDF SECTION ==================== */}
-    {response && (
-      <div style={{ marginTop: "30px" }}>
-        <h3>System Transaction Response Object Log</h3>
-        <pre style={tableStyles.responseBox(response?.status)}>
-          {JSON.stringify(response, null, 2)}
-        </pre>
+        <div style={tableStyles.col}>
+          <h3>Buyer Information</h3>
+          <LabeledInput label="GSTIN" value={payload.bgstin} onChange={(v) => setField("bgstin", v)} />
+          <LabeledInput label="Trade Name" value={payload.btrdNm} onChange={(v) => setField("btrdNm", v)} />
+          <LabeledInput label="Legal Name" value={payload.blglNm} onChange={(v) => setField("blglNm", v)} />
+          <LabeledInput label="Building Name" value={payload.bbnm} onChange={(v) => setField("bbnm", v)} />
+          <LabeledInput label="Floor No" value={payload.bflno} onChange={(v) => setField("bflno", v)} />
+          <LabeledInput label="Location" value={payload.bloc} onChange={(v) => setField("bloc", v)} />
+          <LabeledInput label="State" value={payload.bdst} onChange={(v) => setField("bdst", v)} />
+          <LabeledInput label="State Code" value={payload.bstcd} onChange={(v) => setField("bstcd", v)} />
+          <LabeledInput label="Pincode" value={payload.bpin} onChange={(v) => setField("bpin", v)} />
+          <LabeledInput label="Phone" value={payload.bph} onChange={(v) => setField("bph", v)} />
+          <LabeledInput label="Email" value={payload.bem} onChange={(v) => setField("bem", v)} />
+        </div>
+      </div>
 
-        {response?.status === "SUCCESS" && (
-          <div style={{ marginTop: "20px", display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
-            <button style={tableStyles.btnGreen} onClick={downloadPDF}>
-              Print Standard Template
+      {/* Dispatch & Ship To */}
+      <div style={{ ...tableStyles.twoColGrid, marginTop: "30px" }}>
+        <div style={tableStyles.col}>
+          <h3>Dispatch From</h3>
+          <LabeledInput label="GSTIN" value={payload.dgstin} onChange={(v) => setField("dgstin", v)} />
+          <LabeledInput label="Trade Name" value={payload.dtrdNm} onChange={(v) => setField("dtrdNm", v)} />
+          <LabeledInput label="Legal Name" value={payload.dlglNm} onChange={(v) => setField("dlglNm", v)} />
+          <LabeledInput label="Building Name" value={payload.dbnm} onChange={(v) => setField("dbnm", v)} />
+          <LabeledInput label="Location" value={payload.dloc} onChange={(v) => setField("dloc", v)} />
+          <LabeledInput label="State Code" value={payload.dstcd} onChange={(v) => setField("dstcd", v)} />
+          <LabeledInput label="Pincode" value={payload.dpin} onChange={(v) => setField("dpin", v)} />
+        </div>
+
+        <div style={tableStyles.col}>
+          <h3>Ship To</h3>
+          <LabeledInput label="GSTIN" value={payload.togstin} onChange={(v) => setField("togstin", v)} />
+          <LabeledInput label="Trade Name" value={payload.totrdNm} onChange={(v) => setField("totrdNm", v)} />
+          <LabeledInput label="Legal Name" value={payload.tolglNm} onChange={(v) => setField("tolglNm", v)} />
+          <LabeledInput label="Building Name" value={payload.tobnm} onChange={(v) => setField("tobnm", v)} />
+          <LabeledInput label="Location" value={payload.toloc} onChange={(v) => setField("toloc", v)} />
+          <LabeledInput label="State Code" value={payload.tostcd} onChange={(v) => setField("tostcd", v)} />
+          <LabeledInput label="Pincode" value={payload.topin} onChange={(v) => setField("topin", v)} />
+        </div>
+      </div>
+
+      {/* Item management section */}
+      <div style={{ marginTop: "40px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <h3>Line Items Spreadsheet</h3>
+          <button style={tableStyles.btnGreen} onClick={addItem}>+ Add Document Row Item</button>
+        </div>
+
+        {payload.itemList?.map((item, idx) => (
+          <div key={idx} style={tableStyles.itemCard}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px" }}>
+              <LabeledInput label="Product SKU Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
+              <LabeledInput label="HSN Tariffs Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
+              <LabeledInput label="Item Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
+              <LabeledInput label="Unit Buying Price" type="number" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginTop: "15px" }}>
+              <LabeledInput label="Tax Rate (rt %)" type="number" value={item.rt} onChange={(v) => updateItem(idx, "rt", v)} />
+              <LabeledInput label="UOM Measurement" value={item.unit} onChange={(v) => updateItem(idx, "unit", v)} />
+              <div style={{ paddingTop: "25px" }}><strong>Taxable Subtotal:</strong> ₹{item.txval}</div>
+              <div style={{ paddingTop: "25px" }}><strong>Gross Val:</strong> ₹{item.itmVal}</div>
+            </div>
+            <div style={tableStyles.itemFooter}>
+              <div style={{ fontSize: "13px", color: "#666" }}>Row Index Mapping Reference ID: {item.num}</div>
+              <button style={tableStyles.btnRed} onClick={() => removeItem(idx)}>Remove Product Row</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Aggregate breakdown layout box */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "30px" }}>
+        <div style={{ background: "#fff", padding: "24px", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", width: "350px" }}>
+          <div style={{ display: "flex", justifyContent: "between", marginBottom: "10px" }}><span style={{ color: "#555" }}>Taxable Total:</span><strong>₹{payload.tottxval || 0}</strong></div>
+          <div style={{ display: "flex", justifyContent: "between", marginBottom: "10px" }}><span style={{ color: "#555" }}>IGST Pool Total:</span><strong>₹{payload.totiamt || 0}</strong></div>
+          <div style={{ display: "flex", justifyContent: "between", marginBottom: "10px" }}><span style={{ color: "#555" }}>CGST Pool Total:</span><strong>₹{payload.totcamt || 0}</strong></div>
+          <div style={{ display: "flex", justifyContent: "between", marginBottom: "15px" }}><span style={{ color: "#555" }}>SGST Pool Total:</span><strong>₹{payload.totsamt || 0}</strong></div>
+          <div style={{ display: "flex", justifyContent: "between", borderTop: "1px solid #ddd", paddingTop: "15px", fontSize: "18px" }}><span style={{ color: "#222", fontWeight: "600" }}>Total Invoice Amt:</span><strong style={{ color: colors.primary }}>₹{payload.totinvval || 0}</strong></div>
+        </div>
+      </div>
+
+      {/* Submission Actions Row */}
+      <div style={{ textAlign: "center", marginTop: "40px", marginBottom: "40px" }}>
+        <button style={tableStyles.btnGenerate(loading, token)} onClick={handleGenerate} disabled={loading || !token}>
+          {loading ? "Transmitting Fields..." : "Generate E-Invoice Registry Entry"}
+        </button>
+
+        {payload?.lastGeneratedId && (
+          <div style={{ marginTop: "20px" }}>
+            <button style={{ ...tableStyles.btnGreen, padding: "14px 40px" }} onClick={downloadPDF}>
+              Download Document Invoice PDF
             </button>
-            <LabeledSelect 
-              label="Active PDF Template" 
-              value={template} 
-              options={["STANDARD", "MINIMALIST"]} 
-              onChange={setTemplate} 
-            />
+            <p style={{ color: "#666", fontSize: "14px", marginTop: "8px" }}>{pdfMessage}</p>
           </div>
         )}
-
-        {pdfMessage && (
-          <p style={{ color: colors.primary, marginTop: "10px" }}>{pdfMessage}</p>
-        )}
       </div>
-    )}
-  </div>
-);
+
+      {/* Logger Monitor Frame */}
+      {response && (
+        <div style={{ marginTop: "30px" }}>
+          <h4>System Logs Analytics Monitor Window</h4>
+          <div style={tableStyles.responseBox(response?.status)}>
+            <pre>{JSON.stringify(response, null, 2)}</pre>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default GenerateAndPrintEinvoice;

@@ -7,7 +7,7 @@ const STORAGE_KEY = "iris_einvoice_response";
 const EInvoiceLoginPage = () => {
   const STORAGE_KEY = "iris_einvoice_response";
   const [email, setEmail] = useState("ateeq@calibrecue.com");
-  const [password, setPassword] = useState("Abcd@123khan");
+  const [password, setPassword] = useState("Ateeq@123");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 
@@ -50,6 +50,7 @@ const EInvoiceLoginPage = () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 
         login(store, "EINVOICE"); // AuthProvider will handle redirect via useEffect
+        
       }
     } catch (err) {
       setResponse({ status: "ERROR", message: err.message });
