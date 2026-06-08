@@ -616,15 +616,37 @@ app.post("/proxy/topaz/ewb/printSummary", (req, res) =>
     ===================================================== */
 
 // Generate IRN
-app.post("/proxy/irn/addInvoice", (req, res) =>
-    proxy(res, () =>
-        axios.post(
-            `${BASE_URL}/irisgst/onyx/irn/addInvoice`,
-            req.body,
-            { headers: { ...authHeaders(req), "Content-Type": "application/json" } }
-        )
-    )
-);
+app.post("/proxy/irn/addInvoice", async (req, res) => {
+  try {
+    const url = `${BASE_URL}/irisgst/onyx/irn/addInvoice`;
+
+    console.log("➡️ IRN Request Payload:", JSON.stringify(req.body, null, 2));
+
+    const response = await axios.post(url, req.body, {
+      headers: {
+        ...authHeaders(req),
+        "Content-Type": "application/json",
+      },
+      timeout: 60000, // important for IRN APIs
+    });
+
+    console.log("✅ IRN Response:", response.data);
+
+    return res.status(200).json(response.data);
+  } catch (error) {
+    console.error("❌ IRN API Error:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+    });
+
+    return res.status(error.response?.status || 500).json({
+      status: "ERROR",
+      message: error.message,
+      details: error.response?.data || null,
+    });
+  }
+});
 
 // Get Invoice by IRN
 app.get("/proxy/irn/getInvByIrn", (req, res) =>
@@ -976,7 +998,7 @@ const agent = new https.Agent({
 app.get("/api/invoices", async (req, res) => {
 
     // Authorization Token
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6IjQ3OGQ1MjA0LTMzMTAtNGFjOS1hNjdjLTU0NzQ2M2ZiZTcyMCIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5NDUyMzEsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.isJszaXFkE2tgwTeQ7XLYyrAgahrNItv9vfxbcWcmdk";
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6IjVkMmFmZmUxLWFhYmUtNGUwYS1iZDk0LTQ0NmZjYmE0ZmQ2YSIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5NDczMDYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.tC1uTOOLSlGhcksNDZ0kRWUzBAfb6fJGhXqmC3CUPoE";
 
     try {
 
@@ -1038,7 +1060,7 @@ app.get("/api/invoices", async (req, res) => {
 
 
 const TOKEN =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6IjQ3OGQ1MjA0LTMzMTAtNGFjOS1hNjdjLTU0NzQ2M2ZiZTcyMCIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5NDUyMzEsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.isJszaXFkE2tgwTeQ7XLYyrAgahrNItv9vfxbcWcmdk";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6IjVkMmFmZmUxLWFhYmUtNGUwYS1iZDk0LTQ0NmZjYmE0ZmQ2YSIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5NDczMDYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.tC1uTOOLSlGhcksNDZ0kRWUzBAfb6fJGhXqmC3CUPoE";
 
 app.get("/api/invoice/:id", async (req, res) => {
 
