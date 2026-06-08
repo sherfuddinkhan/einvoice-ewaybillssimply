@@ -293,6 +293,7 @@ export const GenerateAndPrintEinvoice = () => {
   const [invoiceApiData, setInvoiceApiData] = useState(null);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("B2B");
+  const [lastGeneratedId, setLastGeneratedId] = useState(null);
   const location = useLocation();
 
   const receivedData = location.state || {};
@@ -528,75 +529,104 @@ export const GenerateAndPrintEinvoice = () => {
     }
   }, [dynamicId, selectedCategory, recalculateTotals]);
 
-  const handleGenerate = async () => {
-    if (!token) {
-      alert("Login required!");
-      return;
+const handleGenerate = async () => {
+  if (!token) {
+    alert("Login required!");
+    return;
+  }
+
+  setLoading(true);
+  setResponse(null);
+
+  try {
+    const finalPayload = recalculateTotals(payload);
+
+    const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Auth-Token": token,
+        companyId: "24",
+        product: "ONYX",
+      },
+      body: JSON.stringify(finalPayload),
+    });
+
+    const data = await res.json();
+    setResponse(data);
+
+    const generatedId =
+      data?.response?.id ||
+      data?.response?.Id ||
+      data?.response?.irn ||
+      data?.response?.invoiceId;
+
+    if (generatedId) {
+      setLastGeneratedId(generatedId); // ✅ FIXED (no payload dependency)
     }
-    setLoading(true);
-    setResponse(null);
-    try {
-      const finalPayload = recalculateTotals(payload);
-      const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
-        method: "POST",
+
+    if (data?.status === "SUCCESS" && data?.response?.irn) {
+      saveResponseForAutoPopulate(data);
+      storeEinv(data.response);
+      localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
+
+      alert(`✅ IRN Generated Successfully!\nIRN: ${data.response.irn}`);
+    } else {
+      alert(data?.status === "FAILURE"
+        ? `❌ Failed: ${data?.errors?.[0]?.msg || "Unknown error"}`
+        : "Unexpected response");
+    }
+  } catch (err) {
+    alert("Network error: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const downloadPDF = async () => {
+  if (!lastGeneratedId) {
+    alert("No generated invoice found");
+    return;
+  }
+
+  try {
+    setPdfMessage("Generating PDF...");
+
+    const resp = await axios.get(
+      "http://localhost:3001/proxy/einvoice/print",
+      {
+        params: {
+          template,
+          id: lastGeneratedId, // ✅ FIXED
+        },
         headers: {
-          "Content-Type": "application/json",
           "X-Auth-Token": token,
           companyId: "24",
           product: "ONYX",
         },
-        body: JSON.stringify(finalPayload),
-      });
-
-      const data = await res.json();
-      setResponse(data);
-
-      const generatedId = data?.response?.id || data?.response?.Id || data?.response?.irn || data?.response?.invoiceId;
-      if (generatedId) {
-        setPayload((prev) => ({ ...prev, lastGeneratedId: generatedId }));
-      }
-
-      if (data?.status === "SUCCESS" && data?.response?.irn) {
-        saveResponseForAutoPopulate(data);
-        storeEinv(data.response);
-        localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
-        alert(`✅ IRN Generated Successfully!\nIRN: ${data.response.irn}`);
-      } else if (data?.status === "FAILURE") {
-        alert(`❌ Generation Failed: ${data?.errors?.[0]?.msg || "Unknown error"}`);
-      } else {
-        alert("Unexpected response from server");
-      }
-    } catch (err) {
-      setResponse({ status: "ERROR", error: err.message });
-      alert("Network error: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const downloadPDF = async () => {
-    if (!payload?.lastGeneratedId) return;
-    try {
-      setPdfMessage("Generating PDF...");
-      const resp = await axios.get(`http://localhost:3001/proxy/einvoice/print`, {
-        params: { template, id: payload.lastGeneratedId },
-        headers: { "X-Auth-Token": token, companyId: "24", product: "ONYX" },
         responseType: "blob",
-      });
-      const blob = new Blob([resp.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `EInvoice_${payload.lastGeneratedId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      setPdfMessage("PDF downloaded successfully.");
-    } catch (error) {
-      setPdfMessage("Failed to download PDF.");
-    }
-  };
+      }
+    );
+
+    const blob = new Blob([resp.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `EInvoice_${lastGeneratedId}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    setPdfMessage("PDF downloaded successfully.");
+  } catch (error) {
+    console.error(error);
+    setPdfMessage("Failed to download PDF.");
+  }
+};
 
   return (
     <div style={tableStyles.container}>
