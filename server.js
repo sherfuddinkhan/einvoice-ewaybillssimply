@@ -1137,7 +1137,7 @@ app.get("/api/invoices", async (req, res) => {
 
         // External API Request
         const response = await axios.get(
-            "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/21/invoicecumchallan",
+            "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/23/invoicecumchallan",
             {
                 httpsAgent: agent,
 
