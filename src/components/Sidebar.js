@@ -141,6 +141,7 @@ const Sidebar = () => {
       items: [
         { path: "/einvoice/einvoice-display",label: "E-Invoice Fields" },
         { path: "/einvoice/generate-print", label: "Generate Invoice and print" },
+        { path: "/einvoice/generate-printproformo", label: "Generate Proforma Invoice and print" },
         { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
         { path: "/einvoice/get-by-irn", label: "Get by IRN" },
         { path: "/einvoice/get-by-doc", label: "Get by Document" },
