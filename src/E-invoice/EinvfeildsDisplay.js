@@ -60,6 +60,8 @@ const EinvfeildsDisplay = () => {
 
       console.log("Invoices:", invoices);
 
+     
+
       // ======================================================
       // HANDLE DIFFERENT RESPONSE TYPES
       // ======================================================
@@ -138,25 +140,26 @@ const handleGenerateEinvoice = (row) => {
     "Actual Invoice ID:",
     actualInvoiceId
   );
+  
 
   // ==========================================
   // NAVIGATE
   // ==========================================
 
-  //navigate("/einvoice/generate-print", {
-    //state: {
-      //invoiceData: row,
-      //id: actualInvoiceId
-    //}
-  //});
-
-
-    navigate("/einvoice/generate-printproformo", {
+  navigate("/einvoice/generate-print", {
     state: {
       invoiceData: row,
       id: actualInvoiceId
     }
   });
+
+
+   // navigate("/einvoice/generate-printproformo", {
+    //state: {
+     // invoiceData: row,
+      //id: actualInvoiceId
+    //}
+  //});
 
 };
   
