@@ -994,6 +994,138 @@ const agent = new https.Agent({
  * This endpoint calls an external invoice API using
  * Bearer Token Authorization and returns the response.
  */
+//app.get("/api/invoices", async (req, res) => {
+
+    // Authorization Token
+  //  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6ImY3ZjMwZGFhLTZiOTctNDlkMC1hNjc3LTU3Yzc4MzdlYzg4OCIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5ODU3MTcsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.Szh6_Rr3WBFryjiE909Vn9nRSHDcDAD_nX9ypxx7hAw";
+
+    //try {
+
+      //  console.log("Calling Authorized External Invoice API...");
+
+        // External API Request
+        //const response = await axios.get(
+          //  "https://development.myschoolzone.in/api/Invoice/GetFinalInvoiceByID/1086",
+            //{
+              //  httpsAgent: agent,
+
+                //headers: {
+                  //  "Accept": "application/json",
+
+                    // Bearer Token Authorization
+                    //"Authorization": `Bearer ${token}`,
+                //},
+            //}
+        //);
+
+        //console.log("Invoice Data Fetched Successfully");
+        //console.log(response.data);
+
+        // Success Response
+        //return res.status(200).json({
+          //  success: true,
+           // message: "Invoice fetched successfully",
+            //data: response.data,
+        //});
+
+    //} catch (error) {
+
+      //  console.log("=========== AUTHORIZED API ERROR ===========");
+
+        //console.log("Error Message:", error.message);
+
+        //console.log("Error Status:", error.response?.status);
+
+        //console.log("Error Response:", error.response?.data);
+
+        // Failure Response
+        //return res.status(500).json({
+          //  success: false,
+            //message: error.message || "Failed to fetch invoice",
+            //status: error.response?.status || 500,
+            //data: error.response?.data || null,
+        //});
+    //}
+//});
+
+
+
+//const TOKEN =
+  //"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6ImY3ZjMwZGFhLTZiOTctNDlkMC1hNjc3LTU3Yzc4MzdlYzg4OCIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5ODU3MTcsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.Szh6_Rr3WBFryjiE909Vn9nRSHDcDAD_nX9ypxx7hAw";
+
+//app.get("/api/invoice/:id", async (req, res) => {
+
+  //try {
+
+    // ============================================
+    // GET PARAM ID
+    // ============================================
+
+    //const { id } = req.params;
+
+    //console.log("Fetching Invoice ID:", id);
+
+    // ============================================
+    // EXTERNAL API CALL
+    // ============================================
+
+    //const response = await axios.get(
+      //`https://ams.calibrecue.com/api/Invoice/GetFinalInvoiceByID/${id}`,
+      //{
+        //headers: {
+          //Authorization: `Bearer ${TOKEN}`,
+          //"Content-Type": "application/json",
+        //},
+      //}
+    //);
+
+    //console.log(
+      //"=========== INVOICE API SUCCESS ==========="
+    //);
+
+    //console.log(response.data);
+
+    // ============================================
+    // SEND RESPONSE
+    // ============================================
+
+    //return res.status(200).json({
+      //success: true,
+      //data: response.data,
+    //});
+
+  //} catch (error) {
+
+    //console.log(
+     // "=========== API ERROR ==========="
+    //);
+
+    //console.log("MESSAGE:");
+    //console.log(error.message);
+
+    //console.log("STATUS:");
+    //console.log(error.response?.status);
+
+    //console.log("DATA:");
+    //console.log(error.response?.data);
+
+    //return res.status(
+      //error.response?.status || 500
+    //).json({
+      //success: false,
+      //message: "Failed to fetch invoice",
+      //error: error.message,
+      //data: error.response?.data || null,
+    //});
+
+  //}
+
+//});
+
+
+
+// by proformo software
+
 app.get("/api/invoices", async (req, res) => {
 
     // Authorization Token
@@ -1005,7 +1137,7 @@ app.get("/api/invoices", async (req, res) => {
 
         // External API Request
         const response = await axios.get(
-            "https://development.myschoolzone.in/api/Invoice/GetFinalInvoiceByID/1086",
+            "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/21/invoicecumchallan",
             {
                 httpsAgent: agent,
 
@@ -1052,9 +1184,6 @@ app.get("/api/invoices", async (req, res) => {
 // GET E-INVOICE / E-WAY BY ID
 // ======================================
 
-// ===============================
-// FETCH INVOICE BY ID API
-// ===============================
 
 
 
@@ -1129,6 +1258,10 @@ app.get("/api/invoice/:id", async (req, res) => {
   }
 
 });
+
+
+
+
 /* =====================================================
     SERVER START
     ===================================================== */

@@ -143,7 +143,15 @@ const handleGenerateEinvoice = (row) => {
   // NAVIGATE
   // ==========================================
 
-  navigate("/einvoice/generate-print", {
+  //navigate("/einvoice/generate-print", {
+    //state: {
+      //invoiceData: row,
+      //id: actualInvoiceId
+    //}
+  //});
+
+
+    navigate("/einvoice/generate-printproformo", {
     state: {
       invoiceData: row,
       id: actualInvoiceId

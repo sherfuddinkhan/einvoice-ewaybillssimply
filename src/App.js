@@ -29,6 +29,7 @@ import Dashboard from "./components/Dashboard";
 ======================= */
 import EinvfeildsDisplay from "./E-invoice/EinvfeildsDisplay";
 import GenerateAndPrintEinvoice from "./E-invoice/E-invoice&IRN/GenerateAndPrintEinvoice";
+import GenerateandprintproformoEinvoice from"./E-invoice/E-invoice&IRN/Generateandprintproformoinvoice";
 import CancelIRN from "./E-invoice/E-invoice&IRN/CancelIRN";
 import GetInvByIrn from "./E-invoice/E-invoice&IRN/GetInvByIrn";
 import GetIrnByDocDetailsForm from "./E-invoice/E-invoice&IRN/GetIrnByDocDetails";
@@ -171,6 +172,7 @@ const App = () => {
           
           <Route path="einvoice-display" element={<EinvfeildsDisplay />} />
           <Route path="generate-print" element={<GenerateAndPrintEinvoice />} />
+          <Route path="generate-printproformo" element={<GenerateandprintproformoEinvoice />}/>
           <Route path="cancel-irn" element={<CancelIRN />} />
           <Route path="get-by-irn" element={<GetInvByIrn />} />
           <Route path="get-by-doc" element={<GetIrnByDocDetailsForm />} />
