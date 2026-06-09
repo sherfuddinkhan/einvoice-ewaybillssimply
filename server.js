@@ -786,7 +786,6 @@ app.get("/proxy/einvoice/print", async (req, res) => {
                 responseType: "arraybuffer",
             }
         );
-
         res.set({
             "Content-Type": "application/pdf",
             "Content-Disposition": `attachment; filename=einvoice_${req.query.id}.pdf`,
@@ -998,7 +997,7 @@ const agent = new https.Agent({
 app.get("/api/invoices", async (req, res) => {
 
     // Authorization Token
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6IjVkMmFmZmUxLWFhYmUtNGUwYS1iZDk0LTQ0NmZjYmE0ZmQ2YSIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5NDczMDYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.tC1uTOOLSlGhcksNDZ0kRWUzBAfb6fJGhXqmC3CUPoE";
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6ImY3ZjMwZGFhLTZiOTctNDlkMC1hNjc3LTU3Yzc4MzdlYzg4OCIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5ODU3MTcsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.Szh6_Rr3WBFryjiE909Vn9nRSHDcDAD_nX9ypxx7hAw";
 
     try {
 
@@ -1060,7 +1059,7 @@ app.get("/api/invoices", async (req, res) => {
 
 
 const TOKEN =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6IjVkMmFmZmUxLWFhYmUtNGUwYS1iZDk0LTQ0NmZjYmE0ZmQ2YSIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5NDczMDYsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.tC1uTOOLSlGhcksNDZ0kRWUzBAfb6fJGhXqmC3CUPoE";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6ImY3ZjMwZGFhLTZiOTctNDlkMC1hNjc3LTU3Yzc4MzdlYzg4OCIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA5ODU3MTcsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.Szh6_Rr3WBFryjiE909Vn9nRSHDcDAD_nX9ypxx7hAw";
 
 app.get("/api/invoice/:id", async (req, res) => {
 

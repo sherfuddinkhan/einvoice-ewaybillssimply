@@ -35,7 +35,13 @@ const tableStyles = {
     cursor: loading || !token ? "not-allowed" : "pointer",
     boxShadow: "0 10px 30px rgba(26,115,232,0.4)",
   }),
-  itemCard: { background: "#f8fbff", border: "1px solid #d0e4ff", borderRadius: "12px", padding: "24px", marginBottom: "24px", boxShadow: "0 4px 12px rgba(0,0,0,0.06)" },
+  itemCard: { borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "#ced4da",
+  padding: "20px", 
+  borderRadius: "8px", 
+  marginBottom: "15px", 
+  background: "#fff" },
   twoColGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px" },
   col: { display: "flex", flexDirection: "column", gap: "16px" },
   itemFooter: { marginTop: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px dashed #bbb" },
@@ -115,8 +121,12 @@ const LabeledInput = ({ label, id, value, onChange, type = "text", step }) => {
 const LabeledSelect = ({ label, id, value, options, onChange }) => (
   <label htmlFor={id} style={{ display: "block", width: "100%" }}>
     <span style={tableStyles.labelText}>{label}</span>
-    <select id={id} value={value} onChange={(e) => onChange(e.target.value)} style={tableStyles.select}>
-      {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+    <select id={id} value={value ?? ""} onChange={(e) => onChange(e.target.value)} style={tableStyles.select}>
+      {options.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
     </select>
   </label>
 );
@@ -145,29 +155,20 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") =>
   const totSgst = Number(productList.reduce((sum, item) => sum + Number(item.sgstAmount || 0), 0).toFixed(2));
   const totalInvVal = totTxVal + totIgst + totCgst + totSgst;
 
-   const formatDate = (dateInput) => {
-  if (!dateInput) return null;
+  const formatDate = (dateInput) => {
+    if (!dateInput) return null;
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return null;
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+  };
 
-  const date = new Date(dateInput);
-
-  // Invalid date check
-  if (isNaN(date.getTime())) return null;
-
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yyyy = date.getFullYear();
-
-  return `${dd}-${mm}-${yyyy}`;
-};
-
-const formatHSNCode = (hsn) => {
-  if (!hsn) return "73041190";
-
-  return String(hsn)
-    .replace(/\D/g, "")   // remove letters & symbols
-    .trim()
-    .slice(0, 8);         // HSN max length (4–8 digits allowed)
-};
+  const formatHSNCode = (hsn) => {
+    if (!hsn) return "73041190";
+    return String(hsn).replace(/\D/g, "").trim().slice(0, 8);
+  };
 
   return {
     id: String(inv?.refID || dynamicId || "1001"),
@@ -304,98 +305,55 @@ export const GenerateAndPrintEinvoice = () => {
   const initializedRef = useRef(false);
 
   const recalculateTotals = useCallback((currentPayload) => {
-  if (!currentPayload?.itemList) return currentPayload;
+    if (!currentPayload?.itemList) return currentPayload;
 
-  let totalTaxableValue = 0;
-  let totalIGST = 0;
-  let totalCGST = 0;
-  let totalSGST = 0;
+    let totalTaxableValue = 0;
+    let totalIGST = 0;
+    let totalCGST = 0;
+    let totalSGST = 0;
 
-  const sellerCode = String(currentPayload.sstcd || "36");
-  const buyerCode = String(currentPayload.bstcd || "36");
+    const sellerCode = String(currentPayload.sstcd || "36");
+    const buyerCode = String(currentPayload.bstcd || "36");
+    const isInter = sellerCode !== buyerCode;
 
-  const isInter = sellerCode !== buyerCode;
+    const updatedItems = currentPayload.itemList.map((item) => {
+      const qty = Number(item.qty) || 0;
+      const unitPrice = Number(item.unitPrice) || 0;
+      const rate = Number(item.rt) || 18;
+      const txval = Number((qty * unitPrice).toFixed(2));
 
-  const updatedItems = currentPayload.itemList.map((item) => {
-    const qty = Number(item.qty) || 0;
-    const unitPrice = Number(item.unitPrice) || 0;
-    const rate = Number(item.rt) || 18;
+      let iamt = 0, camt = 0, samt = 0;
+      let irt = 0, crt = 0, srt = 0;
 
-    const txval = Number((qty * unitPrice).toFixed(2));
+      if (isInter) {
+        irt = rate;
+        iamt = Number((txval * (rate / 100)).toFixed(2));
+      } else {
+        crt = rate / 2;
+        srt = rate / 2;
+        camt = Number((txval * (crt / 100)).toFixed(2));
+        samt = Number((txval * (srt / 100)).toFixed(2));
+      }
 
-    let iamt = 0, camt = 0, samt = 0;
-    let irt = 0, crt = 0, srt = 0;
+      const itmVal = Number((txval + iamt + camt + samt).toFixed(2));
+      totalTaxableValue += txval;
+      totalIGST += iamt;
+      totalCGST += camt;
+      totalSGST += samt;
 
-    if (isInter) {
-      irt = rate;
-      iamt = Number((txval * (rate / 100)).toFixed(2));
-    } else {
-      crt = rate / 2;
-      srt = rate / 2;
+      return { ...item, txval, sval: txval, rt: rate, irt, crt, srt, iamt, camt, samt, itmVal, csamt: 0 };
+    });
 
-      camt = Number((txval * (crt / 100)).toFixed(2));
-      samt = Number((txval * (srt / 100)).toFixed(2));
-    }
+    const discount = Number(currentPayload.totdisc) || 0;
+    const otherCharges = Number(currentPayload.totothchrg) || 0;
+    const tottxval = Number(totalTaxableValue.toFixed(2));
+    const totiamt = Number(totalIGST.toFixed(2));
+    const totcamt = Number(totalCGST.toFixed(2));
+    const totsamt = Number(totalSGST.toFixed(2));
+    const totinvval = Number((tottxval + totiamt + totcamt + totsamt + otherCharges - discount).toFixed(2));
 
-    const itmVal = Number((txval + iamt + camt + samt).toFixed(2));
-
-    totalTaxableValue += txval;
-    totalIGST += iamt;
-    totalCGST += camt;
-    totalSGST += samt;
-
-    return {
-      ...item,
-      txval,
-      sval: txval,
-
-      rt: rate,
-
-      irt,
-      crt,
-      srt,
-
-      iamt,
-      camt,
-      samt,
-
-      itmVal,
-      csamt: 0,
-    };
-  });
-
-  const discount = Number(currentPayload.totdisc) || 0;
-  const otherCharges = Number(currentPayload.totothchrg) || 0;
-
-  const tottxval = Number(totalTaxableValue.toFixed(2));
-  const totiamt = Number(totalIGST.toFixed(2));
-  const totcamt = Number(totalCGST.toFixed(2));
-  const totsamt = Number(totalSGST.toFixed(2));
-
-  const totinvval = Number(
-    (tottxval + totiamt + totcamt + totsamt + otherCharges - discount).toFixed(2)
-  );
-
-  return {
-    ...currentPayload,
-
-    ntr: isInter ? "Inter" : "Intra",
-
-    // ⚠️ POS should remain buyer state code (keep GST rule safe)
-    pos: buyerCode,
-
-    itemList: updatedItems,
-
-    tottxval,
-    totiamt,
-    totcamt,
-    totsamt,
-    totinvval,
-
-    totcsamt: 0,
-    totstcsamt: 0,
-  };
-}, []);
+    return { ...currentPayload, ntr: isInter ? "Inter" : "Intra", pos: buyerCode, itemList: updatedItems, tottxval, totiamt, totcamt, totsamt, totinvval, totcsamt: 0, totstcsamt: 0 };
+  }, []);
 
   const setField = (field, value) => {
     setPayload((prev) => {
@@ -427,7 +385,6 @@ export const GenerateAndPrintEinvoice = () => {
   useEffect(() => {
     const dataToUse = invoiceApiData || invoiceData;
     if (!dataToUse || initializedRef.current) return;
-
     const basePayload = createBasePayload(dataToUse, dynamicId, selectedCategory);
     setPayload(recalculateTotals(basePayload));
     initializedRef.current = true;
@@ -436,39 +393,16 @@ export const GenerateAndPrintEinvoice = () => {
   const addItem = () => {
     setPayload((prev) => {
       const newItem = {
-        num: String(prev.itemList.length + 1).padStart(5, "0"),
-        hsnCd: "84713010",
-        prdNm: "New Service/Product",
-        qty: 1,
-        unit: "NOS",
-        unitPrice: 100,
-        rt: 18,
-        irt: prev.sstcd !== prev.bstcd ? 18 : 0,
-        txval: 0,
-        iamt: 0,
-        camt: 0,
-        samt: 0,
-        itmVal: 0,
-        discount: 0,
-        othChrg: 0,
-        csamt: 0,
-        srt: 0,
-        crt: 0,
-        freeQty: 0,
-        preTaxVal: 0,
-        isServc: "N",
-        orgCntry: "IN",
+        num: String(prev.itemList.length + 1).padStart(5, "0"), hsnCd: "84713010", prdNm: "New Service/Product", qty: 1, unit: "NOS", unitPrice: 100, rt: 18, irt: prev.sstcd !== prev.bstcd ? 18 : 0, txval: 0, iamt: 0, camt: 0, samt: 0, itmVal: 0, discount: 0, othChrg: 0, csamt: 0, srt: 0, crt: 0, freeQty: 0, preTaxVal: 0, isServc: "N", orgCntry: "IN",
       };
-      const updatedPayload = { ...prev, itemList: [...prev.itemList, newItem] };
-      return recalculateTotals(updatedPayload);
+      return recalculateTotals({ ...prev, itemList: [...prev.itemList, newItem] });
     });
   };
 
   const removeItem = (idx) => {
     setPayload((prev) => {
       if (!prev.itemList || prev.itemList.length <= 1) return prev;
-      const updatedPayload = { ...prev, itemList: prev.itemList.filter((_, i) => i !== idx) };
-      return recalculateTotals(updatedPayload);
+      return recalculateTotals({ ...prev, itemList: prev.itemList.filter((_, i) => i !== idx) });
     });
   };
 
@@ -480,155 +414,164 @@ export const GenerateAndPrintEinvoice = () => {
     localStorage.setItem(EINV_DOC_KEY, JSON.stringify([...filtered, entry]));
   };
 
-  const saveResponseForAutoPopulate = (data) => {
+const saveResponseForAutoPopulate = (data) => {
     if (!data?.response) return;
     const responseData = data.response;
-    if (responseData.id) localStorage.setItem(LAST_GENERATED_ID_KEY, String(responseData.id));
+    
+   if (responseData.id) {
+      try {
+        localStorage.setItem(LAST_GENERATED_ID_KEY, String(responseData.id));
+        setPayload(prev => ({ ...prev, lastGeneratedId: String(responseData.id) }));
+      } catch (e) {
+        console.warn('Could not save generated id to localStorage', e);
+      }
+    }
 
-    const sharedData = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
-    sharedData.companyId = "24";
-    sharedData.token = token;
-    sharedData.irn = responseData.irn;
-    sharedData.companyUniqueCode = payload.userGstin;
-    sharedData.lastGeneratedResponse = responseData;
-    sharedData.lastGeneratedAt = new Date().toISOString();
-    localStorage.setItem(STORAGE_KEY1, JSON.stringify(sharedData));
+    try {
+      const sharedData = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
+      sharedData.companyId = "24";
+      sharedData.token = token;
+      sharedData.irn = responseData.irn;
+      sharedData.companyUniqueCode = payload.userGstin;
+      sharedData.lastGeneratedResponse = responseData;
+      sharedData.lastGeneratedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY1, JSON.stringify(sharedData));
+    } catch (e) {
+      console.error("Failed to parse or save STORAGE_KEY1 config:", e);
+    }
 
-    localStorage.setItem(LAST_DOC_DETAILS_KEY, JSON.stringify({ docNum: payload.no?.trim(), docDate: payload.dt?.trim(), docType: payload.docType, timestamp: new Date().toISOString() }));
-    localStorage.setItem(LAST_IRN_KEY, JSON.stringify({ irn: responseData.irn, timestamp: new Date().toISOString() }));
-    if (responseData.signedQrCode) localStorage.setItem(LAST_SIGNED_QR_JWT_KEY, responseData.signedQrCode);
-    localStorage.setItem(LAST_EWB_DETAILS_KEY, JSON.stringify({ ewbNo: responseData.ewbNo || "", ewbDate: responseData.ewbDate || "", timestamp: new Date().toISOString() }));
+    try {
+      localStorage.setItem(
+        LAST_DOC_DETAILS_KEY, 
+        JSON.stringify({ 
+          docNum: payload.no?.trim(), 
+          docDate: payload.dt?.trim(), 
+          docType: payload.docType, 
+          timestamp: new Date().toISOString() 
+        })
+      );
+      
+      localStorage.setItem(
+        LAST_IRN_KEY, 
+        JSON.stringify({ 
+          irn: responseData.irn, 
+          timestamp: new Date().toISOString() 
+        })
+      );
+      
+      if (responseData.signedQrCode) {
+        localStorage.setItem(LAST_SIGNED_QR_JWT_KEY, responseData.signedQrCode);
+      }
+      
+      localStorage.setItem(
+        LAST_EWB_DETAILS_KEY, 
+        JSON.stringify({ 
+          ewbNo: responseData.ewbNo || "", 
+          ewbDate: responseData.ewbDate || "", 
+          timestamp: new Date().toISOString() 
+        })
+      );
+    } catch (e) {
+      console.error("Failed to update tracking metrics in localStorage:", e);
+    }
 
-    setLastInvoice?.(responseData.irn, payload.userGstin, payload.no, payload.dt, payload.docType);
+    // ✅ FIX: Pushes the context update to the end of the execution queue.
+    // This allows the DOM to render the download button successfully first.
+    setTimeout(() => {
+      if (typeof setLastInvoice === "function") {
+        try {
+          setLastInvoice(
+            responseData.irn, 
+            payload.userGstin, 
+            payload.no, 
+            payload.dt, 
+            payload.docType
+          );
+        } catch (ctxError) {
+          console.error("Error setting last invoice state in AuthContext:", ctxError);
+        }
+      }
+    }, 0);
   };
 
-  const fetchInvoiceData = useCallback(async () => {
-    if (!dynamicId) return;
-    setLoadingInvoice(true);
-    setError("");
+  const handleGenerate = async () => {
+    if (!token) {
+      alert("Login required!");
+      return;
+    }
+    setLoading(true);
+    setResponse(null);
     try {
-      const res = await axios.get(`http://localhost:3001/api/invoice/${dynamicId}`);
-      const encryptedData = res?.data?.data?.data;
-      if (!encryptedData) throw new Error("Invoice encrypted data not found");
+      const finalPayload = recalculateTotals(payload);
+      const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Auth-Token": token, companyId: "24", product: "ONYX" },
+        body: JSON.stringify(finalPayload),
+      });
 
-      let decodedString = atob(encryptedData);
-      let actualInvoiceData = {};
-      try {
-        actualInvoiceData = JSON.parse(decodedString);
-      } catch (e) {
-        actualInvoiceData = { rawEncrypted: encryptedData, decodedRaw: decodedString };
+      const data = await res.json();
+      setResponse(data);
+
+      const generatedId = data?.response?.id || data?.response?.Id || data?.response?.irn || data?.response?.invoiceId;
+      if (generatedId) setLastGeneratedId(generatedId);
+
+      if (data?.status === "SUCCESS" && data?.response?.irn) {
+        saveResponseForAutoPopulate(data);
+        console.log("responsedata", data);
+        storeEinv(data.response);
+        localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
+        alert(`✅ IRN Generated Successfully!\nIRN: ${data.response.irn}`);
+      } else if (data?.response?.id || data?.response?.irn) {
+        alert(`⚠️ Warning: ${data?.errors?.[0]?.msg || "Operation completed with warning"}`);
+      } else {
+        alert(data?.status === "FAILURE" ? `❌ Failed: ${data?.errors?.[0]?.msg || "Unknown error"}` : "Unexpected response");
       }
-
-      setInvoiceApiData(actualInvoiceData);
-      const basePayload = createBasePayload(actualInvoiceData, dynamicId, selectedCategory);
-      setPayload(recalculateTotals(basePayload));
     } catch (err) {
-      setError(err?.message || "Error fetching invoice data");
+      alert("Network error: " + err.message);
     } finally {
-      setLoadingInvoice(false);
+      setLoading(false);
     }
-  }, [dynamicId, selectedCategory, recalculateTotals]);
+  };
 
-const handleGenerate = async () => {
-  if (!token) {
-    alert("Login required!");
-    return;
-  }
-
-  setLoading(true);
-  setResponse(null);
-
-  try {
-    const finalPayload = recalculateTotals(payload);
-
-    const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Auth-Token": token,
-        companyId: "24",
-        product: "ONYX",
-      },
-      body: JSON.stringify(finalPayload),
-    });
-
-    const data = await res.json();
-    setResponse(data);
-
-    const generatedId =
-      data?.response?.id ||
-      data?.response?.Id ||
-      data?.response?.irn ||
-      data?.response?.invoiceId;
-
-    if (generatedId) {
-      setLastGeneratedId(generatedId); // ✅ FIXED (no payload dependency)
+ const downloadPDF = async () => {
+    // ✅ FIX: Fallback sequence looking at global state ID, then nested response ID
+    const activeInvoiceId = lastGeneratedId || response?.response?.id || response?.response?.Id;
+    
+    if (!activeInvoiceId) {
+      alert("No active generated invoice ID found. Please verify the invoice registry entry.");
+      return;
     }
-
-    if (data?.status === "SUCCESS" && data?.response?.irn) {
-      saveResponseForAutoPopulate(data);
-      storeEinv(data.response);
-      localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
-
-      alert(`✅ IRN Generated Successfully!\nIRN: ${data.response.irn}`);
-    } else {
-      alert(data?.status === "FAILURE"
-        ? `❌ Failed: ${data?.errors?.[0]?.msg || "Unknown error"}`
-        : "Unexpected response");
+    
+    try {
+      setPdfMessage("Processing request with print server proxy...");
+      
+      const resp = await axios.get(
+        `http://localhost:3001/proxy/einvoice/print?template=${template}&id=${activeInvoiceId}`,
+        {
+          headers: { "X-Auth-Token": token, companyId: "24", product: "ONYX" },
+          responseType: "blob",
+        }
+      );
+      
+      // Handle file parsing and triggering native browser link downloader context
+      const url = window.URL.createObjectURL(new Blob([resp.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `EInvoice_${activeInvoiceId}.pdf`);
+      
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); // Clean up memory leak footprint
+      
+      setPdfMessage("✅ PDF downloaded successfully.");
+    } catch (error) {
+      setPdfMessage("❌ Failed to compile or download document layout.");
+      console.error("PDF engine connection failure details:", error);
     }
-  } catch (err) {
-    alert("Network error: " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-const downloadPDF = async () => {
-  if (!lastGeneratedId) {
-    alert("No generated invoice found");
-    return;
-  }
-
-  try {
-    setPdfMessage("Generating PDF...");
-
-    const resp = await axios.get(
-      "http://localhost:3001/proxy/einvoice/print",
-      {
-        params: {
-          template,
-          id: lastGeneratedId, // ✅ FIXED
-        },
-        headers: {
-          "X-Auth-Token": token,
-          companyId: "24",
-          product: "ONYX",
-        },
-        responseType: "blob",
-      }
-    );
-
-    const blob = new Blob([resp.data], { type: "application/pdf" });
-    const url = window.URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `EInvoice_${lastGeneratedId}.pdf`;
-
-    document.body.appendChild(link);
-    link.click();
-
-    link.remove();
-    window.URL.revokeObjectURL(url);
-
-    setPdfMessage("PDF downloaded successfully.");
-  } catch (error) {
-    console.error(error);
-    setPdfMessage("Failed to download PDF.");
-  }
-};
-
-  return (
+ return (
     <div style={tableStyles.container}>
       <h1 style={tableStyles.header}>
         Dynamic E-Invoice Generator ({selectedCategory} Mode)
@@ -644,19 +587,19 @@ const downloadPDF = async () => {
         <tbody>
           <tr>
             <td style={tableStyles.td}>
-              <LabeledSelect 
-                label="Invoice Scenario Category" 
-                value={selectedCategory} 
-                options={["B2B", "B2C", "EXP"]} 
-                onChange={handleCategorySelectionChange} 
+              <LabeledSelect
+                label="Invoice Scenario Category"
+                value={selectedCategory}
+                options={["B2B", "B2C", "EXP"]}
+                onChange={handleCategorySelectionChange}
               />
             </td>
             <td style={tableStyles.td}>
-              <LabeledSelect 
-                label="Transaction Type" 
-                value={payload.trnTyp || "REG"} 
-                options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]} 
-                onChange={(v) => setField("trnTyp", v)} 
+              <LabeledSelect
+                label="Transaction Type"
+                value={payload.trnTyp || "REG"}
+                options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]}
+                onChange={(v) => setField("trnTyp", v)}
               />
             </td>
             <td style={tableStyles.td}>
@@ -685,7 +628,7 @@ const downloadPDF = async () => {
         </tbody>
       </table>
 
-      {/* Seller & Buyer Information */}
+      {/* ==================== SELLER & BUYER INFORMATION ==================== */}
       <div style={tableStyles.twoColGrid}>
         <div style={tableStyles.col}>
           <h3>Seller Information</h3>
@@ -701,7 +644,6 @@ const downloadPDF = async () => {
           <LabeledInput label="Phone" value={payload.sph} onChange={(v) => setField("sph", v)} />
           <LabeledInput label="Email" value={payload.sem} onChange={(v) => setField("sem", v)} />
         </div>
-
         <div style={tableStyles.col}>
           <h3>Buyer Information</h3>
           <LabeledInput label="GSTIN" value={payload.bgstin} onChange={(v) => setField("bgstin", v)} />
@@ -718,7 +660,7 @@ const downloadPDF = async () => {
         </div>
       </div>
 
-      {/* Dispatch & Ship To */}
+      {/* ==================== DISPATCH & SHIP TO ==================== */}
       <div style={{ ...tableStyles.twoColGrid, marginTop: "30px" }}>
         <div style={tableStyles.col}>
           <h3>Dispatch From</h3>
@@ -730,7 +672,6 @@ const downloadPDF = async () => {
           <LabeledInput label="State Code" value={payload.dstcd} onChange={(v) => setField("dstcd", v)} />
           <LabeledInput label="Pincode" value={payload.dpin} onChange={(v) => setField("dpin", v)} />
         </div>
-
         <div style={tableStyles.col}>
           <h3>Ship To</h3>
           <LabeledInput label="GSTIN" value={payload.togstin} onChange={(v) => setField("togstin", v)} />
@@ -743,73 +684,128 @@ const downloadPDF = async () => {
         </div>
       </div>
 
-      {/* Item management section */}
+      {/* ==================== ITEM MANAGEMENT ==================== */}
       <div style={{ marginTop: "40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <h3>Line Items Spreadsheet</h3>
           <button style={tableStyles.btnGreen} onClick={addItem}>+ Add Document Row Item</button>
         </div>
-
         {payload.itemList?.map((item, idx) => (
           <div key={idx} style={tableStyles.itemCard}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px" }}>
-              <LabeledInput label="Product SKU Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
-              <LabeledInput label="HSN Tariffs Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
-              <LabeledInput label="Item Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
-              <LabeledInput label="Unit Buying Price" type="number" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
+              <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
+              <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
+              <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
+              <LabeledInput label="Unit Price" type="number" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginTop: "15px" }}>
-              <LabeledInput label="Tax Rate (rt %)" type="number" value={item.rt} onChange={(v) => updateItem(idx, "rt", v)} />
-              <LabeledInput label="UOM Measurement" value={item.unit} onChange={(v) => updateItem(idx, "unit", v)} />
-              <div style={{ paddingTop: "25px" }}><strong>Taxable Subtotal:</strong> ₹{item.txval}</div>
-              <div style={{ paddingTop: "25px" }}><strong>Gross Val:</strong> ₹{item.itmVal}</div>
+              <LabeledInput label="GST Rate (%)" type="number" value={item.rt} onChange={(v) => updateItem(idx, "rt", v)} />
+              <LabeledInput label="UQC Unit" value={item.unit} onChange={(v) => updateItem(idx, "unit", v)} />
+              <div style={{ paddingTop: "25px" }}><strong>Taxable Value:</strong> ₹{item.txval || 0}</div>
+              <div style={{ paddingTop: "25px" }}><strong>Gross Total:</strong> ₹{item.itmVal || 0}</div>
             </div>
             <div style={tableStyles.itemFooter}>
-              <div style={{ fontSize: "13px", color: "#666" }}>Row Index Mapping Reference ID: {item.num}</div>
-              <button style={tableStyles.btnRed} onClick={() => removeItem(idx)}>Remove Product Row</button>
+              <div style={{ fontSize: "13px", color: "#666" }}>Item Number: {item.num}</div>
+              <button style={tableStyles.btnRed} onClick={() => removeItem(idx)}>Remove Item</button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Aggregate breakdown layout box */}
+      {/* ==================== AGGREGATE BREAKDOWN ==================== */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "30px" }}>
         <div style={{ background: "#fff", padding: "24px", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", width: "350px" }}>
-          <div style={{ display: "flex", justifyContent: "between", marginBottom: "10px" }}><span style={{ color: "#555" }}>Taxable Total:</span><strong>₹{payload.tottxval || 0}</strong></div>
-          <div style={{ display: "flex", justifyContent: "between", marginBottom: "10px" }}><span style={{ color: "#555" }}>IGST Pool Total:</span><strong>₹{payload.totiamt || 0}</strong></div>
-          <div style={{ display: "flex", justifyContent: "between", marginBottom: "10px" }}><span style={{ color: "#555" }}>CGST Pool Total:</span><strong>₹{payload.totcamt || 0}</strong></div>
-          <div style={{ display: "flex", justifyContent: "between", marginBottom: "15px" }}><span style={{ color: "#555" }}>SGST Pool Total:</span><strong>₹{payload.totsamt || 0}</strong></div>
-          <div style={{ display: "flex", justifyContent: "between", borderTop: "1px solid #ddd", paddingTop: "15px", fontSize: "18px" }}><span style={{ color: "#222", fontWeight: "600" }}>Total Invoice Amt:</span><strong style={{ color: colors.primary }}>₹{payload.totinvval || 0}</strong></div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}><span style={{ color: "#555" }}>Taxable Total:</span><strong>₹{payload?.tottxval || 0}</strong></div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}><span style={{ color: "#555" }}>IGST Total:</span><strong>₹{payload?.totiamt || 0}</strong></div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}><span style={{ color: "#555" }}>CGST Total:</span><strong>₹{payload?.totcamt || 0}</strong></div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "15px" }}><span style={{ color: "#555" }}>SGST Total:</span><strong>₹{payload?.totsamt || 0}</strong></div>
+          <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid #ddd", paddingTop: "15px", fontSize: "18px" }}>
+            <span style={{ color: "#222", fontWeight: "600" }}>Total Invoice Value:</span>
+            <strong style={{ color: colors.primary }}>₹{payload?.totinvval || 0}</strong>
+          </div>
         </div>
       </div>
-
-      {/* Submission Actions Row */}
-      <div style={{ textAlign: "center", marginTop: "40px", marginBottom: "40px" }}>
-        <button style={tableStyles.btnGenerate(loading, token)} onClick={handleGenerate} disabled={loading || !token}>
-          {loading ? "Transmitting Fields..." : "Generate E-Invoice Registry Entry"}
+{/* ==================== ACTION FOOTER SECTION ==================== */}
+   {/* ==================== ACTION FOOTER SECTION ==================== */}
+      <div style={{ 
+        display: "flex", 
+        flexDirection: "column", 
+        alignItems: "center", 
+        gap: "20px", 
+        marginTop: "50px", 
+        marginBottom: "50px",
+        width: "100%"
+      }}>
+        
+        {/* Primary Invoice Submission Controller */}
+        <button
+          style={tableStyles.btnGenerate(loading, token)}
+          onClick={handleGenerate}
+          disabled={loading || !token}
+        >
+          {loading ? "Generating IRN..." : "Generate E-Invoice Registry Entry"}
         </button>
 
-        {payload?.lastGeneratedId && (
-          <div style={{ marginTop: "20px" }}>
-            <button style={{ ...tableStyles.btnGreen, padding: "14px 40px" }} onClick={downloadPDF}>
-              Download Document Invoice PDF
-            </button>
-            <p style={{ color: "#666", fontSize: "14px", marginTop: "8px" }}>{pdfMessage}</p>
-          </div>
-        )}
-      </div>
+        {/* ✅ BULLETPROOF FIX: Safely checks for explicit SUCCESS state flag context */}
+        {(response?.status === "SUCCESS" || response?.response?.id || lastGeneratedId) ? (
+          <button
+            style={{ 
+              background: colors.success, 
+              color: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "16px 45px", 
+              fontSize: "18px",
+              fontWeight: "bold",
+              cursor: "pointer",
+              width: "350px",
+              border: "none",
+              borderRadius: "8px",
+              boxShadow: "0 4px 12px rgba(52,168,83,0.3)",
+              marginTop: "10px"
+            }}
+            onClick={downloadPDF}
+          >
+            📄 Download / Print Document Invoice PDF
+          </button>
+        ) : null}
 
-      {/* Logger Monitor Frame */}
-      {response && (
-        <div style={{ marginTop: "30px" }}>
-          <h4>System Logs Analytics Monitor Window</h4>
-          <div style={tableStyles.responseBox(response?.status)}>
-            <pre>{JSON.stringify(response, null, 2)}</pre>
-          </div>
+        {/* Network State Text Notification Output */}
+        {pdfMessage && (
+          <p style={{
+            color: pdfMessage.includes("✅") || pdfMessage.includes("success") ? "#34A853" : "#EA4335",
+            fontSize: "15px",
+            fontWeight: "500",
+            margin: "0"
+          }}>
+            {pdfMessage}
+          </p>
+        )}
+
+        {/* Live Tracking Metrics Plate */}
+        <div style={{ 
+          background: "#ffffcc", 
+          padding: "15px", 
+          borderWidth: "1px",
+          borderStyle: "solid",
+          borderColor: "#e1e1d0", 
+          textAlign: "left",
+          borderRadius: "6px",
+          width: "100%",
+          maxWidth: "480px",
+          fontFamily: "monospace",
+          fontSize: "13px"
+        }}>
+          <strong style={{ color: "#333" }}>Debug Info Monitor Panel</strong>
+          <hr style={{ border: "0", borderTop: "1px solid #e1e1d0", margin: "8px 0" }} />
+          <strong>lastGeneratedId:</strong> {String(lastGeneratedId || "Empty")}<br />
+          <strong>response id:</strong> {response?.response?.id || "N/A"}<br />
+          <strong>response irn:</strong> {response?.response?.irn || "N/A"}
         </div>
-      )}
+      </div>
     </div>
   );
-};
 
+};
 export default GenerateAndPrintEinvoice;
