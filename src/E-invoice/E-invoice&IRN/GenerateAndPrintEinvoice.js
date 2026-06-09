@@ -256,7 +256,7 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") =>
     sbnm: inv?.companyBranches?.companyTallyName || "Testing",
     sflno: "ABC",
     sloc: inv?.companyBranches?.poBox || "BANGALOR32",
-    sdst: inv?.companyBranches?.poBox?.split(",")?.[1]?.trim() || "BENGALURU",
+    sdst: inv?.company_State|| "BENGALURU",
     sstcd: sellerStateCode,
     spin: inv?.companyBranches?.pinCode || inv?.companyBranches?.poBoxCode || "500016",
     sph: inv?.companyBranches?.mobile || "123456111111",
