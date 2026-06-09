@@ -1,88 +1,202 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../components/AuthContext";
-import { useNavigate } from "react-router-dom";
+import React, {
+  useState,
+  useEffect,
+} from "react";
 
-const STORAGE_KEY = "iris_einvoice_response";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../components/AuthContext";
+
+const MODE_KEY = "invoiceMode";
 
 const EInvoiceLoginPage = () => {
-  const STORAGE_KEY = "iris_einvoice_response";
   const [email, setEmail] = useState("ateeq@calibrecue.com");
   const [password, setPassword] = useState("Ateeq@123");
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState(null);
+  const [invoiceMode, setInvoiceMode] =
+    useState("NORMAL");
 
-  const { login, isLoggedIn, product } = useAuth();
+  const [loading, setLoading] =
+    useState(false);
+
+  const [response, setResponse] =
+    useState(null);
+
+  const {
+    login,
+    isLoggedIn,
+    product,
+  } = useAuth();
+
   const navigate = useNavigate();
 
-  // Auto redirect if already logged in
+  /* ==========================
+     AUTO REDIRECT
+  ========================== */
+
   useEffect(() => {
-    if (isLoggedIn && product === "EINVOICE") {
-        // Prevent redirect when already on /ewaybill-login
-    if (window.location.pathname !== "/einvoice-login")
-      navigate("/einvoice-generate-print", { replace: true });
+    if (
+      !isLoggedIn ||
+      product !== "EINVOICE"
+    ) {
+      return;
     }
-  }, [isLoggedIn, product, navigate]);
+
+    const mode =
+      sessionStorage.getItem(
+        MODE_KEY
+      ) || "NORMAL";
+
+    navigate(
+      mode === "PROFORMA"
+        ? "/einvoice/generate-printproformo"
+        : "/einvoice/generate-print",
+      {
+        replace: true,
+      }
+    );
+  }, [
+    isLoggedIn,
+    product,
+    navigate,
+  ]);
+
+  /* ==========================
+     LOGIN
+  ========================== */
 
   const handleLogin = async () => {
     setLoading(true);
     setResponse(null);
 
     try {
-      const res = await fetch("http://localhost:3001/proxy/einvoice/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await fetch(
+        "http://localhost:3001/proxy/einvoice/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
 
-      const data = await res.json();
+      const data =
+        await res.json();
+
       setResponse(data);
 
-      if (data.status === "SUCCESS" && data.response?.token) {
-        const store = {
-          token: data.response.token,
-          companyId: data.response.companyId || "24",
+      if (
+        data?.status === "SUCCESS" &&
+        data?.response?.token
+      ) {
+        const loginData = {
+          token:
+            data.response.token,
+
+          companyId:
+            data.response.companyId,
+
+          userGstin:
+            data.response.userGstin,
+
           email,
-          product: "EINVOICE",
+
+          invoiceMode,
+
           fullResponse: data,
-          lastLogin: new Date().toISOString(),
         };
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+        sessionStorage.setItem(
+          MODE_KEY,
+          invoiceMode
+        );
 
-        login(store, "EINVOICE"); // AuthProvider will handle redirect via useEffect
-        
+        login(
+          loginData,
+          "EINVOICE"
+        );
+
+        navigate(
+          invoiceMode ===
+            "PROFORMA"
+            ? "/einvoice/generate-printproformo"
+            : "/einvoice/generate-print",
+          {
+            replace: true,
+          }
+        );
       }
-    } catch (err) {
-      setResponse({ status: "ERROR", message: err.message });
+    } catch (error) {
+      setResponse({
+        status: "ERROR",
+        message:
+          error.message,
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div style={{ padding: "40px", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#F5F5F7" }}>
-      <div style={{ background: "#fff", padding: "30px", borderRadius: "16px", width: "400px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
-        <h2 style={{ textAlign: "center", marginBottom: "24px" }}>🧾 E-Invoice Login</h2>
+    <div>
+      <h2>E-Invoice Login</h2>
 
-        <label>Email</label>
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ width: "100%", padding: "12px", marginBottom: "20px", borderRadius: "8px", border: "1px solid #707070" }} />
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) =>
+          setEmail(e.target.value)
+        }
+      />
 
-        <label>Password</label>
-        <input type="password" value={password} onChange={e => setPassword(e.target.value)} style={{ width: "100%", padding: "12px", marginBottom: "20px", borderRadius: "8px", border: "1px solid #707070" }} />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) =>
+          setPassword(e.target.value)
+        }
+      />
 
-        <button onClick={handleLogin} disabled={loading} style={{ width: "100%", padding: "14px", borderRadius: "10px", background: loading ? "#BDBDBD" : "#1A73E8", color: "#fff", fontSize: "18px", cursor: loading ? "not-allowed" : "pointer" }}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
+      <select
+        value={invoiceMode}
+        onChange={(e) =>
+          setInvoiceMode(
+            e.target.value
+          )
+        }
+      >
+        <option value="NORMAL">
+          Normal E-Invoice
+        </option>
 
-        {response && (
-          <div style={{ marginTop: "20px", padding: "16px", borderRadius: "10px", background: response.status === "SUCCESS" ? "#34A85322" : "#EA433522", border: `2px solid ${response.status === "SUCCESS" ? "#34A853" : "#EA4335"}` }}>
-            <strong>Status: {response.status}</strong>
-            <pre style={{ background: "#263238", color: "#A8FFBF", padding: "10px", borderRadius: "6px", fontFamily: "monospace", marginTop: "10px" }}>
-              {JSON.stringify(response, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
+        <option value="PROFORMA">
+          Proforma E-Invoice
+        </option>
+      </select>
+
+      <button
+        onClick={handleLogin}
+        disabled={loading}
+      >
+        {loading
+          ? "Logging In..."
+          : "Login"}
+      </button>
+
+      {response && (
+        <pre>
+          {JSON.stringify(
+            response,
+            null,
+            2
+          )}
+        </pre>
+      )}
     </div>
   );
 };

@@ -1,167 +1,310 @@
 import React, {
   createContext,
   useContext,
-  useState,
   useEffect,
+  useState,
+  useCallback,
 } from "react";
+
 import { jwtDecode } from "jwt-decode";
 
 const AuthContext = createContext(null);
 
-/* ---------------- STORAGE KEYS ---------------- */
-const EWAY_KEY = "iris_ewaybill_shared_config";
-const EINVOICE_KEY = "iris_einvoice_response";
+const EWAY_KEY = "iris_eway_session";
+const EINVOICE_KEY = "iris_einvoice_session";
 
-/* ---------------- TOKEN VALIDATION ---------------- */
+/* ==========================
+   TOKEN VALIDATION
+========================== */
+
 const isTokenValid = (token) => {
   try {
     if (!token) return false;
+
     const decoded = jwtDecode(token);
-    const now = Date.now() / 1000;
-    return decoded.exp && decoded.exp > now;
-  } catch (err) {
+
+    return decoded.exp > Date.now() / 1000;
+  } catch {
     return false;
   }
 };
 
-export const AuthProvider = ({ children }) => {
-  /* ---------------- AUTH STATE ---------------- */
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [product, setProduct] = useState(null);
-  const [token, setToken] = useState(null);
-  const [companyId, setCompanyId] = useState(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+export const AuthProvider = ({
+  children,
+}) => {
+  const [isAuthReady, setIsAuthReady] =
+    useState(false);
 
-  /* ---------------- LAST USED DATA ---------------- */
-  const [lastUserGstin, setLastUserGstin] = useState(null);
-  const [lastIrn, setLastIrn] = useState(null);
-  const [lastDocNo, setLastDocNo] = useState(null);
-  const [lastDocDate, setLastDocDate] = useState(null);
-  const [lastDocType, setLastDocType] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] =
+    useState(false);
 
-  /* ---------------- CLEAR SESSION ---------------- */
-  const clearSession = () => {
-    localStorage.removeItem(EWAY_KEY);
-    localStorage.removeItem(EINVOICE_KEY);
+  const [product, setProduct] =
+    useState(null);
 
-    setIsLoggedIn(false);
-    setProduct(null);
-    setToken(null);
-    setCompanyId(null);
+  const [token, setToken] =
+    useState(null);
 
-    setLastUserGstin(null);
-    setLastIrn(null);
-    setLastDocNo(null);
-    setLastDocDate(null);
-    setLastDocType(null);
-  };
+  const [companyId, setCompanyId] =
+    useState(null);
 
-  /* ---------------- RESTORE SESSION ---------------- */
-  useEffect(() => {
-    const eway = localStorage.getItem(EWAY_KEY);
-    const einv = localStorage.getItem(EINVOICE_KEY);
+  const [userGstin, setUserGstin] =
+    useState(null);
 
-    const restore = (data, type) => {
-      if (!data?.token || !isTokenValid(data.token)) {
-        return null;
-      }
+  const [lastIrn, setLastIrn] =
+    useState(null);
 
-      return data;
+  const [lastDocNo, setLastDocNo] =
+    useState(null);
+
+  const [lastDocDate, setLastDocDate] =
+    useState(null);
+
+  const [lastDocType, setLastDocType] =
+    useState(null);
+
+  /* ==========================
+     CLEAR SESSION
+  ========================== */
+
+  const clearSession =
+    useCallback(() => {
+      sessionStorage.removeItem(
+        EWAY_KEY
+      );
+
+      sessionStorage.removeItem(
+        EINVOICE_KEY
+      );
+
+      setIsLoggedIn(false);
+
+      setProduct(null);
+
+      setToken(null);
+
+      setCompanyId(null);
+
+      setUserGstin(null);
+
+      setLastIrn(null);
+
+      setLastDocNo(null);
+
+      setLastDocDate(null);
+
+      setLastDocType(null);
+    }, []);
+
+  /* ==========================
+     LOGOUT
+  ========================== */
+
+  const logout =
+    useCallback(() => {
+      clearSession();
+    }, [clearSession]);
+
+  /* ==========================
+     LOGIN
+  ========================== */
+
+  const login = (
+    loginData,
+    productType
+  ) => {
+    const storageKey =
+      productType === "EINVOICE"
+        ? EINVOICE_KEY
+        : EWAY_KEY;
+
+    clearSession();
+
+    const payload = {
+      ...loginData,
+      product: productType,
+      loginTime: Date.now(),
     };
 
+    sessionStorage.setItem(
+      storageKey,
+      JSON.stringify(payload)
+    );
+
+    setToken(loginData.token);
+
+    setCompanyId(
+      loginData.companyId
+    );
+
+    setUserGstin(
+      loginData.userGstin
+    );
+
+    setLastIrn(
+      loginData.irn || null
+    );
+
+    setLastDocNo(
+      loginData.docNo || null
+    );
+
+    setLastDocDate(
+      loginData.docDate || null
+    );
+
+    setLastDocType(
+      loginData.docType || null
+    );
+
+    setProduct(productType);
+
+    setIsLoggedIn(true);
+  };
+
+  /* ==========================
+     RESTORE SESSION
+  ========================== */
+
+  useEffect(() => {
     try {
+      const eway =
+        sessionStorage.getItem(
+          EWAY_KEY
+        );
+
+      const einvoice =
+        sessionStorage.getItem(
+          EINVOICE_KEY
+        );
+
+      let sessionData = null;
+      let sessionProduct = null;
+
       if (eway) {
-        const data = restore(JSON.parse(eway), "EWAY");
+        sessionData =
+          JSON.parse(eway);
 
-        if (data) {
-          setToken(data.token);
-          setCompanyId(data.companyId);
-          setLastUserGstin(data.userGstin || null);
-          setProduct("EWAY");
-          setIsLoggedIn(true);
-        } else {
-          localStorage.removeItem(EWAY_KEY);
-        }
+        sessionProduct =
+          "EWAY";
       }
 
-      if (einv) {
-        const data = restore(JSON.parse(einv), "EINVOICE");
+      if (einvoice) {
+        sessionData =
+          JSON.parse(einvoice);
 
-        if (data) {
-          setToken(data.token);
-          setCompanyId(data.companyId);
-          setLastUserGstin(data.userGstin || null);
-          setLastIrn(data.irn || null);
-          setLastDocNo(data.docNo || null);
-          setLastDocDate(data.docDate || null);
-          setLastDocType(data.docType || null);
-          setProduct("EINVOICE");
-          setIsLoggedIn(true);
-        } else {
-          localStorage.removeItem(EINVOICE_KEY);
-        }
+        sessionProduct =
+          "EINVOICE";
       }
-    } catch (err) {
+
+      if (
+        sessionData &&
+        isTokenValid(
+          sessionData.token
+        )
+      ) {
+        setToken(
+          sessionData.token
+        );
+
+        setCompanyId(
+          sessionData.companyId
+        );
+
+        setUserGstin(
+          sessionData.userGstin
+        );
+
+        setLastIrn(
+          sessionData.irn ||
+            null
+        );
+
+        setLastDocNo(
+          sessionData.docNo ||
+            null
+        );
+
+        setLastDocDate(
+          sessionData.docDate ||
+            null
+        );
+
+        setLastDocType(
+          sessionData.docType ||
+            null
+        );
+
+        setProduct(
+          sessionProduct
+        );
+
+        setIsLoggedIn(true);
+      } else {
+        clearSession();
+      }
+    } catch {
       clearSession();
     }
 
     setIsAuthReady(true);
-  }, []);
+  }, [clearSession]);
 
-  /* ---------------- LOGIN ---------------- */
-  const login = (store, productType) => {
-    const key = productType === "EINVOICE" ? EINVOICE_KEY : EWAY_KEY;
+  /* ==========================
+     AUTO LOGOUT ON EXPIRY
+  ========================== */
 
-    const payload = {
-      ...store,
-      loginTime: Date.now(),
-    };
+  useEffect(() => {
+    if (!token) return;
 
-    localStorage.setItem(key, JSON.stringify(payload));
+    try {
+      const decoded =
+        jwtDecode(token);
 
-    setToken(store.token);
-    setCompanyId(store.companyId);
+      const expiryTime =
+        decoded.exp * 1000;
 
-    setLastUserGstin(store.userGstin || null);
-    setLastIrn(store.irn || null);
-    setLastDocNo(store.docNo || null);
-    setLastDocDate(store.docDate || null);
-    setLastDocType(store.docType || null);
+      const remainingTime =
+        expiryTime -
+        Date.now();
 
-    setProduct(productType);
-    setIsLoggedIn(true);
-  };
+      if (
+        remainingTime <= 0
+      ) {
+        logout();
+        return;
+      }
 
-  /* ---------------- LOGOUT ---------------- */
-  const logout = () => {
-    clearSession();
-    setIsAuthReady(true);
-  };
+      const timer =
+        setTimeout(() => {
+          logout();
+        }, remainingTime);
+
+      return () =>
+        clearTimeout(timer);
+    } catch {
+      logout();
+    }
+  }, [token, logout]);
 
   return (
     <AuthContext.Provider
       value={{
+        isAuthReady,
         isLoggedIn,
+
         product,
+
         token,
         companyId,
-        isAuthReady,
+        userGstin,
 
-        lastUserGstin,
         lastIrn,
         lastDocNo,
         lastDocDate,
         lastDocType,
 
-        setLastUserGstin,
-        setLastIrn,
-        setLastDocNo,
-        setLastDocDate,
-        setLastDocType,
-
         login,
         logout,
-        clearSession,
       }}
     >
       {children}
@@ -169,9 +312,15 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-/* ---------------- HOOK ---------------- */
 export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be inside AuthProvider");
-  return ctx;
+  const context =
+    useContext(AuthContext);
+
+  if (!context) {
+    throw new Error(
+      "useAuth must be used inside AuthProvider"
+    );
+  }
+
+  return context;
 };
