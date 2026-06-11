@@ -1,5 +1,4 @@
-import React, {useState,useEffect} from "react";
-
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
@@ -8,58 +7,16 @@ const MODE_KEY = "invoiceMode";
 const EInvoiceLoginPage = () => {
   const [email, setEmail] = useState("ateeq@calibrecue.com");
   const [password, setPassword] = useState("Ateeq@123");
-  const [invoiceMode, setInvoiceMode] =
-    useState("NORMAL");
+  const [invoiceMode, setInvoiceMode] = useState("NORMAL");
+  const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState(null);
 
-  const [loading, setLoading] =
-    useState(false);
-
-  const [response, setResponse] =
-    useState(null);
-
-  const {
-    login,
-    isLoggedIn,
-    product,
-  } = useAuth();
-
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  /* ==========================
-     AUTO REDIRECT
-  ========================== */
-
-  useEffect(() => {
-    if (
-      !isLoggedIn ||
-      product !== "EINVOICE"
-    ) {
-      return;
-    }
-
-    const mode =
-      sessionStorage.getItem(
-        MODE_KEY
-      ) || "NORMAL";
-
-    navigate(
-      mode === "PROFORMA"
-        ? "/einvoice/generate-printproformo"
-        : "/einvoice/generate-print",
-      {
-        replace: true,
-      }
-    );
-  }, [
-    isLoggedIn,
-    product,
-    navigate,
-  ]);
-
-  /* ==========================
-     LOGIN
-  ========================== */
-
+  // ==========================================
+  // LOGIN
+  // ==========================================
   const handleLogin = async () => {
     setLoading(true);
     setResponse(null);
@@ -70,8 +27,7 @@ const EInvoiceLoginPage = () => {
         {
           method: "POST",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             email,
@@ -80,8 +36,7 @@ const EInvoiceLoginPage = () => {
         }
       );
 
-      const data =
-        await res.json();
+      const data = await res.json();
 
       setResponse(data);
 
@@ -89,38 +44,30 @@ const EInvoiceLoginPage = () => {
         data?.status === "SUCCESS" &&
         data?.response?.token
       ) {
+        const selectedMode = invoiceMode;
+
         const loginData = {
-          token:
-            data.response.token,
-
-          companyId:
-            data.response.companyId,
-
-          userGstin:
-            data.response.userGstin,
-
+          token: data.response.token,
+          companyId: data.response.companyId,
+          userGstin: data.response.userGstin,
           email,
-
-          invoiceMode,
-
+          invoiceMode: selectedMode,
           fullResponse: data,
         };
 
-        sessionStorage.setItem(
-          MODE_KEY,
-          invoiceMode
-        );
+        // Save mode
+        sessionStorage.setItem(MODE_KEY, selectedMode);
 
-        login(
-          loginData,
-          "EINVOICE"
-        );
+        console.log("Selected Mode:", selectedMode);
 
+        // Login
+        login(loginData, "EINVOICE");
+
+        // Redirect immediately based on selected mode
         navigate(
-          invoiceMode ===
-            "PROFORMA"
-            ? "/einvoice/generate-printproformo"
-            : "/einvoice/generate-print",
+          selectedMode === "PROFORMA"
+            ? "/einvoice/einvoice-pdisplay"
+            : "/einvoice/einvoice-display",
           {
             replace: true,
           }
@@ -129,8 +76,7 @@ const EInvoiceLoginPage = () => {
     } catch (error) {
       setResponse({
         status: "ERROR",
-        message:
-          error.message,
+        message: error.message,
       });
     } finally {
       setLoading(false);
@@ -145,27 +91,22 @@ const EInvoiceLoginPage = () => {
         type="email"
         placeholder="Email"
         value={email}
-        onChange={(e) =>
-          setEmail(e.target.value)
-        }
+        onChange={(e) => setEmail(e.target.value)}
       />
 
       <input
         type="password"
         placeholder="Password"
         value={password}
-        onChange={(e) =>
-          setPassword(e.target.value)
-        }
+        onChange={(e) => setPassword(e.target.value)}
       />
 
       <select
         value={invoiceMode}
-        onChange={(e) =>
-          setInvoiceMode(
-            e.target.value
-          )
-        }
+        onChange={(e) => {
+          console.log("Mode Changed:", e.target.value);
+          setInvoiceMode(e.target.value);
+        }}
       >
         <option value="NORMAL">
           Normal E-Invoice
@@ -180,18 +121,12 @@ const EInvoiceLoginPage = () => {
         onClick={handleLogin}
         disabled={loading}
       >
-        {loading
-          ? "Logging In..."
-          : "Login"}
+        {loading ? "Logging In..." : "Login"}
       </button>
 
       {response && (
         <pre>
-          {JSON.stringify(
-            response,
-            null,
-            2
-          )}
+          {JSON.stringify(response, null, 2)}
         </pre>
       )}
     </div>
@@ -199,3 +134,4 @@ const EInvoiceLoginPage = () => {
 };
 
 export default EInvoiceLoginPage;
+

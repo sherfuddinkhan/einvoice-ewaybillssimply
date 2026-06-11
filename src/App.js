@@ -28,6 +28,8 @@ import Dashboard from "./components/Dashboard";
    E-INVOICE
 ======================= */
 import EinvfeildsDisplay from "./E-invoice/EinvfeildsDisplay";
+import EinvprofomofeildsDIsplay from "./E-invoice/EinvprofomofeildsDIsplay"
+
 import GenerateAndPrintEinvoice from "./E-invoice/E-invoice&IRN/GenerateAndPrintEinvoice";
 import GenerateandprintproformoEinvoice from"./E-invoice/E-invoice&IRN/Generateandprintproformoinvoice";
 import CancelIRN from "./E-invoice/E-invoice&IRN/CancelIRN";
@@ -101,7 +103,13 @@ const App = () => {
   if (!isAuthReady) return <div>Loading authentication...</div>;
 
   const EWAY_DEFAULT = "/ewaybill/eway-display";
-  const EINVOICE_DEFAULT = "/einvoice/einvoice-display";
+ const invoiceMode =
+  sessionStorage.getItem("invoiceMode") || "NORMAL";
+
+const EINVOICE_DEFAULT =
+  invoiceMode === "PROFORMA"
+    ? "/einvoice/einvoice-pdisplay"
+    : "/einvoice/einvoice-display";
 
   return (
     <Router>
@@ -171,6 +179,7 @@ const App = () => {
 
           
           <Route path="einvoice-display" element={<EinvfeildsDisplay />} />
+           <Route path="einvoice-pdisplay" element={<EinvprofomofeildsDIsplay />} />
           <Route path="generate-print" element={<GenerateAndPrintEinvoice />} />
           <Route path="generate-printproformo" element={<GenerateandprintproformoEinvoice />}/>
           <Route path="cancel-irn" element={<CancelIRN />} />

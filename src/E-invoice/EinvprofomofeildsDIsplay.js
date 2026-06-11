@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const EinvfeildsDisplay = () => {
+const EinvprofomofeildsDIsplay = () => {
 
   // ======================================================
   // NAVIGATION
@@ -484,4 +484,4 @@ const styles = {
 
 };
 
-export default EinvfeildsDisplay;
+export default EinvprofomofeildsDIsplay;

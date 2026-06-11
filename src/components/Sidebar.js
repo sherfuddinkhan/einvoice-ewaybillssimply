@@ -140,6 +140,7 @@ const Sidebar = () => {
       product: "EINVOICE",
       items: [
         { path: "/einvoice/einvoice-display",label: "E-Invoice Fields" },
+        { path: "/einvoice/einvoice-pdisplay",label: "E-Invoice proformaFields" },
         { path: "/einvoice/generate-print", label: "Generate Invoice and print" },
         { path: "/einvoice/generate-printproformo", label: "Generate Proforma Invoice and print" },
         { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
