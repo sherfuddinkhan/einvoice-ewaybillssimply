@@ -146,7 +146,6 @@ const tableStyles = {
 };
 
 // Storage Keys
-const STORAGE_KEY1 = "iris_einvoice_shared_config";
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 const EINV_DOC_KEY = "iris_einv_doc_map";
 const LAST_GENERATED_ID_KEY = "iris_last_generated_id";
@@ -355,7 +354,7 @@ export const GenerateAndPrintEinvoice = () => {
   const [selectedCategory, setSelectedCategory] = useState("B2B");
   const [lastGeneratedId, setLastGeneratedId] = useState(null);
   const location = useLocation();
-
+ 
   const receivedData = location.state || {};
   const invoiceData = receivedData.invoiceData || {};
   const dynamicId = receivedData.id || invoiceData.pid;
@@ -521,102 +520,205 @@ export const GenerateAndPrintEinvoice = () => {
       return recalculateTotals({ ...prev, itemList: filtered });
     });
   };
-
   const storeEinv = (apiResponse) => {
-    if (!apiResponse?.id || !payload?.no) return;
-    const entry = { docNo: payload.no?.trim(), einvId: String(apiResponse.id), createdAt: new Date().toISOString() };
-    const existing = JSON.parse(localStorage.getItem(EINV_DOC_KEY)) || [];
-    const filtered = existing.filter((e) => e.docNo !== entry.docNo && e.einvId !== entry.einvId);
-    localStorage.setItem(EINV_DOC_KEY, JSON.stringify([...filtered, entry]));
+  if (!apiResponse?.id || !payload?.no) return;
+
+  const entry = {
+    docNo: payload.no?.trim(),
+    einvId: String(apiResponse.id),
+    createdAt: new Date().toISOString(),
   };
 
-  const saveResponseForAutoPopulate = (data) => {
-    if (!data?.response) return;
-    const responseData = data.response;
-    
+  const existing = JSON.parse(localStorage.getItem(EINV_DOC_KEY)) || [];
+
+  const filtered = existing.filter(
+    (e) => e.docNo !== entry.docNo && e.einvId !== entry.einvId
+  );
+
+  localStorage.setItem(
+    EINV_DOC_KEY,
+    JSON.stringify([...filtered, entry])
+  );
+};
+
+const saveResponseForAutoPopulate = (data) => {
+  if (!data?.response) return;
+
+  const responseData = data.response;
+
+  try {
+    // ID
     if (responseData.id) {
-      try {
-        localStorage.setItem(LAST_GENERATED_ID_KEY, String(responseData.id));
-      } catch (e) {
-        console.warn('Could not save generated id to localStorage', e);
-      }
+      localStorage.setItem(
+        LAST_GENERATED_ID_KEY,
+        String(responseData.id)
+      );
     }
 
-    try {
-      const sharedData = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
-      sharedData.companyId = "24";
-      sharedData.token = token;
-      sharedData.irn = responseData.irn;
-      sharedData.companyUniqueCode = payload.userGstin;
-      sharedData.lastGeneratedResponse = responseData;
-      sharedData.lastGeneratedAt = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEY1, JSON.stringify(sharedData));
-    } catch (e) {
-      console.error("Failed to parse or save STORAGE_KEY1 config:", e);
+    // IRN
+    localStorage.setItem(
+      LAST_IRN_KEY,
+      JSON.stringify({
+        irn: responseData.irn,
+        timestamp: new Date().toISOString(),
+      })
+    );
+
+    // QR
+    if (responseData.signedQrCode) {
+      localStorage.setItem(
+        LAST_SIGNED_QR_JWT_KEY,
+        responseData.signedQrCode
+      );
     }
 
-    try {
-      localStorage.setItem(LAST_DOC_DETAILS_KEY, JSON.stringify({ 
-        docNum: payload.no?.trim(), docDate: payload.dt?.trim(), docType: payload.docType, timestamp: new Date().toISOString() 
-      }));
-      localStorage.setItem(LAST_IRN_KEY, JSON.stringify({ irn: responseData.irn, timestamp: new Date().toISOString() }));
-      if (responseData.signedQrCode) localStorage.setItem(LAST_SIGNED_QR_JWT_KEY, responseData.signedQrCode);
-      localStorage.setItem(LAST_EWB_DETAILS_KEY, JSON.stringify({ 
-        ewbNo: responseData.ewbNo || "", ewbDate: responseData.ewbDate || "", timestamp: new Date().toISOString() 
-      }));
-    } catch (e) {
-      console.error("Failed to update tracking metrics in localStorage:", e);
-    }
+    // EWB
+    localStorage.setItem(
+      LAST_EWB_DETAILS_KEY,
+      JSON.stringify({
+        ewbNo: responseData.ewbNo || "",
+        ewbDate: responseData.ewbDate || "",
+        timestamp: new Date().toISOString(),
+      })
+    );
 
-    if (typeof setLastInvoice === "function") {
-      setLastInvoice(responseData.irn, payload.userGstin, payload.no, payload.dt, payload.docType);
-    }
-  };
+    // DOC
+    localStorage.setItem(
+      LAST_DOC_DETAILS_KEY,
+      JSON.stringify({
+        docNum: payload.no?.trim(),
+        docDate: payload.dt?.trim(),
+        docType: payload.docType,
+        timestamp: new Date().toISOString(),
+      })
+    );
 
-  const handleGenerate = async () => {
-    if (!token) {
-      alert("Login required!");
-      return;
-    }
-    setLoading(true);
-    setResponse(null);
-    try {
-      const finalPayload = recalculateTotals(payload);
-      const res = await fetch("http://localhost:3001/proxy/irn/addInvoice", {
+    // FULL RESPONSE (single source of truth)
+    localStorage.setItem(
+      STORAGE_KEY2,
+      JSON.stringify({
+        ...responseData,
+        userGstin: payload.userGstin,
+        timestamp: new Date().toISOString(),
+      })
+    );
+  } catch (e) {
+    console.error("Failed to save response:", e);
+  }
+
+  // AUTH sync (sessionStorage only)
+  try {
+    const { token, companyId } = getAuthData();
+
+    sessionStorage.setItem(
+      "iris_einvoice_session",
+      JSON.stringify({ token, companyId })
+    );
+  } catch (e) {
+    console.error("Auth sync failed:", e);
+  }
+
+  if (typeof setLastInvoice === "function") {
+    setLastInvoice(
+      responseData.irn,
+      payload.userGstin,
+      payload.no,
+      payload.dt,
+      payload.docType
+    );
+  }
+};
+
+const getAuthData = () => {
+  try {
+    const auth = JSON.parse(
+      sessionStorage.getItem("iris_einvoice_session") || "{}"
+    );
+    return {
+      token: auth.token || "",
+      companyId: auth.companyId || "24",
+    };
+  } catch (e) {
+    return { token: "", companyId: "24" };
+  }
+};
+
+ const handleGenerate = async () => {
+  const { token, companyId } = getAuthData(); // ✅ SESSION STORAGE
+  console.log("tokenvalue",token)
+  console.log("companyIdvalue",companyId)
+  if (!token) {
+    alert("Login required!");
+    return;
+  }
+
+  setLoading(true);
+  setResponse(null);
+
+  try {
+    const finalPayload = recalculateTotals(payload);
+
+    const res = await fetch(
+      "https://einvoice.fcssoftwares.com/api/gst/einvoice/generate-irn",
+      // Api for local node.js is  http://localhost:3001/proxy/irn/addInvoice
+      {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Auth-Token": token, companyId: "24", product: "ONYX" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Auth-Token": token,
+          companyId: companyId,
+          product: "ONYX",
+        },
         body: JSON.stringify(finalPayload),
-      });
-
-      const data = await res.json();
-      setResponse(data);
-      const generatedId = data?.response?.id || data?.response?.Id || data?.response?.irn || data?.response?.invoiceId;
-      if (generatedId) setLastGeneratedId(generatedId);
-
-      if (data?.status === "SUCCESS" && data?.response?.irn) {
-        saveResponseForAutoPopulate(data);
-        storeEinv(data.response);
-        localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
-        alert(`✅ IRN Generated Successfully!\nIRN: ${data.response.irn}`);
-      } else if (data?.response?.id || data?.response?.irn) {
-        alert(`⚠️ Warning: ${data?.errors?.[0]?.msg || "Operation completed with warning"}`);
-      } else {
-        alert(data?.status === "FAILURE" ? `❌ Failed: ${data?.errors?.[0]?.msg || "Unknown error"}` : "Unexpected response");
       }
-    } catch (err) {
-      alert("Network error: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
 
+    const data = await res.json();
+    setResponse(data);
+
+    const generatedId =
+      data?.response?.id ||
+      data?.response?.Id ||
+      data?.response?.irn ||
+      data?.response?.invoiceId;
+
+    if (generatedId) setLastGeneratedId(generatedId);
+
+    if (data?.status === "SUCCESS" && data?.response?.irn) {
+      saveResponseForAutoPopulate(data);
+      storeEinv(data.response);
+      sessionStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
+
+      alert(`✅ IRN Generated Successfully!\nIRN: ${data.response.irn}`);
+    } else if (data?.response?.id || data?.response?.irn) {
+      alert(
+        `⚠️ Warning: ${
+          data?.errors?.[0]?.msg || "Operation completed with warning"
+        }`
+      );
+    } else {
+      alert(
+        data?.status === "FAILURE"
+          ? `❌ Failed: ${data?.errors?.[0]?.msg || "Unknown error"}`
+          : "Unexpected response"
+      );
+    }
+  } catch (err) {
+    alert("Network error: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  /// downloading the pdf of invoice with respect to last generated id of invoice
   const downloadPDF = async () => {
     // If no invoice was generated yet, use the local form ID payload as sandbox template baseline
     const activeInvoiceId = lastGeneratedId || response?.response?.id || response?.response?.Id || payload.id || "1001";
     
     try {
       setPdfMessage("Processing request with print server proxy...");
-      const resp = await axios.get(`http://localhost:3001/proxy/einvoice/print?template=${template}&id=${activeInvoiceId}`, {
+      const resp = await axios.get(`https://einvoice.fcssoftwares.com/api/gst/einvoice/download`, {
+       // local node.js Api http://localhost:3001/proxy/einvoice/print?template=${template}&id=${activeInvoiceId}
         headers: { "X-Auth-Token": token || "MOCK_TOKEN", companyId: "24", product: "ONYX" },
         responseType: "blob",
       });
