@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import { useAuth } from "../components/AuthContext";
 const EinvfeildsDisplay = () => {
 
   // ======================================================
@@ -31,7 +31,7 @@ const EinvfeildsDisplay = () => {
   // ======================================================
   // FETCH INVOICE DATA
   // ======================================================
-
+ const { token, companyId } = useAuth();
   const getInvoiceData = async () => {
 
     try {
@@ -45,16 +45,16 @@ const EinvfeildsDisplay = () => {
       // ======================================================
       // API CALL
       // ======================================================
-
-      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdGVlcUBjYWxpYnJlY3VlLmNvbSIsImp0aSI6Ijk1ZDRhMWFkLThiMmQtNGE5NC05MmRhLWNhZjQzMzgwOTUwNyIsInVzZXJuYW1lIjoiYXRlZXFAY2FsaWJyZWN1ZS5jb20iLCJkaXNwbGF5bmFtZSI6ImF0ZWVxIiwidXNlclhpZCI6IjIwIiwiY29tcGFueVhpZCI6IjEyIiwiY29tcGFueUJyYW5jaFhpZCI6IjEwIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODExOTAxNzIsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjQ0MzEzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMTMifQ.NptpzCGH9DO-7Gi-dn_68dE1s4Lfr76k-Cg_OzkwBqk";
-
-
-
+   
 const response = await axios.get(
-  "https://einvoice.fcssoftwares.com/api/Invoice",
+  "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/23/invoicecumchallan",
   {
     headers: {
-      "X-Auth-Token": token,
+     Accept: "application/json",
+    "Content-Type": "application/json",
+    companyId: companyId,
+    "X-Auth-Token": token,
+    product: "ONYX",
     },
   }
 );
@@ -65,7 +65,7 @@ const response = await axios.get(
       // EXTRACT INVOICE DATA
       // ======================================================
 
-      const invoices = response?.data?.data;
+      const invoices = response?.data;
 
       console.log("Invoices:", invoices);
 

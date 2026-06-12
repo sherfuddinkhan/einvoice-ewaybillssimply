@@ -1,10 +1,11 @@
 // GetIrnByDocDetailsForm.js - Auto-Populated & Prioritizes Last Used for Reliable Auto-Fill
 import React, { useState, useEffect } from 'react';
+import { useAuth } from "../../components/AuthContext";
 
 const STORAGE_KEY = 'iris_einvoice_shared_config';
 const LAST_DOC_DETAILS_KEY = 'iris_last_used_doc_details'; // New key for last used doc details
 
-const GetIrnByDocDetails= () => {
+const GetIrnByDocDetails= ({ previousResponse }) => {
   const [config, setConfig] = useState({
     proxyBase: 'http://localhost:3001',
     endpoint: '/proxy/irn/getIrnByDocDetails',
@@ -29,6 +30,8 @@ const GetIrnByDocDetails= () => {
   // ============================
   // LOAD SHARED VALUES FROM STORAGE (Prioritized Auto-Fill)
   // ============================
+  const { token, companyId , userGstin} = useAuth();
+  
   useEffect(() => {
     let newConfig = { ...config };
 
@@ -42,10 +45,10 @@ const GetIrnByDocDetails= () => {
         setSharedData(shared); // Store for debug
         newConfig.headers = {
           ...newConfig.headers,
-          companyId: shared.companyId || '',
-          'X-Auth-Token': shared.token || ''
+          companyId: companyId  || '',
+          'X-Auth-Token': token  || ''
         };
-        newConfig.params.userGstin = shared.companyUniqueCode || newConfig.params.userGstin;
+        newConfig.params.userGstin = userGstin || newConfig.params.userGstin;
       } catch (err) {
         console.warn('Failed to load shared config');
       }
@@ -107,6 +110,65 @@ const GetIrnByDocDetails= () => {
     console.log('Saved last doc details:', lastDoc); // Debug
   };
 
+useEffect(() => {
+  setConfig((prev) => ({
+    ...prev,
+    headers: {
+      ...prev.headers,
+      companyId: companyId || "",
+      "X-Auth-Token": token || "",
+    },
+    params: {
+      ...prev.params,
+      userGstin: userGstin || prev.params.userGstin,
+    },
+  }));
+}, [token, companyId, userGstin]);
+
+useEffect(() => {
+  let docNum = "";
+  let docDate = "";
+
+  // 1️⃣ PRIORITY: last saved successful doc (localStorage)
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(LAST_DOC_DETAILS_KEY) || "{}"
+    );
+
+    docNum = saved.docNum || "";
+    docDate = saved.docDate || "";
+  } catch (e) {
+    console.warn("Failed to parse last doc details");
+  }
+
+  // 2️⃣ FALLBACK: previousResponse (if available)
+  if (!docNum && previousResponse?.lastFetchedInvoice) {
+    const inv = previousResponse.lastFetchedInvoice;
+
+    docNum =
+      inv?.DocDtls?.No ||
+      inv?.DocDtls?.DocNum ||
+      inv?.documentNumber ||
+      docNum;
+
+    docDate =
+      inv?.DocDtls?.Dt ||
+      inv?.DocDtls?.DocDate ||
+      inv?.documentDate ||
+      docDate;
+  }
+
+  setConfig((prev) => ({
+    ...prev,
+    params: {
+      ...prev.params,
+      docNum,
+      docDate,
+    },
+  }));
+}, [previousResponse]);
+
+
   // ==========================
   // UPDATE PARAMS HANDLERS
   // ==========================
@@ -137,7 +199,7 @@ const GetIrnByDocDetails= () => {
       userGstin,
       docDate: encodeURIComponent(docDate.trim())
     });
-    const fullUrl = `${config.proxyBase}${config.endpoint}?${params.toString()}`;
+  const fullUrl = `https://einvoice.fcssoftwares.com/api/gst/einvoice/irn-by-doc?${params.toString()}`;
     try {
       const res = await fetch(fullUrl, {
         method: 'GET',

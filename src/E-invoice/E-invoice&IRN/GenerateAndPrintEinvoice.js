@@ -346,7 +346,8 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") =>
 };
 
 export const GenerateAndPrintEinvoice = () => {
-  const { token, setLastInvoice } = useAuth();
+const { token, companyId } = useAuth();
+const { setLastInvoice } = useAuth();
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [template, setTemplate] = useState("STANDARD");
@@ -644,7 +645,7 @@ const getAuthData = () => {
 };
 
  const handleGenerate = async () => {
-  const { token, companyId } = getAuthData(); // ✅ SESSION STORAGE
+   //const { token, companyid } = useAuth(); // ✅ SESSION STORAGE
   console.log("tokenvalue",token)
   console.log("companyIdvalue",companyId)
   if (!token) {
@@ -709,33 +710,53 @@ const getAuthData = () => {
     setLoading(false);
   }
 };
-
+ 
   /// downloading the pdf of invoice with respect to last generated id of invoice
-  const downloadPDF = async () => {
-    // If no invoice was generated yet, use the local form ID payload as sandbox template baseline
-    const activeInvoiceId = lastGeneratedId || response?.response?.id || response?.response?.Id || payload.id || "1001";
-    
-    try {
-      setPdfMessage("Processing request with print server proxy...");
-      const resp = await axios.get(`https://einvoice.fcssoftwares.com/api/gst/einvoice/download`, {
-       // local node.js Api http://localhost:3001/proxy/einvoice/print?template=${template}&id=${activeInvoiceId}
-        headers: { "X-Auth-Token": token || "MOCK_TOKEN", companyId: "24", product: "ONYX" },
-        responseType: "blob",
-      });
-      const url = window.URL.createObjectURL(new Blob([resp.data], { type: "application/pdf" }));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `EInvoice_${activeInvoiceId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      setPdfMessage("✅ PDF downloaded successfully.");
-    } catch (error) {
-      setPdfMessage("❌ Failed to compile layout document. Verify local proxy server port 3001 connection.");
-      console.error(error);
-    }
-  };
+ const downloadPDF = async () => {
+  // If no invoice was generated yet, use the local form ID payload as sandbox template baseline
+  const activeInvoiceId =
+    lastGeneratedId ||
+    response?.response?.id ||
+    response?.response?.Id ||
+    payload.id ||
+    "1001";
+
+  try {
+    setPdfMessage("Processing PDF download...");
+
+    // API URL
+    const url = `https://einvoice.fcssoftwares.com/api/gst/einvoice/print?id=${activeInvoiceId}`;
+
+    const resp = await axios.post(url, {
+      headers: {
+        "X-Auth-Token": token,
+        companyId: companyId,
+        product: "ONYX",
+      },
+      responseType: "blob",
+    });
+
+    // Create blob URL for download
+    const blobUrl = window.URL.createObjectURL(
+      new Blob([resp.data], { type: "application/pdf" })
+    );
+
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.setAttribute("download", `EInvoice_${activeInvoiceId}.pdf`);
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+
+    setPdfMessage("✅ PDF downloaded successfully.");
+  } catch (error) {
+    console.error(error);
+    setPdfMessage("❌ Failed to download PDF.");
+  }
+};
 
   return (
     <div style={tableStyles.container}>

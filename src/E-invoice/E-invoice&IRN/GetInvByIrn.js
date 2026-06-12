@@ -51,33 +51,20 @@ const GetInvByIrn = ({ previousResponse }) => {
   }, []); // Removed irn/userGstin dependencies as they cause loops
 
   /* -------------------- AUTO-FILL HEADERS (INCLUDING IRN FOR DISPLAY) -------------------- */
-  useEffect(() => {
-    const token =
-      previousResponse?.token ||
-      authToken ||
-      savedResponse?.token ||
-      savedConfig?.token ||
-      "";
+const { token, companyid } = useAuth();
 
-    const companyId =
-      previousResponse?.companyId ||
-      savedResponse?.companyId || 
-      savedConfig?.companyId ||
-      "";
-    
-    // FIX: Use the current 'irn' state to update the headers object for display
-    setHeaders({
-      "X-Auth-Token": token,
-      companyId,
-      product: "ONYX",
-    });
-    // Header update depends on irn, which is why we must include it as a dependency
-  }, [previousResponse, authToken, irn]); 
+useEffect(() => {
+  setHeaders({
+    "X-Auth-Token": token || "",
+    companyId: companyid || "24",
+    product: "ONYX",
+  });
+}, [token, companyid]);
 
   /* -------------------- ENDPOINT -------------------- */
-  const endpoint = `https://stage-api.irisgst.com/irisgst/onyx/irn/getInvByIrn?irn=${encodeURIComponent(
-    irn
-  )}&userGstin=${encodeURIComponent(userGstin)}`;
+  const endpoint = `https://einvoice.fcssoftwares.com/api/gst/einvoice/by-irn?irn=${encodeURIComponent(
+  irn
+)}&userGstin=${encodeURIComponent(userGstin)}`;
 
   /* -------------------- FETCH HANDLER -------------------- */
   const handleFetch = async () => {

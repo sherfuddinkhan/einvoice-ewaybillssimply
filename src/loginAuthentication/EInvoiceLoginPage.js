@@ -37,6 +37,7 @@ const EInvoiceLoginPage = () => {
       );
 
       const data = await res.json();
+      console.log("login APi response",data)
       setResponse(data);
 
       // ✅ FIXED LOGIC (was incorrectly outside function)
@@ -45,13 +46,13 @@ const EInvoiceLoginPage = () => {
 
         const loginData = {
           token: data.response.token,
-          companyId: data.response.companyId,
+          companyId: data.response.companyid,   // ✅ lowercase "id",
           userGstin: data.response.userGstin,
           email,
           invoiceMode: selectedMode,
           fullResponse: data,
         };
-
+       console.log("loginresponse",loginData)
         // store only in AuthContext
         login(loginData, "EINVOICE");
 

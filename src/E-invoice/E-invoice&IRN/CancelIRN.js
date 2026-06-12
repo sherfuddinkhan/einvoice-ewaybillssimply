@@ -1,29 +1,12 @@
 // CancelIRNForm.js - Fully Auto-Populated & Transparent (IRIS GST Style)
 import React, { useState, useEffect } from 'react';
-
+import { useAuth } from "../../components/AuthContext";
 const CancelIRN  = ({ previousResponse }) => {
-const STORAGE_KEY1  = "iris_einvoice_shared_config";
+   const { token, companyId } = useAuth();
+  const STORAGE_KEY1  = "iris_einvoice_shared_config";
   const STORAGE_KEY = "iris_einvoice_response";
 
-    // Step 1: Define the variable to hold the final, ready-to-use object.
-/*const sharedData = 
-
-    // Step 4: Convert the resulting string back into a usable JavaScript object. 
-    // This process is called Deserialization.
-    JSON.parse(
-
-        // Step 2: Attempt to retrieve the JSON string from the browser's persistent storage.
-        // If data exists under the key (e.g., "iris_einvoice_response"), the string is returned.
-        // If the key is not found (e.g., on first load), this returns null.
-        localStorage.getItem(STORAGE_KEY) 
-        
-        // Step 3: The logical OR operator (||) acts as a safety check and provides a default.
-        // If the result of localStorage.getItem() is 'falsy' (like null), 
-        // the code uses the value to the right: the string representation of an empty object ("{}").
-        || "{}"
-    
-    // Step 4 closing parenthesis
-    ); */
+  
   const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
   const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
  
@@ -42,45 +25,37 @@ const STORAGE_KEY1  = "iris_einvoice_shared_config";
     || previousResponse?.userGstin
     || "";
 
-  const [config, setConfig] = useState({
-    proxyBase: 'http://localhost:3001',
-    endpoint: '/proxy/irn/cancel',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'companyId': previousResponse?.companyId || STORAGE_KEY?.companyId || '',
-      'X-Auth-Token': previousResponse?.token || STORAGE_KEY?.token || '',
-      'product': 'ONYX'
-    },
-    body: {
-      irn: irn,
-      cnlRsn: '1', // 1=Wrong Entry, 2=Duplicate, 3=Order Cancelled, 4=Others
-      cnlRem: 'Wrong entry',
-      userGstin: initialCompanyCode
-    }
-  });
 
+const [config, setConfig] = useState({
+  proxyBase: "https://einvoice.fcssoftwares.com",
+  endpoint: "/api/gst/einvoice/cancel-irn",
+  headers: {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    companyId: companyId,
+    "X-Auth-Token": token,
+    product: "ONYX",
+  },
+  body: {
+    irn: irn,
+    cnlRsn: "1", // 1=Wrong Entry, 2=Duplicate, 3=Order Cancelled, 4=Others
+    cnlRem: "Wrong entry",
+    userGstin: initialCompanyCode,
+  },
+});
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const shared = JSON.parse(saved);
-        setConfig(prev => ({
-          ...prev,
-          headers: {
-            ...prev.headers,
-            companyId: shared.companyId || '',
-            'X-Auth-Token': shared.token || '',
-          }
-        }));
-      } catch (e) {
-        console.warn('Failed to load shared config');
-      }
-    }
-  }, []);
+ useEffect(() => {
+  setConfig((prev) => ({
+    ...prev,
+    headers: {
+      ...prev.headers,
+      companyId: companyId || "",
+      "X-Auth-Token": token || "",
+    },
+  }));
+}, [token, companyId]);
 
   const cancelIRN = async () => {
     if (!config.body.irn.trim() || config.body.irn.length !== 64) {
@@ -95,7 +70,6 @@ const STORAGE_KEY1  = "iris_einvoice_shared_config";
       alert('Authentication required. Please set companyId and X-Auth-Token.');
       return;
     }
-
     setLoading(true);
     setResponse(null);
     try {
