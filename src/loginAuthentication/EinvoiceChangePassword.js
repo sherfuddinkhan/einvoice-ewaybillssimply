@@ -60,7 +60,7 @@ const EinvoiceChangePassword = () => {
     const payload = { oldPassword: oldPass, newPassword: newPass };
 
     try {
-      const res = await fetch('http://localhost:3001/proxy/EIchange-password', {
+      const res = await fetch('https://einvoice.fcssoftwares.com/api/gst/auth/ei-change-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -50,7 +50,7 @@ const EWayBillLoginPage = () => {
 
     try {
       const res = await fetch(
-        "http://localhost:3001/proxy/ewaybill/login",
+        "https://einvoice.fcssoftwares.com/api/gst/auth/ewaybill-login",
         {
           method: "POST",
 

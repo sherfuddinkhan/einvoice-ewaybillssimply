@@ -37,7 +37,7 @@ const EwaybillChangePassword = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3001/proxy/EWchange-password",
+        "https://einvoice.fcssoftwares.com/api/gst/auth/ew-change-password",
         formData,
         {
           headers: {

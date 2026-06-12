@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
@@ -23,7 +23,7 @@ const EInvoiceLoginPage = () => {
 
     try {
       const res = await fetch(
-        "http://localhost:3001/proxy/einvoice/login",
+        "https://einvoice.fcssoftwares.com/api/gst/auth/einvoice-login",
         {
           method: "POST",
           headers: {
@@ -37,13 +37,10 @@ const EInvoiceLoginPage = () => {
       );
 
       const data = await res.json();
-
       setResponse(data);
 
-      if (
-        data?.status === "SUCCESS" &&
-        data?.response?.token
-      ) {
+      // ✅ FIXED LOGIC (was incorrectly outside function)
+      if (data?.status === "SUCCESS" && data?.response?.token) {
         const selectedMode = invoiceMode;
 
         const loginData = {
@@ -55,22 +52,15 @@ const EInvoiceLoginPage = () => {
           fullResponse: data,
         };
 
-        // Save mode
-        sessionStorage.setItem(MODE_KEY, selectedMode);
-
-        console.log("Selected Mode:", selectedMode);
-
-        // Login
+        // store only in AuthContext
         login(loginData, "EINVOICE");
 
-        // Redirect immediately based on selected mode
+        // redirect
         navigate(
           selectedMode === "PROFORMA"
             ? "/einvoice/einvoice-pdisplay"
             : "/einvoice/einvoice-display",
-          {
-            replace: true,
-          }
+          { replace: true }
         );
       }
     } catch (error) {
@@ -108,30 +98,17 @@ const EInvoiceLoginPage = () => {
           setInvoiceMode(e.target.value);
         }}
       >
-        <option value="NORMAL">
-          Normal E-Invoice
-        </option>
-
-        <option value="PROFORMA">
-          Proforma E-Invoice
-        </option>
+        <option value="NORMAL">Normal E-Invoice</option>
+        <option value="PROFORMA">Proforma E-Invoice</option>
       </select>
 
-      <button
-        onClick={handleLogin}
-        disabled={loading}
-      >
+      <button onClick={handleLogin} disabled={loading}>
         {loading ? "Logging In..." : "Login"}
       </button>
 
-      {response && (
-        <pre>
-          {JSON.stringify(response, null, 2)}
-        </pre>
-      )}
+      {response && <pre>{JSON.stringify(response, null, 2)}</pre>}
     </div>
   );
 };
 
 export default EInvoiceLoginPage;
-
