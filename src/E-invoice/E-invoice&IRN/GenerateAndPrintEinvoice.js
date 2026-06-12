@@ -727,7 +727,7 @@ const getAuthData = () => {
     // API URL
     const url = `https://einvoice.fcssoftwares.com/api/gst/einvoice/print?id=${activeInvoiceId}`;
 
-    const resp = await axios.post(url, {
+    const resp = await axios.get(url, {
       headers: {
         "X-Auth-Token": token,
         companyId: companyId,
