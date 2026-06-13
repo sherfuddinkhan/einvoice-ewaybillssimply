@@ -4,24 +4,37 @@ import { useAuth } from "../../components/AuthContext";
 
 const STORAGE_KEY = 'iris_einvoice_shared_config';
 const LAST_DOC_DETAILS_KEY = 'iris_last_used_doc_details'; // New key for last used doc details
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
+ const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
+
+//lastGeneratedResponse
+//EwbNo
+
+//id
+
+//no
+
+
 
 const GetIrnByDocDetails= ({ previousResponse }) => {
-  const [config, setConfig] = useState({
-    proxyBase: 'http://localhost:3001',
-    endpoint: '/proxy/irn/getIrnByDocDetails',
-    headers: {
-      Accept: 'application/json',
-      companyId: '',
-      'X-Auth-Token': '',
-      product: 'ONYX'
-    },
-    params: {
-      docNum: '',
-      docType: 'RI',
-      userGstin: '',
-      docDate: ''
-    }
-  });
+const [config, setConfig] = useState({
+  proxyBase: "https://einvoice.fcssoftwares.com",
+  endpoint: "/api/gst/einvoice/irn-by-doc",
+  headers: {
+    Accept: "application/json",
+    companyId: "",
+    "X-Auth-Token": "",
+    product: "ONYX",
+  },
+  params: {
+    docNum: "",
+    docType: "RI",
+    userGstin: "",
+    docDate: "",
+  },
+});
+
+
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
@@ -32,84 +45,85 @@ const GetIrnByDocDetails= ({ previousResponse }) => {
   // ============================
   const { token, companyId , userGstin} = useAuth();
   
-  useEffect(() => {
-    let newConfig = { ...config };
+ //========================
+// LOAD LAST USED DOC DETAILS
+// ==========================
+// =========================
+// LOAD LAST USED DOC DETAILS
+// =========================
+useEffect(() => {
+  let lastDocNum = "";
+  let lastDocDate = "";
+  let loadedUserGstin = "";
 
-    // Load main shared config for headers & GSTIN
-    const saved = localStorage.getItem(STORAGE_KEY);
-    let shared = null;
-    if (saved) {
-      try {
-        shared = JSON.parse(saved);
-        console.log('Shared config loaded:', shared); // Debug log
-        setSharedData(shared); // Store for debug
-        newConfig.headers = {
-          ...newConfig.headers,
-          companyId: companyId  || '',
-          'X-Auth-Token': token  || ''
-        };
-        newConfig.params.userGstin = userGstin || newConfig.params.userGstin;
-      } catch (err) {
-        console.warn('Failed to load shared config');
+  // Load last successful document details
+  const lastDocSaved = localStorage.getItem(STORAGE_KEY2);
+
+  if (lastDocSaved) {
+    try {
+      const lastDoc = JSON.parse(lastDocSaved);
+
+      console.log("Last used doc details loaded:", lastDoc);
+
+      lastDocNum = lastDoc.no || "";
+      loadedUserGstin = lastDoc.userGstin || "";
+
+      // Convert ackDt -> yyyy-MM-dd
+      if (lastDoc.ackDt) {
+        const date = new Date(lastDoc.ackDt);
+
+        if (!isNaN(date.getTime())) {
+          lastDocDate = date.toISOString().split("T")[0];
+        }
       }
+    } catch (err) {
+      console.warn("Failed to load last doc details");
     }
+  }
 
-    // PRIORITY 1: Load last used doc details (from this form's previous success) - MOST RELIABLE FOR BOTH FIELDS
-    const lastDocSaved = localStorage.getItem(LAST_DOC_DETAILS_KEY);
-    let lastDocNum = newConfig.params.docNum;
-    let lastDocDate = newConfig.params.docDate;
-    if (lastDocSaved) {
-      try {
-        const lastDoc = JSON.parse(lastDocSaved);
-        console.log('Last used doc details loaded:', lastDoc); // Debug log
-        lastDocNum = lastDoc.docNum || newConfig.params.docNum;
-        lastDocDate = lastDoc.docDate || newConfig.params.docDate;
-      } catch (err) {
-        console.warn('Failed to load last doc details');
-      }
-    }
+  setConfig((prev) => ({
+    ...prev,
+    headers: {
+      ...prev.headers,
+      companyId: companyId || "",
+      "X-Auth-Token": token || "",
+    },
+    params: {
+      ...prev.params,
+      userGstin: loadedUserGstin || userGstin || prev.params.userGstin,
+      docNum: lastDocNum || prev.params.docNum,
+      docDate: lastDocDate || prev.params.docDate,
+    },
+  }));
+}, []);
 
-    // PRIORITY 2: ONLY if last used is empty, fallback to lastFetchedInvoice (from other forms)
-    if (!lastDocNum && shared?.lastFetchedInvoice) {
-      console.log('lastFetchedInvoice fallback used:', shared.lastFetchedInvoice); // Debug
-      lastDocNum = shared?.lastFetchedInvoice?.DocDtls?.No ||
-                   shared?.lastFetchedInvoice?.DocDtls?.DocNum ||
-                   shared?.lastFetchedInvoice?.documentNumber ||
-                   shared?.lastFetchedInvoice?.DocNum ||
-                   lastDocNum;
-    }
-    if (!lastDocDate && shared?.lastFetchedInvoice) {
-      lastDocDate = shared?.lastFetchedInvoice?.DocDtls?.Dt ||
-                    shared?.lastFetchedInvoice?.DocDtls?.DocDt ||
-                    shared?.lastFetchedInvoice?.documentDate ||
-                    shared?.lastFetchedInvoice?.DocDate ||
-                    lastDocDate;
-    }
 
-    // Apply prioritized values
-    newConfig.params.docNum = lastDocNum;
-    newConfig.params.docDate = lastDocDate;
+// ==========================
+// SAVE LAST USED DOC DETAILS
+// ==========================
+const saveLastDocDetails = (docNum, docDate) => {
+  if (!docNum.trim() || !docDate.trim()) {
+    console.warn("Skipping save: docNum or docDate is empty");
+    return;
+  }
 
-    setConfig(newConfig);
-  }, []);
-
-  // ==========================
-  // SAVE LAST USED DOC DETAILS (after success) - ENSURE BOTH ARE SAVED
-  // ==========================
-  const saveLastDocDetails = (docNum, docDate) => {
-    if (!docNum.trim() || !docDate.trim()) {
-      console.warn('Skipping save: docNum or docDate is empty');
-      return;
-    }
-    const lastDoc = { 
-      docNum: docNum.trim(), 
-      docDate: docDate.trim(), 
-      timestamp: new Date().toISOString() 
-    };
-    localStorage.setItem(LAST_DOC_DETAILS_KEY, JSON.stringify(lastDoc));
-    console.log('Saved last doc details:', lastDoc); // Debug
+  const lastDoc = {
+    docNum: docNum.trim(),
+    docDate: docDate.trim(),
+    timestamp: new Date().toISOString(),
   };
 
+  localStorage.setItem(
+    LAST_DOC_DETAILS_KEY,
+    JSON.stringify(lastDoc)
+  );
+
+  console.log("Saved last doc details:", lastDoc);
+};
+
+// ==========================
+// UPDATE AUTH HEADERS WHEN AUTH CHANGES
+// ==========================
 useEffect(() => {
   setConfig((prev) => ({
     ...prev,
@@ -125,48 +139,6 @@ useEffect(() => {
   }));
 }, [token, companyId, userGstin]);
 
-useEffect(() => {
-  let docNum = "";
-  let docDate = "";
-
-  // 1️⃣ PRIORITY: last saved successful doc (localStorage)
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem(LAST_DOC_DETAILS_KEY) || "{}"
-    );
-
-    docNum = saved.docNum || "";
-    docDate = saved.docDate || "";
-  } catch (e) {
-    console.warn("Failed to parse last doc details");
-  }
-
-  // 2️⃣ FALLBACK: previousResponse (if available)
-  if (!docNum && previousResponse?.lastFetchedInvoice) {
-    const inv = previousResponse.lastFetchedInvoice;
-
-    docNum =
-      inv?.DocDtls?.No ||
-      inv?.DocDtls?.DocNum ||
-      inv?.documentNumber ||
-      docNum;
-
-    docDate =
-      inv?.DocDtls?.Dt ||
-      inv?.DocDtls?.DocDate ||
-      inv?.documentDate ||
-      docDate;
-  }
-
-  setConfig((prev) => ({
-    ...prev,
-    params: {
-      ...prev.params,
-      docNum,
-      docDate,
-    },
-  }));
-}, [previousResponse]);
 
 
   // ==========================

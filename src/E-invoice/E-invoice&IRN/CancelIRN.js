@@ -4,17 +4,19 @@ import { useAuth } from "../../components/AuthContext";
 const CancelIRN  = ({ previousResponse }) => {
    const { token, companyId } = useAuth();
   const STORAGE_KEY1  = "iris_einvoice_shared_config";
-  const STORAGE_KEY = "iris_einvoice_response";
-
+  const LAST_IRN_KEY = "iris_last_generated_irn";
+  const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
   
   const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
-  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
+
  
  console.log("savedConfig1",savedConfig1)
  console.log("savedConfig",savedConfig)
 
+
   // Deduplicated IRN sourcing
-  const irn = previousResponse?.irn || savedConfig1?.irn || '';
+  const irn = previousResponse?.irn || savedConfig?.irn || '';
   console.log("irn",irn)
   const initialGstin = savedConfig1?.companyUniqueCode
     || savedConfig?.companyUniqueCode
@@ -89,9 +91,9 @@ const [config, setConfig] = useState({
 
       if (res.ok && data.status === 'SUCCESS') {
         alert('IRN Cancelled Successfully!');
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          companyId: config.headers.companyId,
-          token: config.headers['X-Auth-Token']
+        localStorage.setItem( LAST_IRN_KEY, JSON.stringify({
+          companyId: companyId,
+          token: token,
         }));
         setConfig(prev => ({ ...prev, body: { ...prev.body, irn: '' } }));
       } else if (res.status === 401 || res.status === 403 || data.message?.includes('Unauth')) {

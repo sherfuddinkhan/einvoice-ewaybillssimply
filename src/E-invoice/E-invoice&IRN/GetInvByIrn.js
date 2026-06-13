@@ -5,6 +5,8 @@ import { useAuth } from "../../components/AuthContext";
 // Local Storage Key Terminology
 const STORAGE_KEY = "iris_einvoice_response";     // Holds irn, companyUniqueCode (GSTIN)
 const STORAGE_KEY1  = "iris_einvoice_shared_config"; // Holds token, companyId
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
+ const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 
 const GetInvByIrn = ({ previousResponse }) => {
   const { authToken, lastIrn, lastUserGstin } = useAuth();
@@ -13,9 +15,7 @@ const GetInvByIrn = ({ previousResponse }) => {
   const savedResponse = JSON.parse(
     localStorage.getItem(STORAGE_KEY) || "{}"
   );
-  const savedConfig = JSON.parse(
-    localStorage.getItem(STORAGE_KEY1) || "{}"
-  );
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
   
   /* -------------------- STATE -------------------- */
   const [irn, setIrn] = useState("");
@@ -38,7 +38,7 @@ const GetInvByIrn = ({ previousResponse }) => {
     const determinedUserGstin = 
       lastUserGstin || 
       savedResponse?.companyUniqueCode || 
-      savedConfig?.companyUniqueCode || 
+      savedConfig?.userGstin || 
       "";
 
     // Update state only if values have changed

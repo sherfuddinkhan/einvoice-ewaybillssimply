@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-
+import { useAuth } from "../../components/AuthContext";
 /* ----------------------------
    LocalStorage Keys
 ---------------------------- */
@@ -18,6 +18,7 @@ const CANCEL_REASONS = {
 };
 
 const CancelEwb = ({ previousResponse }) => {
+  const { token, companyId, userGstin } = useAuth();
   /* ----------------------------
      State
   ---------------------------- */
@@ -44,53 +45,55 @@ const CancelEwb = ({ previousResponse }) => {
   /* ----------------------------
      useEffect – Auto populate
   ---------------------------- */
-  useEffect(() => {
-    const einvResp = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    const sharedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
-    const irnEwbData = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
-    console.log("einvResp ",einvResp)
-    console.log("sharedConfig",sharedConfig)
-    console.log("irnEwbData",irnEwbData)
-    /* ---- Headers ---- */
-    setHeaders(prev => ({
-      ...prev,
-      companyid:
-        previousResponse?.companyId ||
-        sharedConfig?.companyId ||
-        '',
-      'x-auth-token':
-        previousResponse?.token ||
-        sharedConfig?.token ||
-        ''
-    }));
+useEffect(() => {
+  const irnEwbData = JSON.parse(
+    localStorage.getItem(STORAGE_KEY2) || "{}"
+  );
 
-    /* ---- Body ---- */
-    setBody(prev => ({
-      ...prev,
-      ewbNo: irnEwbData?.data?.response?.EwbNo || '',
-      userGstin:
-        irnEwbData?.data?.response?.fromGstin || // BEST source
-        sharedConfig?.gstin ||
-        sharedConfig?.companyUniqueCode ||
-        ''
-    }));
-  }, [previousResponse]);
+  console.log("irnEwbData", irnEwbData);
 
-  /* ----------------------------
-     Helpers
-  ---------------------------- */
-  const updateHeader = (key, value) =>
-    setHeaders(prev => ({ ...prev, [key]: value }));
+  /* ---- Headers (from Auth) ---- */
+  setHeaders((prev) => ({
+    ...prev,
+    companyid: companyId || "",
+    "x-auth-token": token || "",
+  }));
 
-  const updateBody = (key, value) =>
-    setBody(prev => ({ ...prev, [key]: value }));
+  /* ---- Body ---- */
+  setBody((prev) => ({
+    ...prev,
+    ewbNo: irnEwbData?.EwbNo || "",
+    userGstin:
+      userGstin ||
+      irnEwbData?.
+userGstin
+ ||
+      "",
+  }));
+}, [token, companyId, userGstin]);
 
-  const isReady =
-    headers.companyid &&
-    headers['x-auth-token'] &&
-    body.ewbNo &&
-    body.userGstin &&
-    body.cnlRsn;
+/* ----------------------------
+   Helpers
+---------------------------- */
+
+const updateHeader = (key, value) =>
+  setHeaders((prev) => ({
+    ...prev,
+    [key]: value,
+  }));
+
+const updateBody = (key, value) =>
+  setBody((prev) => ({
+    ...prev,
+    [key]: value,
+  }));
+
+const isReady =
+  !!companyId &&
+  !!token &&
+  !!body.ewbNo &&
+  !!body.userGstin &&
+  !!body.cnlRsn;
 
   /* ----------------------------
      Cancel API Call
@@ -106,7 +109,7 @@ const CancelEwb = ({ previousResponse }) => {
 
     try {
       const res = await fetch(
-        'http://localhost:3001/proxy/irn/cancelEwb',
+        'https://einvoice.fcssoftwares.com/api/gst/einvoice/cancel-ewb',
         {
           method: 'PUT',
           headers,

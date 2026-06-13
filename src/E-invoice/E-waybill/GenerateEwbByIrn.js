@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import { useAuth } from "../../components/AuthContext";
 // Define the standard colors object (Required for tableStyles)
 const colors = {
   primary: "#1A73E8",
@@ -79,7 +79,7 @@ const STORAGE_KEY = "iris_einvoice_response";  
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 
-
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 // Default values for EWB fields if not found in storage
 const FALLBACK_DEFAULTS = {
     irn: "5eb8ce1121003e0b0b44059d85b660d2f4f00e3587bac05e16fed14a791386cd",
@@ -88,165 +88,181 @@ const FALLBACK_DEFAULTS = {
     transId: "01ACQPN4602B002",
     transDocDate: "14-11-2025", 
 };
-
 const GenerateEwbByIrn = () => {
+  const { token, companyId, userGstin } = useAuth();
 
-
-    /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
-  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
+  /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
   const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
-    console.log("savedConfig",savedConfig)
-    console.log("savedResponse",savedResponse)
-    console.log("savedConfig2",savedConfig2)
-    // Derive Auth/ID values
-    const initialAuthToken = savedResponse.token || savedConfig.token;
-    const initialCompanyId = savedResponse.companyId || savedConfig.companyId;
+  const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
 
-    // Derive body values, prioritizing storage
-    const storageIrn = savedConfig2.irn;
-    const storageUserGstin = savedResponse.companyUniqueCode || savedConfig.companyUniqueCode;
-    const storageVehNo = savedResponse.vehNo || savedConfig.vehNo;
-    const storageTransId = savedResponse.transId || savedConfig.transId;
+  console.log("savedConfig", savedConfig);
+  console.log("savedResponse", savedResponse);
+  console.log("savedConfig2", savedConfig2);
+
+  // Storage values
+  const storageIrn = savedConfig2?.irn || "";
+  const storageVehNo = savedResponse?.vehNo || savedConfig?.vehNo || "";
+  const storageTransId = savedResponse?.transId || savedConfig?.transId || "";
+
+  /* -------------------- CONSOLIDATED REQUEST BODY -------------------- */
+  const INITIAL_REQUEST_BODY = {
+    irn: storageIrn || FALLBACK_DEFAULTS.irn,
+    userGstin: userGstin || FALLBACK_DEFAULTS.userGstin,
+
+    // Transport Details
+    transMode: "ROAD",
+    vehTyp: "R",
+    transDist: 0,
+    transName: "Safe and Secure",
+    transDocNo: "10294",
+    transDocDate: FALLBACK_DEFAULTS.transDocDate,
+    vehNo: storageVehNo || FALLBACK_DEFAULTS.vehNo,
+    transId: storageTransId || FALLBACK_DEFAULTS.transId,
+
+    // Supply Details
+    subSplyTyp: "Supply",
+    subSplyDes: "",
+
+    // Dispatch Details
+    pobewb: null,
+    paddr1: "Basket",
+    paddr2: "JVRoad",
+    ploc: "Nainital",
+    pstcd: "18",
+    ppin: "781006",
+
+    // Delivery Details
+    dNm: "ANV",
+    daddr1: "MKJIO",
+    daddr2: "KLIOOPPP",
+    disloc: "Nainital",
+    disstcd: "27",
+    dispin: "400602",
+  };
+
+  /* -------------------- STATE -------------------- */
+
+  const [config, setConfig] = useState({
+    proxyBase: "https://einvoice.fcssoftwares.com",
+    endpoint: "/api/gst/einvoice/generate-ewb",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      companyId: "",
+      "X-Auth-Token": "",
+      product: "ONYX",
+    },
+    body: INITIAL_REQUEST_BODY,
+  });
+
+  const [response, setResponse] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  /* -------------------- AUTO UPDATE -------------------- */
+
+  useEffect(() => {
+    setConfig((prev) => ({
+      ...prev,
+      headers: {
+        ...prev.headers,
+        companyId: companyId || "",
+        "X-Auth-Token": token || "",
+      },
+      body: {
+        ...prev.body,
+        irn: storageIrn || prev.body.irn,
+        userGstin: userGstin || prev.body.userGstin,
+      },
+    }));
+  }, [token, companyId, userGstin]);
+
+  /* -------------------- HELPERS -------------------- */
+
+  const handleBodyChange = (key, value) => {
+    setConfig((prev) => ({
+      ...prev,
+      body: {
+        ...prev.body,
+        [key]: value,
+      },
+    }));
+  };
+  
+// Check whether authentication is available
+const isReady = !!(companyId && token);
+
+// Shortcut for request body
+const payload = config.body;
+
+// Generate button style
+const generateBtnStyle = tableStyles.btnGenerate(loading, isReady);
+
+// Check whether API response is successful
+const isSuccessResponse =
+  response &&
+  (response.status === 200 ||
+    response.body?.status === "SUCCESS");
 
 
- /* -------------------- CONSOLIDATED REQUEST BODY DEFINITION -------------------- */
-    const INITIAL_REQUEST_BODY = {
-// 1. Mandatory E-Invoice Reference
- "irn": storageIrn || FALLBACK_DEFAULTS.irn, 
- "userGstin": storageUserGstin || FALLBACK_DEFAULTS.userGstin,
 
-// 2. Transport Details
- "transMode": "ROAD",
- "vehTyp": "R",
-        "transDist": 0,
-        "transName": "Safe and Secure",
-        "transDocNo": "10294",
-        "transDocDate": FALLBACK_DEFAULTS.transDocDate, 
-        "vehNo": storageVehNo || FALLBACK_DEFAULTS.vehNo,
-        "transId": storageTransId || FALLBACK_DEFAULTS.transId,
-        
-        // 3. Supply Type
-        "subSplyTyp": "Supply",
-        "subSplyDes": "",
-        
-        // 4. E-Way Bill Place/Dispatch/Delivery Details
-        "pobewb": null, 
-        "paddr1": "Basket",
-        "paddr2": "JVRoad",
-        "ploc": "Nainital",
-        "pstcd": "18", 
-        "ppin": "781006",
-        "dNm": "ANV",
-        "daddr1": "MKJIO",
-        "daddr2": "KLIOOPPP",
-        "disloc": "Nainital",
-        "disstcd": "27",
-        "dispin": "400602"
-    };
-    // ---------------------------------------------------------------------------------
+  /* -------------------- API CALL -------------------- */
 
+  const generateEWB = async () => {
+    if (!config.body.irn?.trim()) {
+      alert("IRN field is empty.");
+      return;
+    }
 
-    /* -------------------- STATE INITIALIZATION -------------------- */
-  const [config, setConfig] = useState({
-    proxyBase: 'http://localhost:3001',
-    endpoint: '/proxy/irn/generateEwbByIrn',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      companyId: initialCompanyId || '',
-      'X-Auth-Token': initialAuthToken || '',
-      product: 'ONYX',
-    },
-    body: INITIAL_REQUEST_BODY,
-  });
+    setLoading(true);
+    setResponse(null);
 
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState(false);
+    try {
+      const res = await fetch(
+        `${config.proxyBase}${config.endpoint}`,
+        {
+          method: "PUT",
+          headers: {
+            ...config.headers,
+            companyId,
+            "X-Auth-Token": token,
+          },
+          body: JSON.stringify(config.body),
+        }
+      );
 
-    /* -------------------- AUTO-FILL/UPDATE EFFECT -------------------- */
-    useEffect(() => {
-        const sourceToken = savedResponse?.token || savedConfig?.token || "";
-        const sourceCompanyId = savedResponse?.companyId || savedConfig?.companyId || "";
-        
-        const sourceGstin = savedResponse?.companyUniqueCode || savedConfig?.companyUniqueCode || FALLBACK_DEFAULTS.userGstin;
-        const sourceIrn = savedResponse?.irn || savedConfig?.irn || FALLBACK_DEFAULTS.irn;
-         console.log("sourceIrn",savedConfig2?.irn)
-        setConfig(prev => ({
-            ...prev,
-            headers: {
-                ...prev.headers,
-                "X-Auth-Token": sourceToken,
-                companyId: sourceCompanyId,
-            },
-            body: {
-                ...prev.body,
-                userGstin: sourceGstin,
-                irn: sourceIrn, 
-            }
-        }));
-    }, [savedResponse, savedConfig]);
+      const data = await res.json();
 
+      const result = {
+        status: res.status,
+        body: data,
+        time: new Date().toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        }),
+      };
 
-    /* -------------------- API CALL FUNCTION -------------------- */
-  const generateEWB = async () => {
-    if (!config.body.irn || !config.body.irn.trim()) {
-      alert('IRN field is empty. This endpoint requires an IRN.');
-      return;
-    }
+      setResponse(result);
 
-    setLoading(true);
-    setResponse(null);
+      if (res.ok && data.status === "SUCCESS") {
+        alert("E-Way Bill Generated Successfully!");
 
-    try {
-      const res = await fetch(`${config.proxyBase}${config.endpoint}`, {
-        method: 'PUT',
-        headers: config.headers,
-        body: JSON.stringify(config.body),
-      });
+        localStorage.setItem(
+          STORAGE_KEY2,
+          JSON.stringify(data)
+        );
 
-      const data = await res.json();
-      const result = {
-        status: res.status,
-        body: data,
-        time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-      };
-      setResponse(result);
+        console.log("responseData", data);
+      }
+    } catch (err) {
+      setResponse({
+        error: err.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      if (res.ok && data.status === 'SUCCESS') {
-        alert('E-Way Bill Generated Successfully!');
-        // Save the successful response data back to the storage key
-localStorage.setItem(STORAGE_KEY2, JSON.stringify({data})); 
-console.log("responsedata",data)
-      }
-    } catch (err) {
-      setResponse({ error: err.message });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-    /* -------------------- RENDER -------------------- */
-  const isReady = config.headers.companyId && config.headers['X-Auth-Token'];
-  const payload = config.body;
-
-  const handleBodyChange = (key, value) => {
-    setConfig(prev => ({
-      ...prev,
-      body: { 
-            ...prev.body, 
-            [key]: value
-        },
-    }));
-  };
-
-  // Generate button style using the provided btnGenerate style (using primary color)
-  const generateBtnStyle = tableStyles.btnGenerate(loading, isReady);
-
-  // Helper to check if a response indicates success
-  const isSuccessResponse = response && (response.status === 200 || response.body.status === 'SUCCESS');
-
-  return (
+   return (
     <div style={tableStyles.container}>
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
         <h1 style={tableStyles.header}>Generate E-Way Bill by IRN</h1>
@@ -445,5 +461,9 @@ console.log("responsedata",data)
     </div>
   );
 };
+
+
+
+
 
 export default GenerateEwbByIrn;

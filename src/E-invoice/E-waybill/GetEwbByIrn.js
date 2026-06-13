@@ -1,153 +1,137 @@
 // GetEwbByIrn.js - Auto IRN + Auto GSTIN + Clean UI
 import React, { useState, useEffect } from 'react';
-
+import { useAuth } from "../../components/AuthContext";
 /* ---------- LocalStorage Keys ---------- */
 const STORAGE_KEY = 'iris_einvoice_shared_config';
 const LAST_IRN_KEY = 'iris_last_used_irn';
 const LAST_EWB_KEY = 'iris_last_ewb_details';
-
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 console.log("STORAGE_KEY",STORAGE_KEY)
 console.log("LAST_IRN_KEY",LAST_IRN_KEY)
 console.log("LAST_EWB_KEY",LAST_EWB_KEY)
-
+console.log("STORAGE_KEY2",STORAGE_KEY2)
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 const GetEwbByIrn = () => {
+    const { token, companyId, userGstin } = useAuth();
+/* ---------- Component State ---------- */
+const [config, setConfig] = useState({
+  proxyBase: "https://einvoice.fcssoftwares.com",
+  endpoint: "/api/gst/einvoice/ewb-by-irn",
+  headers: {
+    Accept: "application/json",
+    companyId: "",
+    "X-Auth-Token": "",
+    product: "ONYX",
+  },
+  params: {
+    irn: "",
+    userGstin: "",
+    updateFlag: true,
+  },
+});
 
-  /* ---------- Component State ---------- */
-  const [config, setConfig] = useState({
-    proxyBase: 'http://localhost:3001',
-    endpoint: '/proxy/irn/getEwbByIrn',
+const [response, setResponse] = useState(null);
+const [loading, setLoading] = useState(false);
+
+/* ------------------------------------------------------------
+   AUTO-POPULATE: IRN + Auth Details
+------------------------------------------------------------ */
+useEffect(() => {
+  let irnValue = "";
+  let userGstin="";
+
+  const lastIrn = localStorage.getItem(LAST_IRN_KEY);
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
+
+  if (lastIrn) {
+    try {
+      irnValue = JSON.parse(lastIrn)?.irn || "";
+    } catch {}
+  }
+
+  setConfig((prev) => ({
+    ...prev,
     headers: {
-      Accept: 'application/json',
-      companyId: '',
-      'X-Auth-Token': '',
-      product: 'ONYX',
+      ...prev.headers,
+      companyId: companyId || "",
+      "X-Auth-Token": token || "",
     },
     params: {
-      irn: '',
-      userGstin: '',
-      updateFlag: true,
+      ...prev.params,
+      irn: irnValue,
+      userGstin:  savedConfig ?.userGstin || "",
     },
-  });
+  }));
+}, [token, companyId, userGstin]);
 
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState(false);
-  
+/* ------------------------------------------------------------
+   FETCH E-WAY BILL BY IRN
+------------------------------------------------------------ */
+const fetchEWB = async () => {
+  if (!config.params.irn.trim()) {
+    alert("Please enter IRN");
+    return;
+  }
 
-  /* ------------------------------------------------------------
-      AUTO-POPULATE: IRN, userGstin, companyId, token
-     ------------------------------------------------------------ */
-  useEffect(() => {
-    let irnValue = '';
-    let userGstinValue = '';
-    let companyIdValue = '';
-    let tokenValue = '';
+  setLoading(true);
+  setResponse(null);
 
-    /* 1️⃣ Load latest IRN */
-    const lastIrn = localStorage.getItem(LAST_IRN_KEY);
-    if (lastIrn) {
-      try {
-        const parsed = JSON.parse(lastIrn);
-        if (parsed?.irn) irnValue = parsed.irn;
-      } catch {}
-    }
+  const queryString = new URLSearchParams({
+    irn: config.params.irn,
+    userGstin: config.params.userGstin,
+    updateFlag: config.params.updateFlag.toString(),
+  }).toString();
 
-    /* 2️⃣ Load IRN from last generated EWB if needed */
-    const lastEwb = localStorage.getItem(LAST_EWB_KEY);
-    if (!irnValue && lastEwb) {
-      try {
-        const parsed = JSON.parse(lastEwb);
-        if (parsed?.irn) irnValue = parsed.irn;
-      } catch {}
-    }
+  const fullUrl = `${config.proxyBase}${config.endpoint}?${queryString}`;
 
-    /* 3️⃣ Load login shared config */
-    const shared = localStorage.getItem(STORAGE_KEY);
-    if (shared) {
-      try {
-        const parsed = JSON.parse(shared);
-        userGstinValue = parsed.companyUniqueCode || '';
-        companyIdValue = parsed.companyId || '';
-        tokenValue = parsed.token || '';
-      } catch {}
-    }
-
-    /* 4️⃣ Update state */
-    setConfig(prev => ({
-      ...prev,
+  try {
+    const res = await fetch(fullUrl, {
+      method: "GET",
       headers: {
-        ...prev.headers,
-        companyId: companyIdValue,
-        'X-Auth-Token': tokenValue,
+        ...config.headers,
+        companyId,
+        "X-Auth-Token": token,
       },
-      params: {
-        ...prev.params,
-        irn: irnValue,
-        userGstin: userGstinValue,
-      },
-    }));
-  }, []);
+    });
 
-  /* ------------------------------------------------------------
-      FETCH E-WAY BILL BY IRN
-     ------------------------------------------------------------ */
-  const fetchEWB = async () => {
-    if (!config.params.irn.trim()) {
-      alert('Please enter IRN');
-      return;
+    const data = await res.json();
+
+    const result = {
+      url: fullUrl,
+      status: res.status,
+      body: data,
+      time: new Date().toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+      }),
+    };
+
+    setResponse(result);
+
+    /* Save to localStorage */
+    if (res.ok && data.status === "SUCCESS") {
+      localStorage.setItem(
+        LAST_EWB_KEY,
+        JSON.stringify({
+          irn: config.params.irn,
+          EwbNo: data.response?.EwbNo,
+          EwbDt: data.response?.EwbDt,
+          EwbValidTill: data.response?.EwbValidTill,
+        })
+      );
+
+      alert("E-Way Bill fetched and saved!");
     }
+  } catch (err) {
+    setResponse({
+      error: err.message,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
-    setLoading(true);
-    setResponse(null);
-
-    const queryString = new URLSearchParams({
-      irn: config.params.irn,
-      userGstin: config.params.userGstin,
-      updateFlag: config.params.updateFlag.toString(),
-    }).toString();
-
-    const fullUrl = `${config.proxyBase}${config.endpoint}?${queryString}`;
-
-    try {
-      const res = await fetch(fullUrl, {
-        method: 'GET',
-        headers: config.headers,
-      });
-
-      const data = await res.json();
-
-      const result = {
-        url: fullUrl,
-        status: res.status,
-        body: data,
-        time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-      };
-
-      setResponse(result);
-
-      /* Save to localStorage */
-      if (res.ok && data.status === 'SUCCESS') {
-        localStorage.setItem(
-          LAST_EWB_KEY,
-          JSON.stringify({
-            irn: config.params.irn,
-            EwbNo: data.response.EwbNo,
-            EwbDt: data.response.EwbDt,
-            EwbValidTill: data.response.EwbValidTill,
-          })
-        );
-        alert('E-Way Bill fetched and saved!');
-      }
-    } catch (err) {
-      setResponse({ error: err.message });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const isReady =
-    config.headers.companyId &&
-    config.headers['X-Auth-Token'] &&
-    config.params.irn;
+/* ---------- Auth Status ---------- */
+const isReady = !!(companyId && token && config.params.irn);
 
   /* ------------------------------------------------------------
       UI Rendering
