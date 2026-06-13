@@ -108,58 +108,29 @@ export const AuthProvider = ({
      LOGIN
   ========================== */
 
-  const login = (
-    loginData,
-    productType
-  ) => {
-    const storageKey =
-      productType === "EINVOICE"
-        ? EINVOICE_KEY
-        : EWAY_KEY;
+const login = (loginData, productType) => {
+  const storageKey =
+    productType === "EINVOICE"
+      ? EINVOICE_KEY
+      : EWAY_KEY;
 
-    clearSession();
-
-    const payload = {
-      ...loginData,
-      product: productType,
-      loginTime: Date.now(),
-    };
-
-    sessionStorage.setItem(
-      storageKey,
-      JSON.stringify(payload)
-    );
-
-    setToken(loginData.token);
-
-    setCompanyId(
-      loginData.companyId
-    );
-
-    setUserGstin(
-      loginData.userGstin
-    );
-
-    setLastIrn(
-      loginData.irn || null
-    );
-
-    setLastDocNo(
-      loginData.docNo || null
-    );
-
-    setLastDocDate(
-      loginData.docDate || null
-    );
-
-    setLastDocType(
-      loginData.docType || null
-    );
-
-    setProduct(productType);
-
-    setIsLoggedIn(true);
+  const payload = {
+    ...loginData,
+    product: productType,
+    loginTime: Date.now(),
   };
+
+  sessionStorage.setItem(
+    storageKey,
+    JSON.stringify(payload)
+  );
+
+  setToken(loginData.token);
+  setCompanyId(loginData.companyId);
+  setUserGstin(loginData.userGstin);
+  setProduct(productType);
+  setIsLoggedIn(true);
+};
 
   /* ==========================
      RESTORE SESSION

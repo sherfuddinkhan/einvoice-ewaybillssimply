@@ -57,12 +57,12 @@ const EInvoiceLoginPage = () => {
         login(loginData, "EINVOICE");
 
         // redirect
-        navigate(
-          selectedMode === "PROFORMA"
-            ? "/einvoice/einvoice-pdisplay"
-            : "/einvoice/einvoice-display",
-          { replace: true }
-        );
+       console.log("➡️ Redirecting using window.location");
+
+window.location.href =
+  selectedMode === "PROFORMA"
+    ? "/einvoice/einvoice-pdisplay"
+    : "/einvoice/einvoice-display";
       }
     } catch (error) {
       setResponse({
