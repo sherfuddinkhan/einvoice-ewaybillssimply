@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "../../components/AuthContext";
+import { useLocation } from "react-router-dom";
 // Define the standard colors object (Required for tableStyles)
 const colors = {
   primary: "#1A73E8",
@@ -89,60 +90,95 @@ const FALLBACK_DEFAULTS = {
     transDocDate: "14-11-2025", 
 };
 const GenerateEwbByIrn = () => {
+ const location = useLocation();
+
+const invoiceData =
+  location.state?.invoiceData ||
+  JSON.parse(localStorage.getItem("selectedInvoice") || "{}");
+const inv = invoiceData;
   const { token, companyId, userGstin } = useAuth();
 
-  /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
+  console.log("Received Invoice:", inv);
+  console.log("GSTIN:", inv?.gstin);
+  console.log("Buyer:", inv?.clients || inv?.buyerClients);
+  console.log("Products:", inv?.invoiceProductDetails);
+
+  // ================= LOCAL STORAGE =================
   const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
   const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
 
-  console.log("savedConfig", savedConfig);
-  console.log("savedResponse", savedResponse);
-  console.log("savedConfig2", savedConfig2);
-
-  // Storage values
-  const storageIrn = savedConfig2?.irn || "";
+  console.log("savedConfig",savedConfig);
+  const storageIrn = savedConfig?.irn || "";
   const storageVehNo = savedResponse?.vehNo || savedConfig?.vehNo || "";
   const storageTransId = savedResponse?.transId || savedConfig?.transId || "";
 
-  /* -------------------- CONSOLIDATED REQUEST BODY -------------------- */
-  const INITIAL_REQUEST_BODY = {
-    irn: storageIrn || FALLBACK_DEFAULTS.irn,
-    userGstin: userGstin || FALLBACK_DEFAULTS.userGstin,
+  // ================= DATE FORMAT =================
+  const formatDate = (dateInput) => {
+    if (!dateInput) return "";
 
-    // Transport Details
-    transMode: "ROAD",
-    vehTyp: "R",
-    transDist: 0,
-    transName: "Safe and Secure",
-    transDocNo: "10294",
-    transDocDate: FALLBACK_DEFAULTS.transDocDate,
-    vehNo: storageVehNo || FALLBACK_DEFAULTS.vehNo,
-    transId: storageTransId || FALLBACK_DEFAULTS.transId,
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return "";
 
-    // Supply Details
-    subSplyTyp: "Supply",
-    subSplyDes: "",
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
 
-    // Dispatch Details
-    pobewb: null,
-    paddr1: "Basket",
-    paddr2: "JVRoad",
-    ploc: "Nainital",
-    pstcd: "18",
-    ppin: "781006",
-
-    // Delivery Details
-    dNm: "ANV",
-    daddr1: "MKJIO",
-    daddr2: "KLIOOPPP",
-    disloc: "Nainital",
-    disstcd: "27",
-    dispin: "400602",
+    return `${dd}-${mm}-${yyyy}`;
   };
 
-  /* -------------------- STATE -------------------- */
+  
+const selectedTrnTyp = inv?.transactionType || "REG";
+  // ================= SELLER / BUYER =================
+  const sellerGstin = inv?.gstin || userGstin || FALLBACK_DEFAULTS.userGstin;
+  const sellerStateCode = sellerGstin?.substring(0, 2) || "00";
 
+  const party = inv?.clients || inv?.buyerClients || {};
+
+  const buyerGstin = party?.gstin || "URP";
+  const buyerStateCode =
+    buyerGstin !== "URP" ? buyerGstin.substring(0, 2) : "02";
+
+  // ================= REQUEST BODY =================
+  const INITIAL_REQUEST_BODY = {
+    // BASIC
+    irn: storageIrn || inv?.irn || FALLBACK_DEFAULTS.irn,
+    userGstin: sellerGstin,
+
+    // TRANSPORT
+    vehTyp: "R",
+    transDist: Number(inv?.transDist || 0),
+    transDocNo: inv?.transDocNo || `DOC${inv?.refID || "001"}`,
+    transDocDate: formatDate(inv?.dateofIssue || new Date()),
+    vehNo: inv?.vehicleNo || FALLBACK_DEFAULTS.vehNo,
+    transId: inv?.transId ?? FALLBACK_DEFAULTS.transId,
+    transName: inv?.transName ?? "Safe and Secure",
+    transMode: inv?.transMode ?? "Road",
+
+    // SUPPLY
+    subSplyTyp: "Supply",
+    subSplyDes: "",
+// ================= SHIP TO =================
+    togstin: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.gstin || buyerGstin) : null,
+    totrdNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || "TEST SHIP") : null,
+    tolglNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || "TEST SHIP") : null,
+    tobnm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? "TEST SHIP" : null,
+    toloc: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.officeAddress || "MUMBAI") : null,
+    tostcd: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? buyerStateCode : null,
+    topin: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.poBox || "174001") : null,
+
+    // ================= DISPATCH =================
+    dgstin: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? sellerGstin : null,
+    dtrdNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.companyTallyName || "TEST DISP") : null,
+    dlglNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.nameEng || "TEST DISP") : null,
+    dbnm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? "TEST DISP" : null,
+    dflno: null,
+    dloc: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.poBox || "BANGALOR32") : null,
+    ddst: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? "BENGALURU" : null,
+    dstcd: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? sellerStateCode : null,
+    dpin: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.pinCode || "192233") : null,
+  };
+
+  // ================= STATE =================
   const [config, setConfig] = useState({
     proxyBase: "https://einvoice.fcssoftwares.com",
     endpoint: "/api/gst/einvoice/generate-ewb",
@@ -159,8 +195,7 @@ const GenerateEwbByIrn = () => {
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  /* -------------------- AUTO UPDATE -------------------- */
-
+  // ================= AUTH SYNC =================
   useEffect(() => {
     setConfig((prev) => ({
       ...prev,
@@ -177,8 +212,7 @@ const GenerateEwbByIrn = () => {
     }));
   }, [token, companyId, userGstin]);
 
-  /* -------------------- HELPERS -------------------- */
-
+  // ================= HELPERS =================
   const handleBodyChange = (key, value) => {
     setConfig((prev) => ({
       ...prev,
@@ -188,26 +222,15 @@ const GenerateEwbByIrn = () => {
       },
     }));
   };
-  
-// Check whether authentication is available
-const isReady = !!(companyId && token);
 
-// Shortcut for request body
-const payload = config.body;
+  const isReady = !!(companyId && token);
+  const payload = config.body;
 
-// Generate button style
-const generateBtnStyle = tableStyles.btnGenerate(loading, isReady);
+ const isSuccessResponse =
+  response?.status === 200 ||
+  response?.body?.status === "SUCCESS";
 
-// Check whether API response is successful
-const isSuccessResponse =
-  response &&
-  (response.status === 200 ||
-    response.body?.status === "SUCCESS");
-
-
-
-  /* -------------------- API CALL -------------------- */
-
+  // ================= API CALL =================
   const generateEWB = async () => {
     if (!config.body.irn?.trim()) {
       alert("IRN field is empty.");
@@ -246,22 +269,27 @@ const isSuccessResponse =
       if (res.ok && data.status === "SUCCESS") {
         alert("E-Way Bill Generated Successfully!");
 
-        localStorage.setItem(
-          STORAGE_KEY2,
-          JSON.stringify(data)
-        );
-
-        console.log("responseData", data);
+        localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
       }
     } catch (err) {
-      setResponse({
-        error: err.message,
-      });
+      setResponse({ error: err.message });
     } finally {
       setLoading(false);
     }
   };
 
+  const generateBtnStyle = tableStyles?.btnGenerate
+  ? tableStyles.btnGenerate(loading, isReady)
+  : {
+      background: isReady ? "#1976d2" : "#ccc",
+      color: "#fff",
+      border: "none",
+      padding: "10px 18px",
+      borderRadius: "6px",
+      cursor: isReady ? "pointer" : "not-allowed",
+      fontWeight: "bold",
+    };
+  // ================= UI =================
    return (
     <div style={tableStyles.container}>
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
@@ -448,20 +476,30 @@ const isSuccessResponse =
 
         {/* --- API Response --- */}
         {response && (
-            <div>
-                <h3 style={{ color: isSuccessResponse ? colors.success : colors.danger, marginBottom: "16px", fontSize: "18px" }}>
-                    API Response (Status: {response.status})
-                </h3>
-                <pre style={tableStyles.responseBox(response.body.status || response.status)}>
-                    {JSON.stringify(response.body, null, 2)}
-                </pre>
-            </div>
-        )}
+  <div>
+    <h3
+      style={{
+        color: isSuccessResponse ? colors.success : colors.danger,
+        marginBottom: "16px",
+        fontSize: "18px",
+      }}
+    >
+      API Response (Status: {response?.status})
+    </h3>
+
+    <pre
+      style={tableStyles.responseBox(
+        response?.body?.status || response?.status
+      )}
+    >
+      {JSON.stringify(response?.body ?? response, null, 2)}
+    </pre>
+  </div>
+)}
       </div>
     </div>
   );
 };
-
 
 
 

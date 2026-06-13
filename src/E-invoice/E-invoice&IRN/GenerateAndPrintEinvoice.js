@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "../../components/AuthContext";
 import { useLocation } from "react-router-dom";
+import GenerateEwbByirn from "../E-waybill/GenerateEwbByIrn";
 
 const colors = {
   primary: "#1A73E8",
@@ -198,22 +199,45 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
 );
 
 const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") => {
-  const inv = invoiceData;
-  const selectedTrnTyp = inv?.transactionType || "REG";
+ const inv = invoiceData;
 
-  const sellerGstin = inv?.companyBranches?.gstin || "01AAACI9260R002";
-  const sellerStateCode = sellerGstin.substring(0, 2);
+console.log("📦 FULL INVOICE:", inv);
 
-  let buyerGstin = inv?.buyerClients?.gstin || "";
-  if (selectedCatg === "B2B" && (!buyerGstin || buyerGstin === "URP")) {
-    buyerGstin = "02AAACI9260R002";
-  } else if (selectedCatg === "B2C") {
-    buyerGstin = "URP";
-  }
-  const buyerStateCode = buyerGstin !== "URP" ? buyerGstin.substring(0, 2) : "02";
+const selectedTrnTyp = inv?.transactionType || "REG";
+console.log("🚚 Transaction Type:", selectedTrnTyp);
 
-  const isInterState = sellerStateCode !== buyerStateCode;
-  const productList = inv?.invoiceProductDetails?.length > 0 ? inv.invoiceProductDetails : [];
+const sellerGstin =
+  inv?.companyBranches?.gstin || "01AAACI9260R002";
+console.log("🏭 Seller GSTIN:", sellerGstin);
+
+const sellerStateCode = sellerGstin.substring(0, 2);
+console.log("🏭 Seller State Code:", sellerStateCode);
+
+let buyerGstin = inv?.buyerClients?.gstin || "";
+console.log("🧾 Raw Buyer GSTIN:", buyerGstin);
+
+if (selectedCatg === "B2B" && (!buyerGstin || buyerGstin === "URP")) {
+  buyerGstin = "02AAACI9260R002";
+  console.log("🔁 B2B fallback Buyer GSTIN applied:", buyerGstin);
+} else if (selectedCatg === "B2C") {
+  buyerGstin = "URP";
+  console.log("🔁 B2C Buyer GSTIN set to URP");
+}
+
+const buyerStateCode =
+  buyerGstin !== "URP" ? buyerGstin.substring(0, 2) : "02";
+console.log("🏢 Buyer State Code:", buyerStateCode);
+
+const isInterState = sellerStateCode !== buyerStateCode;
+console.log("🌐 Is InterState:", isInterState);
+
+const productList =
+  inv?.invoiceProductDetails?.length > 0
+    ? inv.invoiceProductDetails
+    : [];
+
+console.log("📦 Product List Count:", productList.length);
+console.log("📦 Product List:", productList);
 
   const totTxVal = Number(productList.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0).toFixed(2));
   const totIgst = Number(productList.reduce((sum, item) => sum + Number(item.igstAmount || 0), 0).toFixed(2));
@@ -264,13 +288,13 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") =>
     // ================= BUYER =================
     bgstin: buyerGstin,
     btrdNm: inv?.buyerClients?.companyName || "TEST ENTERPRISES",
-    blglNm: inv?.buyerClients?.companyName || "TEST PRODUCT",
+    blglNm: inv?.buyerClients?.companyName || "TEST PRODUCT01",
     bbnm: inv?.buyerClients?.companyName || "ABCD12345",
     bflno: "abc",
     bloc: inv?.buyerClients?.officeAddress || "Jijamat",
     bdst: inv?.buyerClients?.masterStateNames?.stateName || "BANGALORE",
     bstcd: buyerStateCode,
-    bpin: inv?.buyerClients?.poBox || "174001",
+    bpin: inv?.buyerClients?.poBox || "174071",
     bph: inv?.buyerClients?.mobile || "989898111111",
     bem: inv?.buyerClients?.email || "abc123@gmail.com",
 
@@ -359,6 +383,8 @@ const { setLastInvoice } = useAuth();
   const receivedData = location.state || {};
   const invoiceData = receivedData.invoiceData || {};
   const dynamicId = receivedData.id || invoiceData.pid;
+  console.log("invoiceData",invoiceData);
+  console.log("dynamicId ",dynamicId);
 
   const [payload, setPayload] = useState({ itemList: [] });
   const initializedRef = useRef(false);
