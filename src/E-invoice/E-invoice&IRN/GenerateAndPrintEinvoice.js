@@ -340,7 +340,7 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") =>
     invRefPreDtls: [{ oinum: null, oidt: null, othRefNo: null }],
     invRefContDtls: [{ raref: null, radt: null, tendref: null, contref: null, extref: null, projref: null, poref: null, porefdt: null }],
     genIrn: true,
-    genewb: "Y",
+    genewb: "N",
     signedDataReq: true
   };
 };

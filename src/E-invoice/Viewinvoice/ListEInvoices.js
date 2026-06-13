@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-
+import { useAuth } from "../../components/AuthContext";
 /* ----------------------------
     LocalStorage Keys
 ---------------------------- */
@@ -116,35 +116,40 @@ const ListEInvoices = () => {
     /* -------------------------
         Auto-load headers, payload, and Doc Map
     ------------------------- */
-    useEffect(() => {
-        const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
-        const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-        
-        if (!localStorage.getItem(EINV_DOC_KEY)) {
-            updateLocalStorageDocMap("1s4345", "2025-12-20 20:57:36");
-            updateLocalStorageDocMap("987654", "2024-12-20 10:00:00");
-            updateLocalStorageDocMap("111111", "2025-11-15 05:00:00");
-        }
+  
+const { token, companyId, userGstin } = useAuth();
 
-        try {
-            const loadedDocMap = JSON.parse(localStorage.getItem(EINV_DOC_KEY) || "[]");
-            setDocMap(loadedDocMap);
-            console.log(`Loaded ${loadedDocMap.length} documents from ${EINV_DOC_KEY}.`);
-        } catch (e) {
-            console.error("Error loading document map:", e);
-        }
 
-        setHeaders((prev) => ({
-            ...prev,
-            companyId: savedConfig.companyId || "24",
-            "X-Auth-Token": savedResponse.token || "",
-        }));
 
-        setPayload((prev) => ({
-            ...prev,
-            companyUniqueCode: savedConfig.companyUniqueCode || "01AAACI9260R002",
-        }));
-    }, []);
+useEffect(() => {
+  // Initialize sample document map if it doesn't exist
+  if (!localStorage.getItem(EINV_DOC_KEY)) {
+    updateLocalStorageDocMap("1s4345", "2025-12-20 20:57:36");
+    updateLocalStorageDocMap("987654", "2024-12-20 10:00:00");
+    updateLocalStorageDocMap("111111", "2025-11-15 05:00:00");
+  }
+
+  // Load document map
+  try {
+    const loadedDocMap = JSON.parse(
+      localStorage.getItem(EINV_DOC_KEY) || "[]"
+    );
+
+    setDocMap(loadedDocMap);
+
+    console.log(
+      `Loaded ${loadedDocMap.length} documents from ${EINV_DOC_KEY}.`
+    );
+  } catch (e) {
+    console.error("Error loading document map:", e);
+  }
+
+  // Set company GSTIN from Auth
+  setPayload((prev) => ({
+    ...prev,
+    companyUniqueCode: userGstin || "",
+  }));
+}, [userGstin]);
 
     /* -------------------------
         Helpers (Update payload and constraints)
@@ -188,35 +193,56 @@ const ListEInvoices = () => {
     /* -------------------------
         API Call (Converts YYYY-MM-DD state to DD/MM/YYYY for API)
     ------------------------- */
-    const fetchInvoices = async () => {
-        if (!payload.companyUniqueCode) { 
-            return alert("Company Unique Code is mandatory");
-        }
+   
+const fetchInvoices = async () => {
+  if (!userGstin) {
+    alert("Company GSTIN is mandatory");
+    return;
+  }
 
-        setLoading(true);
-        setResponse(null);
+  if (!token || !companyId) {
+    alert("Authentication information is missing");
+    return;
+  }
 
-        const finalPayload = { ...payload };
-        finalPayload.fromDt = convertYMDToDMY(payload.fromDt);
-        finalPayload.toDt = convertYMDToDMY(payload.toDt);
+  setLoading(true);
+  setResponse(null);
 
-        console.log("Sending Payload:", finalPayload); 
+  const finalPayload = {
+    ...payload,
+    companyUniqueCode: userGstin,
+    fromDt: convertYMDToDMY(payload.fromDt),
+    toDt: convertYMDToDMY(payload.toDt),
+  };
 
-        try {
-            const res = await fetch("http://localhost:3001/proxy/einvoice/view", {
-                method: "POST",
-                headers,
-                body: JSON.stringify(finalPayload),
-            });
+  console.log("Sending Payload:", finalPayload);
 
-            const data = await res.json();
-            setResponse(data);
-        } catch (err) {
-            setResponse({ error: err.message });
-        } finally {
-            setLoading(false);
-        }
-    };
+  try {
+    const res = await fetch("https://einvoice.fcssoftwares.com/api/gst/einvoice/view", {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        companyId,
+        "X-Auth-Token": token,
+        product: "ONYX",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(finalPayload),
+    });
+
+    const data = await res.json();
+
+    setResponse(data);
+  } catch (err) {
+    setResponse({
+      error: err.message,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
     /* -------------------------
         UI (Unchanged)

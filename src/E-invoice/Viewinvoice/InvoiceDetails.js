@@ -1,90 +1,44 @@
-// InvoiceDetails.jsx
+
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../../components/AuthContext";
 
-/* ----------------------------
-   LocalStorage Keys
----------------------------- */
-const STORAGE_KEY = "iris_einvoice_response";  
-const STORAGE_KEY1 = "iris_einvoice_shared_config";
-const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
-
-    /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
-  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
-  const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
-    console.log("savedConfig",savedConfig)
-    console.log("savedResponse",savedResponse)
-    console.log("savedConfig2",savedConfig2)
-
-/* ----------------------------
-   Component
----------------------------- */
 const InvoiceDetails = () => {
-  /* ----------------------------
-     State
-  ---------------------------- */
+  const { token, companyId } = useAuth();
+
   const [einvId, setEinvId] = useState("");
-
-  const [headers, setHeaders] = useState({
-    accept: "application/json",
-    companyId: "",
-    "X-Auth-Token": "",
-    product: "ONYX",
-  });
-
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 
-  /* ------------------------------------------------
-     useEffect – Auto populate headers & einvId
-  ------------------------------------------------ */
+  // Auto-fill last generated E-Invoice ID
   useEffect(() => {
-    // ---- Load auth details ----
-   
-    /* -------------------- LOCAL STORAGE DATA FETCH -------------------- */
-  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
-  const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
-    console.log("savedConfig",savedConfig)
-    console.log("savedResponse",savedResponse)
-    console.log("savedConfig2",savedConfig2)
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem("iris_einvoice_irn_ewabill") || "{}"
+      );
 
-    setHeaders((prev) => ({
-      ...prev,
-      companyId:
-        savedConfig.companyId ||
-        savedResponse .companyId ||
-        "",
-      "X-Auth-Token":
-        savedConfig.token ||
-        savedResponse.token ||
-        "",
-    }));
+      const id = saved?.response?.id;
 
-  const autoEinvId = savedConfig2?.response?.id|| savedConfig ?.lastGeneratedResponse?.id || "";
-    if (autoEinvId) {
-      setEinvId(String(autoEinvId));
+      if (id) {
+        setEinvId(String(id));
+      }
+    } catch (err) {
+      console.error("Failed to load saved E-Invoice ID:", err);
     }
   }, []);
 
-  /* ----------------------------
-     Helpers
-  ---------------------------- */
-  const updateHeader = (key, value) => {
-    setHeaders((prev) => ({ ...prev, [key]: value }));
+  const headers = {
+    accept: "application/json",
+    companyId,
+    "X-Auth-Token": token,
+    product: "ONYX",
   };
 
   const isReady =
-    headers.companyId &&
-    headers["X-Auth-Token"] &&
-    headers.product &&
-    einvId;
+    !!companyId &&
+    !!token &&
+    !!headers.product &&
+    !!einvId.trim();
 
-  /* ------------------------------------------------
-     API – Fetch Invoice Details (ONYX)
-     Backend calls:
-     https://stage-api.irisgst.com/irisgst/onyx/einvoice/details
-  ------------------------------------------------ */
   const fetchInvoiceDetails = async () => {
     if (!isReady) {
       alert("Missing required headers or einvId");
@@ -96,7 +50,7 @@ const InvoiceDetails = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:3001/proxy/onyx/einvoice/details?einvId=${einvId}`,
+        `https://einvoice.fcssoftwares.com/api/gst/einvoice/details?einvId=${einvId.trim()}`,
         {
           method: "GET",
           headers,
@@ -113,15 +67,14 @@ const InvoiceDetails = () => {
         }),
       });
     } catch (err) {
-      setResponse({ error: err.message });
+      setResponse({
+        error: err.message,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  /* ----------------------------
-     UI
-  ---------------------------- */
   return (
     <div
       style={{
@@ -131,7 +84,7 @@ const InvoiceDetails = () => {
         fontFamily: "Segoe UI, Arial",
       }}
     >
-      <h1 style={{ color: "#1b5e20" }}>
+      <h1 style={{ color: "#1b5e20", textAlign: "center" }}>
         E-Invoice Details (ONYX)
       </h1>
 
@@ -145,30 +98,76 @@ const InvoiceDetails = () => {
           boxShadow: "0 10px 35px rgba(0,0,0,0.15)",
         }}
       >
-        {/* ---------------- Headers ---------------- */}
+        {/* Headers */}
         <h2 style={{ borderBottom: "3px solid #66bb6a" }}>
           Request Headers
         </h2>
 
-        {Object.entries(headers).map(([key, value]) => (
-          <div key={key} style={{ marginBottom: "14px" }}>
-            <strong>{key}</strong>
-            <input
-              value={value}
-              onChange={(e) => updateHeader(key, e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px",
-                marginTop: "6px",
-                borderRadius: "6px",
-                border: "2px solid #66bb6a",
-                fontFamily: "monospace",
-              }}
-            />
-          </div>
-        ))}
+        <div style={{ marginBottom: "14px" }}>
+          <strong>accept</strong>
+          <input
+            value="application/json"
+            readOnly
+            style={{
+              width: "100%",
+              padding: "10px",
+              marginTop: "6px",
+              borderRadius: "6px",
+              border: "2px solid #66bb6a",
+              fontFamily: "monospace",
+            }}
+          />
+        </div>
 
-        {/* ---------------- einvId ---------------- */}
+        <div style={{ marginBottom: "14px" }}>
+          <strong>companyId</strong>
+          <input
+            value={companyId || ""}
+            readOnly
+            style={{
+              width: "100%",
+              padding: "10px",
+              marginTop: "6px",
+              borderRadius: "6px",
+              border: "2px solid #66bb6a",
+              fontFamily: "monospace",
+            }}
+          />
+        </div>
+
+        <div style={{ marginBottom: "14px" }}>
+          <strong>X-Auth-Token</strong>
+          <input
+            value={token || ""}
+            readOnly
+            style={{
+              width: "100%",
+              padding: "10px",
+              marginTop: "6px",
+              borderRadius: "6px",
+              border: "2px solid #66bb6a",
+              fontFamily: "monospace",
+            }}
+          />
+        </div>
+
+        <div style={{ marginBottom: "14px" }}>
+          <strong>product</strong>
+          <input
+            value="ONYX"
+            readOnly
+            style={{
+              width: "100%",
+              padding: "10px",
+              marginTop: "6px",
+              borderRadius: "6px",
+              border: "2px solid #66bb6a",
+              fontFamily: "monospace",
+            }}
+          />
+        </div>
+
+        {/* E-Invoice ID */}
         <h2
           style={{
             marginTop: "30px",
@@ -179,6 +178,7 @@ const InvoiceDetails = () => {
         </h2>
 
         <strong>einvId</strong>
+
         <input
           value={einvId}
           onChange={(e) => setEinvId(e.target.value)}
@@ -190,6 +190,7 @@ const InvoiceDetails = () => {
             borderRadius: "6px",
             border: "2px solid #66bb6a",
             fontFamily: "monospace",
+            boxSizing: "border-box",
           }}
         />
 
@@ -204,6 +205,7 @@ const InvoiceDetails = () => {
             color: "#fff",
             fontSize: "20px",
             fontWeight: "bold",
+            border: "none",
             borderRadius: "12px",
             cursor: loading ? "not-allowed" : "pointer",
           }}
@@ -212,12 +214,17 @@ const InvoiceDetails = () => {
         </button>
       </div>
 
-      {/* ---------------- Response ---------------- */}
       {response && (
-        <div style={{ marginTop: "40px" }}>
-          <h2>
-            Response ({response.time})
-          </h2>
+        <div
+          style={{
+            marginTop: "40px",
+            maxWidth: "900px",
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        >
+          <h2>Response ({response.time})</h2>
+
           <pre
             style={{
               background: "#1e1e1e",
@@ -227,7 +234,7 @@ const InvoiceDetails = () => {
               overflow: "auto",
             }}
           >
-{JSON.stringify(response.body || response, null, 2)}
+            {JSON.stringify(response.body || response, null, 2)}
           </pre>
         </div>
       )}
