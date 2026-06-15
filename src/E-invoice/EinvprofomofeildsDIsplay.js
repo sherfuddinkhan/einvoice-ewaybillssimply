@@ -66,7 +66,7 @@ const response = await axios.get(
       // EXTRACT INVOICE DATA
       // ======================================================
 
-      const invoices = response?.data?.data;
+      const invoices = response?.data;
 
       console.log("Invoices:", invoices);
 

@@ -23,11 +23,17 @@ const EwayfeildsDisplay = () => {
         "http://localhost:3001/api/invoices"
       );
 
-      if (Array.isArray(response.data)) {
-        setInvoiceData(response.data);
-      } else {
-        setInvoiceData([]);
-      }
+        console.log("Full API Response:", response);
+console.log("Response Data:", response.data);
+        console.log("array response",Array.isArray(response.data));
+console.log("array response",response.data);
+    if (Array.isArray(response.data)) {
+  setInvoiceData(response.data);
+} else if (response.data) {
+  setInvoiceData([response.data]);   // <-- IMPORTANT
+} else {
+  setInvoiceData([]);
+}
 
     } catch (error) {
       console.log("Fetch Error:", error);

@@ -379,7 +379,7 @@ const { setLastInvoice } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("B2B");
   const [lastGeneratedId, setLastGeneratedId] = useState(null);
   const location = useLocation();
- 
+  const [manualInvoiceId, setManualInvoiceId] = useState("");
   const receivedData = location.state || {};
   const invoiceData = receivedData.invoiceData || {};
   const dynamicId = receivedData.id || invoiceData.pid;
@@ -740,18 +740,19 @@ const getAuthData = () => {
   /// downloading the pdf of invoice with respect to last generated id of invoice
  const downloadPDF = async () => {
   // If no invoice was generated yet, use the local form ID payload as sandbox template baseline
-  const activeInvoiceId =
-    lastGeneratedId ||
-    response?.response?.id ||
-    response?.response?.Id ||
-    payload.id ||
-    "1001";
+const finalInvoiceId =
+  manualInvoiceId.trim() ||
+  lastGeneratedId ||
+  response?.response?.id ||
+  response?.response?.Id ||
+  payload?.id ||
+  "1001";
 
   try {
     setPdfMessage("Processing PDF download...");
 
     // API URL
-    const url = `https://einvoice.fcssoftwares.com/api/gst/einvoice/print?id=${activeInvoiceId}`;
+    const url = `https://einvoice.fcssoftwares.com/api/gst/einvoice/print?id=${finalInvoiceId}`;
 
     const resp = await axios.get(url, {
       headers: {
@@ -769,7 +770,7 @@ const getAuthData = () => {
 
     const link = document.createElement("a");
     link.href = blobUrl;
-    link.setAttribute("download", `EInvoice_${activeInvoiceId}.pdf`);
+    link.setAttribute("download", `EInvoice_${finalInvoiceId}.pdf`);
 
     document.body.appendChild(link);
     link.click();

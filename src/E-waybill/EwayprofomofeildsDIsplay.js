@@ -20,14 +20,20 @@ const EwayprofomofeildsDIsplay = () => {
       setLoading(true);
 
       const response = await axios.get(
-        "http://localhost:3001/api/invoices"
+        "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/23/invoicecumchallan"
       );
-
-      if (Array.isArray(response.data)) {
-        setInvoiceData(response.data);
-      } else {
-        setInvoiceData([]);
-      }
+      
+      console.log("Full API Response:", response);
+console.log("Response Data:", response.data);
+        console.log("array response",Array.isArray(response.data));
+console.log("array response",response.data);
+    if (Array.isArray(response.data)) {
+  setInvoiceData(response.data);
+} else if (response.data) {
+  setInvoiceData([response.data]);   // <-- IMPORTANT
+} else {
+  setInvoiceData([]);
+}
 
     } catch (error) {
       console.log("Fetch Error:", error);
@@ -36,6 +42,7 @@ const EwayprofomofeildsDIsplay = () => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     getInvoiceData();
@@ -46,79 +53,112 @@ const EwayprofomofeildsDIsplay = () => {
   // =========================
 
  const handleGenerateEinvoice = (row) => {
-    navigate("/ewaybill/ewb-generate-print", { state: { 
+    navigate("/ewaybill/eway-generate-print-pewdisplay", { state: { 
       invoiceData: row, 
       id: row.pid || row.id 
     } });
   };
 
-  return (
-    <div style={styles.container}>
+return (
+  <div style={styles.container}>
+    {/* HEADER */}
+    <h2 style={styles.heading}>Invoice List</h2>
 
-      {/* HEADER */}
-      <h2 style={styles.heading}>Invoice List</h2>
+    {/* LOADING */}
+    {loading && <div style={styles.loading}>Loading...</div>}
 
-      {/* LOADING */}
-      {loading && <div style={styles.loading}>Loading...</div>}
+    {/* TABLE */}
+    <div style={styles.tableWrapper}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>#</th>
+            <th style={styles.th}>Customer Name</th>
+            <th style={styles.th}>Mobile</th>
+            <th style={styles.th}>PO</th>
+            <th style={styles.th}>PO Date</th>
+            <th style={styles.th}>Invoice Created</th>
+            <th style={styles.th}>Created On</th>
+            <th style={styles.th}>GSTIN</th>
+            <th style={styles.th}>Vehicle</th>
+            <th style={styles.th}>E-Way No</th>
+            <th style={styles.th}>Status</th>
+            <th style={styles.th}>Action</th>
+          </tr>
+        </thead>
 
-      {/* TABLE */}
-      <div style={styles.tableWrapper}>
-        <table style={styles.table}>
+        <tbody>
+          {invoiceData.length > 0 ? (
+            invoiceData.map((row, index) => {
+              console.log("Rendering Row:", row);
 
-          <thead>
-            <tr>
-              <th style={styles.th}>#</th>
-              <th style={styles.th}>Customer Name</th>
-              <th style={styles.th}>Mobile</th>
-              <th style={styles.th}>PO</th>
-              <th style={styles.th}>PO Date</th>
-              <th style={styles.th}>Invoice Created</th>
-              <th style={styles.th}>Created On</th>
-              <th style={styles.th}>GSTIN</th>
-              <th style={styles.th}>Vehicle</th>
-              <th style={styles.th}>E-Way No</th>
-              <th style={styles.th}>Status</th>
-              <th style={styles.th}>Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {invoiceData.length > 0 ? (
-              invoiceData.map((row, index) => (
+              return (
                 <tr key={index}>
-
                   <td style={styles.td}>{index + 1}</td>
-                  <td style={styles.td}>{row.clientCompanyName || "-"}</td>
-                  <td style={styles.td}>{row.mobileNo || "-"}</td>
-                  <td style={styles.td}>{row.purchaseOrder || "-"}</td>
 
+                  {/* Customer Name */}
+                  <td style={styles.td}>
+                    {row.clients?.companyName ||
+                      row.buyerClients?.companyName ||
+                      row.company_Name ||
+                      "-"}
+                  </td>
+
+                  {/* Mobile */}
+                  <td style={styles.td}>
+                    {row.clients?.mobile ||
+                      row.buyerClients?.mobile ||
+                      row.phone_no ||
+                      "-"}
+                  </td>
+
+                  {/* Purchase Order */}
+                  <td style={styles.td}>
+                    {row.purchaseOrder || row.purchase_Order || "-"}
+                  </td>
+
+                  {/* Purchase Order Date */}
                   <td style={styles.td}>
                     {row.purchaseOrderDate
                       ? new Date(row.purchaseOrderDate).toLocaleDateString()
+                      : row.purchase_Order_Date
+                      ? new Date(row.purchase_Order_Date).toLocaleDateString()
                       : "-"}
                   </td>
 
+                  {/* Invoice Created */}
                   <td style={styles.td}>
                     {row.invoiceCreatedOn
                       ? new Date(row.invoiceCreatedOn).toLocaleString()
                       : "-"}
                   </td>
 
+                  {/* Created On */}
                   <td style={styles.td}>
                     {row.createdOn
                       ? new Date(row.createdOn).toLocaleString()
                       : "-"}
                   </td>
 
+                  {/* GSTIN */}
                   <td style={styles.td}>{row.gstin || "-"}</td>
+
+                  {/* Vehicle */}
                   <td style={styles.td}>{row.vehicleNo || "-"}</td>
+
+                  {/* E-Way Bill */}
                   <td style={styles.td}>{row.eWayBillNumber || "-"}</td>
-                  <td style={styles.td}>{row.transactionStatusXid || "-"}</td>
 
-                  {/* ACTION BUTTONS */}
+                  {/* Status */}
+                  <td style={styles.td}>
+                    {row.transactionStatusXid ||
+                      row.status ||
+                      row.transactionStatus ||
+                      "-"}
+                  </td>
+
+                  {/* Action */}
                   <td style={styles.actionTd}>
-
                     <div style={styles.buttonContainer}>
                       <button
                         style={styles.einvoiceBtn}
@@ -126,26 +166,23 @@ const EwayprofomofeildsDIsplay = () => {
                       >
                         Generate E-way bill
                       </button>
-
                     </div>
-
                   </td>
-
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="12" style={styles.noData}>
-                  No Invoice Data Found
-                </td>
-              </tr>
-            )}
-
-          </tbody>
-        </table>
-      </div>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan="12" style={styles.noData}>
+                No Invoice Data Found
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
-  );
+  </div>
+);
 };
 
 // =========================

@@ -345,7 +345,7 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") =>
   };
 };
 
-export const GenerateAndPrintproformoEinvoice = () => {
+export const Generateandprintproformoinvoice = () => {
   const { token, setLastInvoice } = useAuth();
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
@@ -926,7 +926,7 @@ const getAuthData = () => {
     </div>
   );
 };  
-export default GenerateAndPrintproformoEinvoice;
+export default Generateandprintproformoinvoice;
 
 
 

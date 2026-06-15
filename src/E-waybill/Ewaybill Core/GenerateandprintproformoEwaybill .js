@@ -148,9 +148,9 @@ const GenerateandprintproformoEwaybill  = () => {
       setLoadingInvoice(true);
 
       const res = await axios.get(
-        `http://localhost:3001/api/invoice/${dynamicId}`
+        `https://einvoice.fcssoftwares.com/api/gst/ewaybill/generate/${dynamicId}`
       );
-
+    console.log("response",res)
       const apiData = res.data?.data;
       const invoice = apiData?.response || apiData || {};
       const item = invoice?.invoiceProductDetails?.[0] || {};

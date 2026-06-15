@@ -31,7 +31,7 @@ import EinvfeildsDisplay from "./E-invoice/EinvfeildsDisplay";
 import EinvprofomofeildsDIsplay from "./E-invoice/EinvprofomofeildsDIsplay"
 
 import GenerateAndPrintEinvoice from "./E-invoice/E-invoice&IRN/GenerateAndPrintEinvoice";
-import GenerateandprintproformoEinvoice from"./E-invoice/E-invoice&IRN/Generateandprintproformoinvoice";
+import Generateandprintproformoinvoice from "./E-invoice/E-invoice&IRN/Generateandprintproformoinvoice";
 import CancelIRN from "./E-invoice/E-invoice&IRN/CancelIRN";
 import GetInvByIrn from "./E-invoice/E-invoice&IRN/GetInvByIrn";
 import GetIrnByDocDetailsForm from "./E-invoice/E-invoice&IRN/GetIrnByDocDetails";
@@ -51,7 +51,7 @@ import ListEInvoices from "./E-invoice/Viewinvoice/ListEInvoices";
 ======================= */
 import EwayfeildsDisplay from "./E-waybill/EwayfeildsDisplay";
 import EwbGenerateAndPrint from "./E-waybill/Ewaybill Core/EwbGenerateAndPrint";
-import GenerateandprintproformoEwaybill from "./E-waybill/Ewaybill Core/GenerateandprintproformoEwaybill ";
+import GenerateandprintproformoEwaybill  from "./E-waybill/Ewaybill Core/GenerateandprintproformoEwaybill ";
 import EwayprofomofeildsDIsplay  from "./E-waybill/EwayprofomofeildsDIsplay";
 import FetchEWBbyNumber from "./E-waybill/Ewaybill Core/FetchEWBbyNumber";
 import GetEwbDetails from "./E-waybill/Ewaybill Core/GetEwbDetails";
@@ -144,7 +144,7 @@ const EINVOICE_DEFAULT =
         <Route path="/ewaybill" element={<RequireAuth product="EWAY"> <Layout /> </RequireAuth> }>
           <Route path="eway-display" element={<EwayfeildsDisplay/>} />
           <Route path="eway-pewdisplay" element={<EwayprofomofeildsDIsplay/>} />
-          <Route path="eway-generate-print-pewdisplay" element={<GenerateandprintproformoEwaybill/>} />
+          <Route path="eway-generate-print-pewdisplay" element={<GenerateandprintproformoEwaybill />} />
           <Route path="ewb-generate-print" element={<EwbGenerateAndPrint />} />
           <Route path="fetch-ewb" element={<FetchEWBbyNumber />} />
           <Route path="ewb-details" element={<GetEwbDetails />} />
@@ -181,8 +181,11 @@ const EINVOICE_DEFAULT =
         {/* ================= E-INVOICE ================= */}
         <Route path="/einvoice" element={<RequireAuth product="EINVOICE"> <Layout /> </RequireAuth>}>
           <Route path="einvoice-display" element={<EinvfeildsDisplay />} />
-           <Route path="einvoice-pdisplay" element={<EwayprofomofeildsDIsplay/>} />
-          <Route path="generate-printproformoeway" element={<GenerateandprintproformoEwaybill />}/>
+          <Route path="einvoice-pdisplay" element={<EinvprofomofeildsDIsplay/>} />
+
+          <Route path="generate-print" element={<GenerateAndPrintEinvoice />} />
+          <Route path="generate-printproformo" element={<Generateandprintproformoinvoice/>} />
+
           <Route path="cancel-irn" element={<CancelIRN />} />
           <Route path="get-by-irn" element={<GetInvByIrn />} />
           <Route path="get-by-doc" element={<GetIrnByDocDetailsForm />} />
