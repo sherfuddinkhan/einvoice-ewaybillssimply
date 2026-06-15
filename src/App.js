@@ -143,7 +143,8 @@ const EINVOICE_DEFAULT =
         {/* ================= E-WAY BILL ================= */}
         <Route path="/ewaybill" element={<RequireAuth product="EWAY"> <Layout /> </RequireAuth> }>
           <Route path="eway-display" element={<EwayfeildsDisplay/>} />
-
+          <Route path="eway-pewdisplay" element={<EwayprofomofeildsDIsplay/>} />
+          <Route path="eway-generate-print-pewdisplay" element={<GenerateandprintproformoEwaybill/>} />
           <Route path="ewb-generate-print" element={<EwbGenerateAndPrint />} />
           <Route path="fetch-ewb" element={<FetchEWBbyNumber />} />
           <Route path="ewb-details" element={<GetEwbDetails />} />

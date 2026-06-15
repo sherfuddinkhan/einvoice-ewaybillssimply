@@ -68,6 +68,8 @@ const Sidebar = () => {
       items: [
         { path: "/ewaybill/eway-display",label: "E-Waybill Fields" },
         { path: "/ewaybill/ewb-generate-print", label: "Generate & Print" },
+        { path: "/ewaybill/eway-pewdisplay",label: "E-Waybill proformaFields" },
+        { path: "/ewaybill/eway-generate-print-pewdisplay",label: "E-Waybill proformaFields Generate&print" },
         { path: "/ewaybill/fetch-ewb", label: "Fetch by EWB No" },
         { path: "/ewaybill/ewb-details", label: "Get EWB Details" },
       ],

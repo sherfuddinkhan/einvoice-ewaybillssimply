@@ -93,8 +93,8 @@ const EWayBillLoginPage = () => {
 
        window.location.href =
   selectedMode === "PROFORMA"
-    ? "/einvoice/eway-pewdisplay"
-    : "/einvoice/eway-display";
+    ? "/ewaybill/eway-pewdisplay"
+    : "/ewaybill/eway-display";
       }
     } catch (error) {
       setResponse({
@@ -181,8 +181,8 @@ const EWayBillLoginPage = () => {
           setInvoiceMode(e.target.value);
         }}
       >
-        <option value="NORMAL">Normal E-Invoice</option>
-        <option value="PROFORMA">Proforma E-Invoice</option>
+        <option value="NORMAL">Normal E-wayBill</option>
+        <option value="PROFORMA">Proforma E-WayBill</option>
       </select>
         <button
           onClick={handleLogin}
