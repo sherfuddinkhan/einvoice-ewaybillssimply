@@ -1,45 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../components/AuthContext";
 import { useNavigate } from "react-router-dom";
+
+const MODE_KEY = "ewayMode";
 const EWayBillLoginPage = () => {
   const [email, setEmail] = useState("eway@gmail.com");
   const [password, setPassword] = useState("Abcd@12345");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
-  const [invoiceMode, setInvoiceMode] = useState("NORMAL");
+  const [ewayMode, setewayMode] = useState("NORMAL");
 
-  const {
-    login,
-    isLoggedIn,
-    product,
-  } = useAuth();
+  const {login} = useAuth();
 
   const navigate = useNavigate();
-
-  /* ==========================
-     AUTO REDIRECT
-  ========================== */
-
-  useEffect(() => {
-    if (
-      !isLoggedIn ||
-      product !== "EWAY"
-    ) {
-      return;
-    }
-
-    navigate(
-      "/eway-display",
-      {
-        replace: true,
-      }
-    );
-  }, [
-    isLoggedIn,
-    product,
-    navigate,
-  ]);
-
   /* ==========================
      LOGIN
   ========================== */
@@ -72,7 +45,7 @@ const EWayBillLoginPage = () => {
       setResponse(data);
 
       if (data?.status === "SUCCESS" &&data?.response?.token) {
-          const selectedMode = invoiceMode;
+          const selectedMode = ewayMode;
         const loginData = {
           token:data.response.token,
           companyId:data.response.companyId || "24",
@@ -80,17 +53,13 @@ const EWayBillLoginPage = () => {
             null,
           email,
           fullResponse: data,
-          invoiceMode: selectedMode,
+          ewayMode: selectedMode,
           lastLogin:
             new Date().toISOString(),
         };
 
         // AuthContext handles sessionStorage
-        login(
-          loginData,
-          "EWAY"
-        );
-
+        login(loginData, "EWAY");
        window.location.href =
   selectedMode === "PROFORMA"
     ? "/ewaybill/eway-pewdisplay"
@@ -175,10 +144,10 @@ const EWayBillLoginPage = () => {
           }}
         />
         <select
-        value={invoiceMode}
+        value={ewayMode}
         onChange={(e) => {
           console.log("Mode Changed:", e.target.value);
-          setInvoiceMode(e.target.value);
+          setewayMode(e.target.value);
         }}
       >
         <option value="NORMAL">Normal E-wayBill</option>
@@ -246,10 +215,7 @@ const EWayBillLoginPage = () => {
                   "auto",
               }}
             >
-              {JSON.stringify(
-                response,
-                null,
-                2
+              {JSON.stringify(response,null,2
               )}
             </pre>
           </div>

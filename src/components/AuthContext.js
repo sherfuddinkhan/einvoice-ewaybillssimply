@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
+import React, {createContext,useContext,useEffect,useState,useCallback} from "react";
 
 import { jwtDecode } from "jwt-decode";
 
@@ -29,38 +23,17 @@ const isTokenValid = (token) => {
   }
 };
 
-export const AuthProvider = ({
-  children,
-}) => {
-  const [isAuthReady, setIsAuthReady] =
-    useState(false);
-
-  const [isLoggedIn, setIsLoggedIn] =
-    useState(false);
-
-  const [product, setProduct] =
-    useState(null);
-
-  const [token, setToken] =
-    useState(null);
-
-  const [companyId, setCompanyId] =
-    useState(null);
-
-  const [userGstin, setUserGstin] =
-    useState(null);
-
-  const [lastIrn, setLastIrn] =
-    useState(null);
-
-  const [lastDocNo, setLastDocNo] =
-    useState(null);
-
-  const [lastDocDate, setLastDocDate] =
-    useState(null);
-
-  const [lastDocType, setLastDocType] =
-    useState(null);
+export const AuthProvider = ({children}) => {
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] =useState(false);
+  const [product, setProduct]=useState(null);
+  const [token, setToken] = useState(null);
+  const [companyId, setCompanyId] = useState(null);
+  const [userGstin, setUserGstin] = useState(null);
+  const [lastIrn, setLastIrn] = useState(null);
+  const [lastDocNo, setLastDocNo] = useState(null);
+  const [lastDocDate, setLastDocDate] =useState(null);
+  const [lastDocType, setLastDocType] = useState(null);
 
   /* ==========================
      CLEAR SESSION
@@ -68,30 +41,16 @@ export const AuthProvider = ({
 
   const clearSession =
     useCallback(() => {
-      sessionStorage.removeItem(
-        EWAY_KEY
-      );
-
-      sessionStorage.removeItem(
-        EINVOICE_KEY
-      );
-
+      sessionStorage.removeItem(EWAY_KEY);
+      sessionStorage.removeItem( EINVOICE_KEY);
       setIsLoggedIn(false);
-
       setProduct(null);
-
       setToken(null);
-
       setCompanyId(null);
-
       setUserGstin(null);
-
       setLastIrn(null);
-
       setLastDocNo(null);
-
       setLastDocDate(null);
-
       setLastDocType(null);
     }, []);
 
@@ -110,9 +69,7 @@ export const AuthProvider = ({
 
 const login = (loginData, productType) => {
   const storageKey =
-    productType === "EINVOICE"
-      ? EINVOICE_KEY
-      : EWAY_KEY;
+    productType === "EINVOICE"? EINVOICE_KEY : EWAY_KEY;
 
   const payload = {
     ...loginData,
@@ -120,10 +77,7 @@ const login = (loginData, productType) => {
     loginTime: Date.now(),
   };
 
-  sessionStorage.setItem(
-    storageKey,
-    JSON.stringify(payload)
-  );
+  sessionStorage.setItem(storageKey,JSON.stringify(payload));
 
   setToken(loginData.token);
   setCompanyId(loginData.companyId);
@@ -139,32 +93,19 @@ const login = (loginData, productType) => {
   useEffect(() => {
     try {
       const eway =
-        sessionStorage.getItem(
-          EWAY_KEY
-        );
-
-      const einvoice =
-        sessionStorage.getItem(
-          EINVOICE_KEY
-        );
+        sessionStorage.getItem(EWAY_KEY);
+      const einvoice = sessionStorage.getItem(EINVOICE_KEY);
 
       let sessionData = null;
       let sessionProduct = null;
 
       if (eway) {
-        sessionData =
-          JSON.parse(eway);
-
-        sessionProduct =
-          "EWAY";
+        sessionData =JSON.parse(eway);
+        sessionProduct ="EWAY";
       }
-
       if (einvoice) {
-        sessionData =
-          JSON.parse(einvoice);
-
-        sessionProduct =
-          "EINVOICE";
+        sessionData = JSON.parse(einvoice);
+        sessionProduct ="EINVOICE";
       }
 
       if (
@@ -262,18 +203,14 @@ const login = (loginData, productType) => {
       value={{
         isAuthReady,
         isLoggedIn,
-
         product,
-
         token,
         companyId,
         userGstin,
-
         lastIrn,
         lastDocNo,
         lastDocDate,
         lastDocType,
-
         login,
         logout,
       }}

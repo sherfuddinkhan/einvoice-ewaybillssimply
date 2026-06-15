@@ -20,7 +20,7 @@ const EwayfeildsDisplay = () => {
       setLoading(true);
 
       const response = await axios.get(
-        "http://localhost:3001/api/invoices"
+        "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/23/invoicecumchallan"
       );
 
         console.log("Full API Response:", response);
@@ -51,10 +51,13 @@ console.log("array response",response.data);
   // NAVIGATION ACTIONS
   // =========================
 
- const handleGenerateEinvoice = (row) => {
+ const handleGenerateEinvoice = (invoice) => {
+   console.log("FULL INVOICE OBJECT:", JSON.stringify(invoice, null, 2))
+        localStorage.setItem("selectedInvoice", JSON.stringify(invoice));
+    console.log("Selected Invoice", invoice);
     navigate("/ewaybill/ewb-generate-print", { state: { 
-      invoiceData: row, 
-      id: row.pid || row.id 
+        invoiceData: invoice,
+        id: invoice?.invoiceProductDetails?.[0]?.invoiceXID,
     } });
   };
 

@@ -25,7 +25,7 @@ const EinvfeildsDisplay = () => {
       setError("");
 
       const { data } = await axios.get(
-        "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/23/invoicecumchallan",
+        "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/24/invoicecumchallan",
         {
           headers: {
             Accept: "application/json",

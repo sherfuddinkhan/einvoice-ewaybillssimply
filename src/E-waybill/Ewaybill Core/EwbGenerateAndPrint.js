@@ -1,240 +1,347 @@
-import React, { useState} from "react";
-import { useEffect } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useLocation } from "react-router-dom";
-/* ---------------------------
-   LocalStorage keys
---------------------------- */
-const STORAGE_KEY00 = "iris_ewaybill_shared_config";
-const LATEST_EWB_KEY = "latestEwbData";
-const EWB_HISTORY_KEY = "ewbHistory";
 
-/* ---------------------------
-   Utils
---------------------------- */
-const safeParse = (v, fallback = {}) => {
+// LocalStorage Keys
+const EWAY_KEY = "iris_eway_session";
+const LOGIN_RESPONSE_KEY = 'iris_login_data';
+const LATEST_EWB_KEY = 'latestEwbData';
+const EWB_HISTORY_KEY = 'ewbHistory';
+
+const EwbGenerateAndPrint= () => {
+    const location = useLocation();
+  const defaultFormData = {
+    supplyType: "O",
+    subSupplyType: "1",
+    docType: "INV",
+    docNo: "Topaz340290",
+    invType: "B2B",
+    docDate: "15/11/2025",
+    transactionType: 1,
+    fromGstin: "05AAAAU1183B5ZW",
+    fromTrdName: "ABC",
+    dispatchFromGstin: "05AAAAU1183B5ZW",
+    dispatchFromTradeName: "PQR",
+    fromAddr1: "T231",
+    fromAddr2: "IIP",
+    fromPlace: "Akodiya",
+    fromPincode: 248001,
+    fromStateCode: 5,
+    toGstin: "05AAAAU1183B1Z0",
+    toTrdName: "RJ-Rawat Foods",
+    toAddr1: "S531, SSB Towers",
+    toAddr2: "MG Road",
+    toPlace: "Dehradun",
+    toPincode: 248002,
+    toStateCode: 5,
+    totInvValue: 21000.00,
+    totalValue: 20000.00,
+    cgstValue: 500.00,
+    sgstValue: 500.00,
+    igstValue: 0.00,
+    cessValue: 0.00,
+    cessNonAdvolValue: 0.00,
+    otherValue: 0.00,
+    transMode: 1,
+    transDistance: 10,
+    transDocDate: "15/11/2025",
+    transDocNo: "1212",
+    transporterId: "05AAAAU1183B1Z0",
+    transporterName: "ACVDF",
+    vehicleNo: "RJ14CA9999",
+    vehicleType: "R",
+    actFromStateCode: "5",
+    actToStateCode: "5",
+    itemList: [
+      {
+        productName: "Sugar",
+        productDesc: "Sugar",
+        hsnCode: "8517",
+        quantity: 10,
+        qtyUnit: "KGS",
+        taxableAmount: 20000.00,
+        sgstRate: 2.50,
+        cgstRate: 2.50,
+        igstRate: 0.00,
+        cessRate: 0.00,
+        cessNonAdvol: 0.00,
+        iamt: 0.00,
+        camt: 500.00,
+        samt: 500.00,
+        csamt: 0.00,
+        txp: "T"
+      }
+    ],
+    companyId: null,
+    userGstin: "05AAAAU1183B5ZW",
+    forceDuplicateCheck: true
+  };
+
+  const [formData, setFormData] = useState(defaultFormData);
+  const [authData, setAuthData] = useState({ companyId: '', token: '', userGstin: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [apiResponse, setApiResponse] = useState(null);
+    const [authCredentials, setAuthCredentials] = useState({
+      token: "YOUR_AUTH_TOKEN",
+      companyId: "YOUR_COMPANY_ID"
+    });
+
+  const safeParse = (v, fallback = {}) => {
   try {
     return JSON.parse(v ?? "null") ?? fallback;
   } catch {
     return fallback;
   }
 };
+  // ----------------- AUTOPOPULATE -----------------
+ useEffect(() => {
+  const sessionData = safeParse(sessionStorage.getItem(EWAY_KEY));
+  console.log("sessionData",sessionData)
 
-const getLS = (k, fb = {}) => safeParse(localStorage.getItem(k), fb);
-const setLS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-/* ---------------------------
-   Component
---------------------------- */
-const EwbGenerateAndPrint = () => {
-  const location = useLocation();
-  const [loading, setLoading] = useState(false); // ✅ FIX HERE
-  // =========================
-  // RECEIVED DATA
-  // =========================
-  const receivedData = location.state || {};
-  const invoiceData = receivedData.invoiceData || {};
-  const dynamicId = receivedData.id || invoiceData.pid;
+  const parsedToken =
+    sessionData?.token ||
+    sessionData?.fullResponse?.response?.token ||
+    "YOUR_AUTH_TOKEN";
 
-  console.log("Received Data:", receivedData);
-  console.log("invoiceData:", invoiceData);
+  // Use companyid from fullResponse.response
+  const parsedCompanyId =
+    sessionData?.fullResponse?.response?.companyid || "4";
 
-  // =========================
-  // DEFAULT FORM
-  // =========================
-  const DEFAULT_FORM = {
-    supplyType: "O",
-    subSupplyType: "1",
-    docType: "INV",
+  const parsedGstin =
+    sessionData?.userGstin || "05AAAAU1183B5ZW";
 
-    docNo: invoiceData?.invoiceNumber || invoiceData?.billNo || "Topaz340290",
+  console.log("Parsed Token:", parsedToken);
+  console.log("Parsed CompanyId:", parsedCompanyId);
+   console.log("parsedGstin:",  parsedGstin);
 
-    invType: "B2B",
+  setAuthCredentials({
+    token: parsedToken,
+    companyId: String(parsedCompanyId),
+  });
+console.log(" authData",authData)
+  setFormData((prev) => ({
+    ...prev,
+    companyId: Number(parsedCompanyId),
+    userGstin: parsedGstin || prev.userGstin,
+  }));
+}, []);
 
-    docDate: new Date().toLocaleDateString("en-GB"),
+useEffect(() => {
+  console.log("AUTH UPDATED:", authCredentials);
+}, [authCredentials]);
+  // ----------------- LOCAL STORAGE SAVE -----------------
+  const saveToLocalStorage = (fullResponse) => {
+    const resp = fullResponse.response;
+    const ewbData = {
+      generatedAt: new Date().toISOString(),
+      ewbNo: resp.ewbNo,
+      validUpto: resp.validUpto,
+      fullApiResponse: fullResponse,
+      payloadUsed: formData,
+      qrCode: resp.qrCode || null,
+      barcode: resp.barcode || null,
+    };
 
-    transactionType: 1,
+    localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(ewbData));
 
-    fromGstin: invoiceData?.companyGstin || "05AAAAU1183B5ZW",
-    fromTrdName: invoiceData?.companyName || "ABC",
-
-    dispatchFromGstin: invoiceData?.companyGstin || "05AAAAU1183B5ZW",
-    dispatchFromTradeName: invoiceData?.companyName || "PQR",
-
-    fromAddr1: invoiceData?.companyAddress || "T231",
-    fromAddr2: invoiceData?.companyAddress2 || "IIP",
-    fromPlace: invoiceData?.companyCity || "Akodiya",
-    fromPincode: invoiceData?.companyPincode || 248001,
-    fromStateCode: invoiceData?.companyStateCode || 5,
-
-    toGstin: invoiceData?.clientGstin || "05AAAAU1183B1Z0",
-    toTrdName: invoiceData?.clientCompanyName || receivedData?.invoiceData?.clientCompanyName || "",
-    toAddr1: invoiceData?.clientAddress1 || "S531",
-    toAddr2: invoiceData?.clientAddress2 || "MG Road",
-    toPlace: invoiceData?.clientCity || "Dehradun",
-    toPincode: invoiceData?.clientPincode || 248002,
-    toStateCode: invoiceData?.clientStateCode || 5,
-
-    totInvValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.afterGSTAmount || 21000,
-    totalValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount || 20000,
-    cgstValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount || 500,
-    sgstValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount || 500,
-    igstValue: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount || 0,
-
-    cessValue: 0,
-    cessNonAdvolValue: 0,
-    otherValue: 0,
-
-    transMode: 1,
-    transDistance: 10,
-    transDocNo: "1212",
-    transDocDate: new Date().toLocaleDateString("en-GB"),
-
-    transporterId: invoiceData?.transporterId || "05AAAAU1183B1Z0",
-    transporterName: invoiceData?.transporterName || "ACVDF",
-
-    vehicleNo: invoiceData?.vehicleNo || receivedData?.invoiceData?.vehicleNo || "RJ14CA9999",
-    vehicleType: "R",
-
-    actFromStateCode: invoiceData?.companyStateCode || "5",
-    actToStateCode: invoiceData?.clientStateCode || "5",
-
-    itemList: [
-      {
-        productName: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.itemName || "",
-        productDesc: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.description || "",
-        hsnCode: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.hsncode || "",
-
-        quantity: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.quantity || 1,
-        qtyUnit: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.uom || "",
-
-        taxableAmount: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.totalAmount || 20000,
-
-        sgstRate: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstPer || 2.5,
-        cgstRate: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstPer || 2.5,
-        igstRate: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstPer || 0,
-
-        iamt: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.igstAmount || 0,
-        camt: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.cgstAmount || 500,
-        samt: receivedData?.invoiceData?.invoiceProductDetails?.[0]?.sgstAmount || 500,
-
-        csamt: 0,
-        txp: "T",
-      },
-    ],
-
-    companyId: "",
-    userGstin: invoiceData?.companyGstin || "05AAAAU1183B5ZW",
-    forceDuplicateCheck: true,
+    let history = JSON.parse(localStorage.getItem(EWB_HISTORY_KEY) || '[]');
+    history = history.filter(h => h.ewbNo !== resp.ewbNo);
+    history.unshift(ewbData);
+    if (history.length > 20) history.pop();
+    localStorage.setItem(EWB_HISTORY_KEY, JSON.stringify(history));
   };
 
-  // =========================
-  // STATE
-  // =========================
-  const [formData, setFormData] = useState(DEFAULT_FORM);
-  const [loadingInvoice, setLoadingInvoice] = useState(false);
-  const [apiResponse, setApiResponse] = useState(null);
-  const [error, setError] = useState("");
-
-  // =========================
-  // FETCH INVOICE
-  // =========================
-  useEffect(() => {
-    if (!dynamicId) return;
-    fetchInvoiceData();
-  }, [dynamicId]);
-
-  const fetchInvoiceData = async () => {
-    try {
-      setLoadingInvoice(true);
-
-      const res = await axios.get(
-        `http://localhost:3001/api/invoice/${dynamicId}`
-      );
-
-      const apiData = res.data?.data;
-      const invoice = apiData?.response || apiData || {};
-      const item = invoice?.invoiceProductDetails?.[0] || {};
-
-      // =========================
-      // MERGE FORM DATA (FIX HERE)
-      // =========================
-      const mergedForm = {
-        ...DEFAULT_FORM,
-
-        docNo: invoice?.invoiceNumber || invoice?.billNo || DEFAULT_FORM.docNo,
-        fromGstin: invoice?.companyGstin || DEFAULT_FORM.fromGstin,
-        fromTrdName: invoice?.companyName || DEFAULT_FORM.fromTrdName,
-
-        toGstin: invoice?.clientGstin || DEFAULT_FORM.toGstin,
-        toTrdName:
-          invoice?.clientCompanyName ||
-          receivedData?.invoiceData?.clientCompanyName ||
-          DEFAULT_FORM.toTrdName,
-
-        vehicleNo:
-          invoice?.vehicleNo ||
-          receivedData?.invoiceData?.vehicleNo ||
-          DEFAULT_FORM.vehicleNo,
-
-        totInvValue: item?.afterGSTAmount || DEFAULT_FORM.totInvValue,
-        totalValue: item?.totalAmount || DEFAULT_FORM.totalValue,
-        cgstValue: item?.cgstAmount || DEFAULT_FORM.cgstValue,
-        sgstValue: item?.sgstAmount || DEFAULT_FORM.sgstValue,
-        igstValue: item?.igstAmount || DEFAULT_FORM.igstValue,
-
-        itemList: [
-          {
-            ...DEFAULT_FORM.itemList[0],
-            productName: item?.itemName || "",
-            productDesc: item?.description || "",
-            hsnCode: item?.hsncode || "",
-            quantity: item?.quantity || 1,
-            qtyUnit: item?.uom || "",
-            taxableAmount: item?.totalAmount || 0,
-            iamt: item?.igstAmount || 0,
-            camt: item?.cgstAmount || 0,
-            samt: item?.sgstAmount || 0,
-          },
-        ],
-      };
-
-      setFormData(mergedForm);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoadingInvoice(false);
-    }
+  // ----------------- FORM HANDLERS -----------------
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // =========================
-  // GENERATE EWB
-  // =========================
-  const handleGenerate = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
+  const handleItemChange = (index, e) => {
+    const { name, value } = e.target;
+    const newItems = [...formData.itemList];
+    newItems[index] = { ...newItems[index], [name]: value };
+    setFormData(prev => ({ ...prev, itemList: newItems }));
+  };
 
-      const res = await axios.post(
-        "http://localhost:3001/proxy/topaz/ewb/generate",
-        formData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  const addItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      itemList: [...prev.itemList, {
+        productName: "", productDesc: "", hsnCode: "", quantity: 0, qtyUnit: "KGS",
+        taxableAmount: 0, sgstRate: 0, cgstRate: 0, igstRate: 0, cessRate: 0,
+        cessNonAdvol: 0, iamt: 0, camt: 0, samt: 0, csamt: 0, txp: "T"
+      }]
+    }));
+  };
 
+  const removeItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      itemList: prev.itemList.filter((_, i) => i !== index)
+    }));
+  };
+
+  // ----------------- SUBMIT HANDLER -----------------
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setApiResponse(null);
+
+  console.log("AUTH USED:", authCredentials);
+
+  const headers = {
+    "X-Auth-Token": authCredentials?.token || "",
+    "companyId": authCredentials?.companyId || "",
+    "product": "TOPAZ",
+    "Content-Type": "application/json"
+  };
+
+  console.log("Headers:", headers);
+  console.log("Payload:", formData);
+
+  try {
+    const res = await axios.post(
+      "http://localhost:3001/proxy/topaz/ewb/generate",
+      formData,
+      { headers }
+    );
+
+    if (res.data.status === "SUCCESS" && res.data.response) {
       setApiResponse(res.data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      saveToLocalStorage(res.data);
+    } else {
+      throw new Error(res.data.message || "E-Way Bill generation failed");
     }
+  } catch (err) {
+    setError(
+      err.response?.data?.message ||
+      err.message ||
+      "Unknown error"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+  const requestHeaders = {
+    'X-Auth-Token': authCredentials.token || '',
+    'companyId': authCredentials.companyId || '',
+    'product': 'TOPAZ',
+    'Content-Type': 'application/json'
   };
 
+  // ----------------- JSX -----------------
   return (
-    <div>
-      <h1>EWB Generator</h1>
+    <div style={{ maxWidth: '1200px', margin: '20px auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      <h1 style={{ textAlign: 'center', color: '#2c3e50' }}>Generate E-Way Bill</h1>
+
+      {/* Request Preview */}
+      <div style={{ margin: '30px 0', padding: '20px', background: '#f1f2f6', borderRadius: '10px' }}>
+        <h2 style={{ color: '#2f3542' }}>🔍 Request Preview</h2>
+
+        <h3 style={{ marginTop: '15px', color: '#57606f' }}>Headers</h3>
+        <pre style={{ background: '#dfe4ea', padding: '15px', borderRadius: '8px', overflowX: 'auto' }}>
+          {JSON.stringify(requestHeaders, null, 2)}
+        </pre>
+
+        <h3 style={{ marginTop: '15px', color: '#57606f' }}>Payload</h3>
+        <pre style={{ background: '#dfe4ea', padding: '15px', borderRadius: '8px', overflowX: 'auto' }}>
+          {JSON.stringify(formData, null, 2)}
+        </pre>
+      </div>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit}>
+        {Object.keys(formData)
+          .filter(key => key !== 'itemList')
+          .map(key => (
+            <div key={key} style={{ margin: '10px 0', display: 'flex', alignItems: 'center' }}>
+              <label style={{ width: '220px', fontWeight: 'bold' }}>{key}:</label>
+              <input
+                name={key}
+                value={formData[key] ?? ''}
+                onChange={handleChange}
+                style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                disabled={loading}
+              />
+            </div>
+          ))}
+
+        <h3 style={{ marginTop: '30px', color: '#34495e' }}>Item List</h3>
+        {formData.itemList.map((item, idx) => (
+          <div key={idx} style={{ border: '2px dashed #95a5a6', padding: '15px', margin: '15px 0', borderRadius: '8px', background: '#ecf0f1' }}>
+            {Object.keys(item).map(attr => (
+              <div key={attr} style={{ margin: '8px 0', display: 'flex', alignItems: 'center' }}>
+                <label style={{ width: '200px' }}>{attr}:</label>
+                <input
+                  name={attr}
+                  value={item[attr] ?? ''}
+                  onChange={(e) => handleItemChange(idx, e)}
+                  style={{ flex: 1, padding: '6px', borderRadius: '4px' }}
+                  disabled={loading}
+                />
+              </div>
+            ))}
+            <button type="button" onClick={() => removeItem(idx)} style={{ padding: '8px 16px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px' }}>
+              Remove Item
+            </button>
+          </div>
+        ))}
+
+        <button type="button" onClick={addItem} style={{ padding: '12px 24px', background: '#3498db', color: 'white', border: 'none', borderRadius: '6px', margin: '15px 0' }}>
+          + Add New Item
+        </button>
+
+        <br /><br />
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '18px',
+            fontSize: '20px',
+            background: loading ? '#95a5a6' : '#27ae60',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {loading ? 'Generating E-Way Bill...' : 'Generate E-Way Bill'}
+        </button>
+      </form>
+
+      {/* API Response */}
+      {apiResponse && apiResponse.status === "SUCCESS" && (
+        <div style={{ marginTop: '50px', padding: '30px', background: '#f8f9fa', border: '3px solid #27ae60', borderRadius: '12px' }}>
+          <h2 style={{ textAlign: 'center', color: '#27ae60' }}>E-Way Bill Generated Successfully!</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '15px', margin: '20px 0', fontSize: '16px' }}>
+            <div><strong>EWB No:</strong> <span style={{ fontSize: '22px', color: '#e67e22', fontWeight: 'bold' }}>{apiResponse.response.ewbNo}</span></div>
+            <div><strong>Valid Upto:</strong> <span style={{ color: '#c0392b' }}>{apiResponse.response.validUpto}</span></div>
+            <div><strong>Generated On:</strong> {apiResponse.response.generatedOn || apiResponse.response.ewbDate}</div>
+            <div><strong>Status:</strong> <span style={{ color: '#27ae60', fontWeight: 'bold' }}>{apiResponse.response.status}</span></div>
+            <div><strong>Invoice No:</strong> {apiResponse.response.docNo}</div>
+            <div><strong>Total Value:</strong> ₹{apiResponse.response.totInvValue?.toLocaleString()}</div>
+          </div>
+          <details style={{ marginTop: '30px' }}>
+            <summary style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', color: '#2980b9' }}>
+              View Complete API Response (JSON)
+            </summary>
+            <pre style={{ background: '#2c3e50', color: '#1abc9c', padding: '20px', borderRadius: '8px', overflowX: 'auto', marginTop: '10px', fontSize: '13px' }}>
+              {JSON.stringify(apiResponse, null, 2)}
+            </pre>
+          </details>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginTop: '30px', padding: '20px', background: '#e74c3c', color: 'white', borderRadius: '8px', textAlign: 'center', fontSize: '18px' }}>
+          <strong>Error:</strong> {error}
+        </div>
+      )}
     </div>
   );
 };

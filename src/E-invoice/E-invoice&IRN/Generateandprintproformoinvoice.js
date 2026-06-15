@@ -718,7 +718,7 @@ const getAuthData = () => {
     
     try {
       setPdfMessage("Processing request with print server proxy...");
-      const resp = await axios.get(`http://localhost:3001/proxy/einvoice/print?template=${template}&id=${activeInvoiceId}`, {
+      const resp = await axios.get(`https://einvoice.fcssoftwares.com/api/gst/einvoice/print?template=${template}&id=${activeInvoiceId}`, {
         headers: { "X-Auth-Token": token || "MOCK_TOKEN", companyId: "24", product: "ONYX" },
         responseType: "blob",
       });
