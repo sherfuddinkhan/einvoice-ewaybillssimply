@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../components/AuthContext";
 import { useNavigate } from "react-router-dom";
-
 const EWayBillLoginPage = () => {
   const [email, setEmail] = useState("eway@gmail.com");
-  const [password, setPassword] = useState("Abcd@123khan");
+  const [password, setPassword] = useState("Abcd@12345");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
+  const [invoiceMode, setInvoiceMode] = useState("NORMAL");
 
   const {
     login,
@@ -71,26 +71,16 @@ const EWayBillLoginPage = () => {
 
       setResponse(data);
 
-      if (
-        data?.status === "SUCCESS" &&
-        data?.response?.token
-      ) {
+      if (data?.status === "SUCCESS" &&data?.response?.token) {
+          const selectedMode = invoiceMode;
         const loginData = {
-          token:
-            data.response.token,
-
-          companyId:
-            data.response.companyId ||
-            "24",
-
-          userGstin:
-            data.response.userGstin ||
+          token:data.response.token,
+          companyId:data.response.companyId || "24",
+          userGstin:data.response.userGstin ||
             null,
-
           email,
-
           fullResponse: data,
-
+          invoiceMode: selectedMode,
           lastLogin:
             new Date().toISOString(),
         };
@@ -101,12 +91,10 @@ const EWayBillLoginPage = () => {
           "EWAY"
         );
 
-        navigate(
-          "/eway-display",
-          {
-            replace: true,
-          }
-        );
+       window.location.href =
+  selectedMode === "PROFORMA"
+    ? "/einvoice/eway-pewdisplay"
+    : "/einvoice/eway-display";
       }
     } catch (error) {
       setResponse({
@@ -186,7 +174,16 @@ const EWayBillLoginPage = () => {
               "1px solid #707070",
           }}
         />
-
+        <select
+        value={invoiceMode}
+        onChange={(e) => {
+          console.log("Mode Changed:", e.target.value);
+          setInvoiceMode(e.target.value);
+        }}
+      >
+        <option value="NORMAL">Normal E-Invoice</option>
+        <option value="PROFORMA">Proforma E-Invoice</option>
+      </select>
         <button
           onClick={handleLogin}
           disabled={loading}
