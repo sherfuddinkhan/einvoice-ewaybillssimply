@@ -1,48 +1,53 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "../../components/AuthContext";
 
 const STORAGE_KEY = "iris_einvoice_shared_config";
 const STORAGE_KEY4 = "iris_einvoice_uploadfile";
 
 const UploadInvoice = () => {
-  const [companyUniqueCode, setCompanyUniqueCode] = useState("");
-  const [file, setFile] = useState(null);
-  const [headers, setHeaders] = useState({
-    companyId: "",
-    "X-Auth-Token": "",
-    product: "ONYX",
-    Accept: "application/json",
-  });
-  const [preview, setPreview] = useState(null);
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState(false);
+const { token, companyId, userGstin } = useAuth();
+const [companyUniqueCode, setCompanyUniqueCode] = useState("");
+const [file, setFile] = useState(null);
+const [preview, setPreview] = useState(null);
+const [response, setResponse] = useState(null);
+const [loading, setLoading] = useState(false);
 
+const headers = {
+  companyId,
+  "X-Auth-Token": token,
+  product: "ONYX",
+  Accept: "application/json",
+};
   // Auto-populate headers & companyUniqueCode from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setHeaders((prev) => ({
-          ...prev,
-          companyId: parsed.companyId || "",
-          "X-Auth-Token": parsed.token || "",
-        }));
-        setCompanyUniqueCode(parsed.companyUniqueCode || "");
-      } catch (e) {
-        console.log("Parsing error", e);
-      }
-    }
-  }, []);
+ useEffect(() => {
+  setCompanyUniqueCode(userGstin || "");
+}, [userGstin]);
 
   const handleFileUpload = async () => {
+      if (!file) {
+    alert("Please select CSV or ZIP file");
+    return;
+  }
+
+  if (!companyUniqueCode) {
+    alert("companyUniqueCode is required");
+    return;
+  }
+
+  if (!companyId || !token) {
+    alert("Authentication information is missing");
+    return;
+  }
+
     if (!file) return alert("Please select CSV or ZIP file");
     if (!companyUniqueCode) return alert("companyUniqueCode is required");
 
     setLoading(true);
     setResponse(null);
+   
 
     setPreview({
-      endpoint: `/proxy/onyx/upload/invoices?companyUniqueCode=${companyUniqueCode}`,
+      endpoint: `https://einvoice.fcssoftwares.com/api/gst/upload/invoice?companyUniqueCode=${companyUniqueCode}`,
       headers,
       fileName: file.name,
       fileSize: `${(file.size / 1024).toFixed(2)} KB`,
@@ -53,12 +58,10 @@ const UploadInvoice = () => {
       formData.append("file", file);
 
       const res = await fetch(
-        `http://localhost:3001/proxy/onyx/upload/invoices?companyUniqueCode=${companyUniqueCode}`,
+        `https://einvoice.fcssoftwares.com/api/gst/upload/invoice?companyUniqueCode=${companyUniqueCode}`,
         {
           method: "POST",
-          headers: {
-            ...headers, // Do NOT set Content-Type manually for FormData
-          },
+         headers,
           body: formData,
         }
       );
