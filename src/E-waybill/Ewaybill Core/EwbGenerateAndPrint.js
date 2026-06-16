@@ -82,10 +82,7 @@ const EwbGenerateAndPrint= () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [apiResponse, setApiResponse] = useState(null);
-    const [authCredentials, setAuthCredentials] = useState({
-      token: "YOUR_AUTH_TOKEN",
-      companyId: "YOUR_COMPANY_ID"
-    });
+  const [authCredentials, setAuthCredentials] = useState({token: "YOUR_AUTH_TOKEN",companyId: "YOUR_COMPANY_ID"});
 
   const safeParse = (v, fallback = {}) => {
   try {
@@ -233,117 +230,50 @@ const handleSubmit = async (e) => {
   };
 
   // ----------------- JSX -----------------
-  return (
-    <div style={{ maxWidth: '1200px', margin: '20px auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1 style={{ textAlign: 'center', color: '#2c3e50' }}>Generate E-Way Bill</h1>
+return (
+  <div style={{ maxWidth: '1200px', margin: '20px auto', padding: '20px' }}>
+    
+    <h1 style={{ textAlign: 'center' }}>Generate E-Way Bill</h1>
 
-      {/* Request Preview */}
-      <div style={{ margin: '30px 0', padding: '20px', background: '#f1f2f6', borderRadius: '10px' }}>
-        <h2 style={{ color: '#2f3542' }}>🔍 Request Preview</h2>
+    {/* ONLY FORM (NO PREVIEW SECTION) */}
+    <form onSubmit={handleSubmit}>
 
-        <h3 style={{ marginTop: '15px', color: '#57606f' }}>Headers</h3>
-        <pre style={{ background: '#dfe4ea', padding: '15px', borderRadius: '8px', overflowX: 'auto' }}>
-          {JSON.stringify(requestHeaders, null, 2)}
-        </pre>
-
-        <h3 style={{ marginTop: '15px', color: '#57606f' }}>Payload</h3>
-        <pre style={{ background: '#dfe4ea', padding: '15px', borderRadius: '8px', overflowX: 'auto' }}>
-          {JSON.stringify(formData, null, 2)}
-        </pre>
-      </div>
-
-      {/* Form */}
-      <form onSubmit={handleSubmit}>
-        {Object.keys(formData)
-          .filter(key => key !== 'itemList')
-          .map(key => (
-            <div key={key} style={{ margin: '10px 0', display: 'flex', alignItems: 'center' }}>
-              <label style={{ width: '220px', fontWeight: 'bold' }}>{key}:</label>
-              <input
-                name={key}
-                value={formData[key] ?? ''}
-                onChange={handleChange}
-                style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                disabled={loading}
-              />
-            </div>
-          ))}
-
-        <h3 style={{ marginTop: '30px', color: '#34495e' }}>Item List</h3>
-        {formData.itemList.map((item, idx) => (
-          <div key={idx} style={{ border: '2px dashed #95a5a6', padding: '15px', margin: '15px 0', borderRadius: '8px', background: '#ecf0f1' }}>
-            {Object.keys(item).map(attr => (
-              <div key={attr} style={{ margin: '8px 0', display: 'flex', alignItems: 'center' }}>
-                <label style={{ width: '200px' }}>{attr}:</label>
-                <input
-                  name={attr}
-                  value={item[attr] ?? ''}
-                  onChange={(e) => handleItemChange(idx, e)}
-                  style={{ flex: 1, padding: '6px', borderRadius: '4px' }}
-                  disabled={loading}
-                />
-              </div>
-            ))}
-            <button type="button" onClick={() => removeItem(idx)} style={{ padding: '8px 16px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px' }}>
-              Remove Item
-            </button>
+      {/* Example: still allow inputs OR you can hide everything */}
+      {Object.keys(formData)
+        .filter(key => key !== "itemList")
+        .map(key => (
+          <div key={key} style={{ margin: "10px 0" }}>
+            <label>{key}</label>
+            <input
+              name={key}
+              value={formData[key] ?? ""}
+              onChange={handleChange}
+              style={{ width: "100%", padding: 8 }}
+              disabled={loading}
+            />
           </div>
         ))}
 
-        <button type="button" onClick={addItem} style={{ padding: '12px 24px', background: '#3498db', color: 'white', border: 'none', borderRadius: '6px', margin: '15px 0' }}>
-          + Add New Item
-        </button>
+      <button type="submit" disabled={loading}>
+        {loading ? "Generating..." : "Generate E-Way Bill"}
+      </button>
+    </form>
 
-        <br /><br />
+    {/* RESPONSE ONLY */}
+    {apiResponse && (
+      <div style={{ marginTop: 30 }}>
+        <h3>Success Response</h3>
+        <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
+      </div>
+    )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: '100%',
-            padding: '18px',
-            fontSize: '20px',
-            background: loading ? '#95a5a6' : '#27ae60',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {loading ? 'Generating E-Way Bill...' : 'Generate E-Way Bill'}
-        </button>
-      </form>
-
-      {/* API Response */}
-      {apiResponse && apiResponse.status === "SUCCESS" && (
-        <div style={{ marginTop: '50px', padding: '30px', background: '#f8f9fa', border: '3px solid #27ae60', borderRadius: '12px' }}>
-          <h2 style={{ textAlign: 'center', color: '#27ae60' }}>E-Way Bill Generated Successfully!</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '15px', margin: '20px 0', fontSize: '16px' }}>
-            <div><strong>EWB No:</strong> <span style={{ fontSize: '22px', color: '#e67e22', fontWeight: 'bold' }}>{apiResponse.response.ewbNo}</span></div>
-            <div><strong>Valid Upto:</strong> <span style={{ color: '#c0392b' }}>{apiResponse.response.validUpto}</span></div>
-            <div><strong>Generated On:</strong> {apiResponse.response.generatedOn || apiResponse.response.ewbDate}</div>
-            <div><strong>Status:</strong> <span style={{ color: '#27ae60', fontWeight: 'bold' }}>{apiResponse.response.status}</span></div>
-            <div><strong>Invoice No:</strong> {apiResponse.response.docNo}</div>
-            <div><strong>Total Value:</strong> ₹{apiResponse.response.totInvValue?.toLocaleString()}</div>
-          </div>
-          <details style={{ marginTop: '30px' }}>
-            <summary style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', color: '#2980b9' }}>
-              View Complete API Response (JSON)
-            </summary>
-            <pre style={{ background: '#2c3e50', color: '#1abc9c', padding: '20px', borderRadius: '8px', overflowX: 'auto', marginTop: '10px', fontSize: '13px' }}>
-              {JSON.stringify(apiResponse, null, 2)}
-            </pre>
-          </details>
-        </div>
-      )}
-
-      {error && (
-        <div style={{ marginTop: '30px', padding: '20px', background: '#e74c3c', color: 'white', borderRadius: '8px', textAlign: 'center', fontSize: '18px' }}>
-          <strong>Error:</strong> {error}
-        </div>
-      )}
-    </div>
-  );
+    {error && (
+      <div style={{ color: "red", marginTop: 20 }}>
+        {error}
+      </div>
+    )}
+  </div>
+);
 };
 
 export default EwbGenerateAndPrint;

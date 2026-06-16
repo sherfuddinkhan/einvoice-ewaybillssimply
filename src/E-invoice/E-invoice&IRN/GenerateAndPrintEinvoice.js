@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "../../components/AuthContext";
 import { useLocation } from "react-router-dom";
-import GenerateEwbByirn from "../E-waybill/GenerateEwbByIrn";
+
 
 const colors = {
   primary: "#1A73E8",

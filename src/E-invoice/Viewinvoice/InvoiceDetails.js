@@ -2,6 +2,15 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../components/AuthContext";
 
+// Storage Keys
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
+const EINV_DOC_KEY = "iris_einv_doc_map";
+const LAST_GENERATED_ID_KEY = "iris_last_generated_id";
+const LAST_DOC_DETAILS_KEY = "iris_last_used_doc_details";
+const LAST_IRN_KEY = "iris_last_used_irn";
+const LAST_SIGNED_QR_JWT_KEY = "iris_last_signed_qr_jwt";
+const LAST_EWB_DETAILS_KEY = "iris_last_ewb_details";
+
 const InvoiceDetails = () => {
   const { token, companyId } = useAuth();
 
@@ -16,7 +25,9 @@ const InvoiceDetails = () => {
         localStorage.getItem("iris_einvoice_irn_ewabill") || "{}"
       );
 
-      const id = saved?.response?.id;
+      console.log("saved",saved);
+      const id = saved?.id;
+      console.log("einvid",id)
 
       if (id) {
         setEinvId(String(id));

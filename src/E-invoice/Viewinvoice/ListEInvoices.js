@@ -195,6 +195,10 @@ useEffect(() => {
     ------------------------- */
    
 const fetchInvoices = async () => {
+     console.log("userGstin:", userGstin);
+  console.log("token:", token);
+  console.log("companyId:", companyId);
+
   if (!userGstin) {
     alert("Company GSTIN is mandatory");
     return;
@@ -216,17 +220,18 @@ const fetchInvoices = async () => {
   };
 
   console.log("Sending Payload:", finalPayload);
+  const requestHeaders = {
+     accept: "application/json", 
+     companyId, 
+     "X-Auth-Token": token, 
+     product: "ONYX", 
+     "Content-Type": "application/json"
+     };
 
   try {
     const res = await fetch("https://einvoice.fcssoftwares.com/api/gst/einvoice/view", {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        companyId,
-        "X-Auth-Token": token,
-        product: "ONYX",
-        "Content-Type": "application/json",
-      },
+     headers: requestHeaders,
       body: JSON.stringify(finalPayload),
     });
 
@@ -243,7 +248,7 @@ const fetchInvoices = async () => {
 };
 
 
-
+/***************************** * AUTH HEADERS DISPLAY *****************************/ const authHeaders = { accept: "application/json", companyId, "X-Auth-Token": token, product: "ONYX", "Content-Type": "application/json", };
     /* -------------------------
         UI (Unchanged)
     ------------------------- */
@@ -258,11 +263,7 @@ https://stage-api.irisgst.com/irisgst/onyx/einvoice/view
                 </pre>
 
                 <h4>Headers</h4>
-                {Object.entries(headers).map(([k, v]) => (
-                    <Row key={k} label={k}>
-                        <input value={v} onChange={(e) => updateHeader(k, e.target.value)} />
-                    </Row>
-                ))}
+              <h4>Headers (From AuthContext)</h4> {Object.entries(authHeaders).map(([k, v]) => ( <Row key={k} label={k}> <input value={v || ""} readOnly /> </Row> ))}
 
                 <h4 style={{ marginTop: 25 }}>Payload</h4>
                 

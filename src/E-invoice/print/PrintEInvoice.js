@@ -35,7 +35,7 @@ const PrintEInvoice = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:3001/proxy/einvoice/print?template=${template}&id=${id}`,
+        `https://einvoice.fcssoftwares.com/api/gst/einvoice/print?template=${template}&id=${id}`,
         {
           headers: {
             Accept: "*/*",
