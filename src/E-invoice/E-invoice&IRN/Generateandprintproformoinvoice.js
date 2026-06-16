@@ -715,11 +715,11 @@ const getAuthData = () => {
   const downloadPDF = async () => {
     // If no invoice was generated yet, use the local form ID payload as sandbox template baseline
     const activeInvoiceId = lastGeneratedId || response?.response?.id || response?.response?.Id || payload.id || "1001";
-    
+    const { token, companyId } = getAuthData(); // ✅ MUST be here
     try {
       setPdfMessage("Processing request with print server proxy...");
       const resp = await axios.get(`https://einvoice.fcssoftwares.com/api/gst/einvoice/print?template=${template}&id=${activeInvoiceId}`, {
-        headers: { "X-Auth-Token": token || "MOCK_TOKEN", companyId: "24", product: "ONYX" },
+        headers: { "X-Auth-Token": token || "MOCK_TOKEN", companyId: companyId || "24", product: "ONYX" },
         responseType: "blob",
       });
       const url = window.URL.createObjectURL(new Blob([resp.data], { type: "application/pdf" }));

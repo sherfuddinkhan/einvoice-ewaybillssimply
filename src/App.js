@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-  Outlet,
-} from "react-router-dom";
+import {BrowserRouter as Router,Routes,Route,Navigate,Outlet} from "react-router-dom";
 
 import { useAuth } from "./components/AuthContext";
 import RequireAuth from "./components/RequireAuth";
@@ -32,6 +26,10 @@ import EinvprofomofeildsDIsplay from "./E-invoice/EinvprofomofeildsDIsplay"
 
 import GenerateAndPrintEinvoice from "./E-invoice/E-invoice&IRN/GenerateAndPrintEinvoice";
 import Generateandprintproformoinvoice from "./E-invoice/E-invoice&IRN/Generateandprintproformoinvoice";
+
+import GenerateandprintCNinvoice from "./E-invoice/E-invoice&IRN/GenerateandprintCNinvoice";
+import GenerateandprintCNproformainvoice from "./E-invoice/E-invoice&IRN/GenerateandprintCNproformainvoice";
+
 import CancelIRN from "./E-invoice/E-invoice&IRN/CancelIRN";
 import GetInvByIrn from "./E-invoice/E-invoice&IRN/GetInvByIrn";
 import GetIrnByDocDetailsForm from "./E-invoice/E-invoice&IRN/GetIrnByDocDetails";
@@ -185,6 +183,11 @@ const EINVOICE_DEFAULT =
 
           <Route path="generate-print" element={<GenerateAndPrintEinvoice />} />
           <Route path="generate-printproformo" element={<Generateandprintproformoinvoice/>} />
+
+          <Route path="generateCN-print" element={<GenerateandprintCNinvoice/>} />
+          <Route path="generateCNP-print" element={<GenerateandprintCNproformainvoice />} />
+
+      
 
           <Route path="cancel-irn" element={<CancelIRN />} />
           <Route path="get-by-irn" element={<GetInvByIrn />} />

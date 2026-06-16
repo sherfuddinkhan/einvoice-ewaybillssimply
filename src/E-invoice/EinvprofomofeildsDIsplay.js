@@ -52,7 +52,7 @@ const EinvprofomofeildsDIsplay = () => {
 
 
 const response = await axios.get(
-  "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/23/invoicecumchallan",
+  "https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/24/invoicecumchallan",
   {
     headers: {
       "X-Auth-Token": token,
