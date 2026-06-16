@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+import { useAuth } from "../../components/AuthContext";
 const STORAGE_KEY = "iris_einvoice_response";  
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
@@ -15,6 +15,7 @@ const STORAGE_KEY4 = "iris_einvoice_uploadfile"; // upload info (uploadId)
     console.log("savedConfig2",savedConfig2)
     console.log("savedConfig3",savedConfig3)
 const UploadStatus = () => {
+   const { token, companyId, userGstin } = useAuth();
   const [uploadId, setUploadId] = useState("");
 
   const [headers, setHeaders] = useState({
@@ -76,7 +77,7 @@ const UploadStatus = () => {
     setResponse(null);
 
     // The endpoint includes the uploadId as a query parameter
-    const endpoint = `http://localhost:3001/proxy/onyx/upload/status?uploadId=${uploadId}`;
+    const endpoint = `'https://einvoice.fcssoftwares.com/api/gst/upload/status?uploadId=${uploadId}`;
 
     setPreview({
       method: "GET",

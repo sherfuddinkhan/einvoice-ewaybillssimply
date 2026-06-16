@@ -1,106 +1,108 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../components/AuthContext";
+
 /* ----------------------------
-   LocalStorage Keys
+   LocalStorage Key
 ---------------------------- */
-const STORAGE_KEY = 'iris_einvoice_response';
-const STORAGE_KEY1 = 'iris_einvoice_shared_config';
-const STORAGE_KEY2 = 'iris_einvoice_irn_ewabill';
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 
 /* ----------------------------
    Cancel Reasons
 ---------------------------- */
 const CANCEL_REASONS = {
-  '1': 'Duplicate',
-  '2': 'Data Entry Mistake',
-  '3': 'Order Cancelled',
-  '4': 'Others'
+  "1": "Duplicate",
+  "2": "Data Entry Mistake",
+  "3": "Order Cancelled",
+  "4": "Others",
 };
 
-const CancelEwb = ({ previousResponse }) => {
-  const { token, companyId, userGstin } = useAuth();
+const CancelEwb = () => {
+  const { token, companyId, userGstin} = useAuth();
+
   /* ----------------------------
-     State
+     Headers
   ---------------------------- */
 
-  // IMPORTANT: lowercase headers (browser → express)
   const [headers, setHeaders] = useState({
-    accept: 'application/json',
-    'content-type': 'application/json',
-    companyid: '',
-    'x-auth-token': '',
-    product: 'ONYX'
+    accept: "application/json",
+    "content-type": "application/json",
+    companyid: "",
+    "x-auth-token": "",
+    product: "ONYX",
   });
 
+  /* ----------------------------
+     Body
+  ---------------------------- */
+
   const [body, setBody] = useState({
-    ewbNo: '',
-    cnlRsn: '3',
-    cnlRem: 'Order cancelled by buyer',
-    userGstin: ''
+    ewbNo: "",
+    cnlRsn: "3",
+    cnlRem: "Order cancelled by buyer",
+    userGstin: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 
   /* ----------------------------
-     useEffect – Auto populate
+     Auto Populate
   ---------------------------- */
-useEffect(() => {
-  const irnEwbData = JSON.parse(
-    localStorage.getItem(STORAGE_KEY2) || "{}"
-  );
 
-  console.log("irnEwbData", irnEwbData);
+  useEffect(() => {
+    const irnEwbData = JSON.parse(
+      localStorage.getItem(STORAGE_KEY2) || "{}"
+    );
 
-  /* ---- Headers (from Auth) ---- */
-  setHeaders((prev) => ({
-    ...prev,
-    companyid: companyId || "",
-    "x-auth-token": token || "",
-  }));
+    console.log("IRN EWB Data :", irnEwbData);
 
-  /* ---- Body ---- */
-  setBody((prev) => ({
-    ...prev,
-    ewbNo: irnEwbData?.EwbNo || "",
-    userGstin:
-      userGstin ||
-      irnEwbData?.
-userGstin
- ||
-      "",
-  }));
-}, [token, companyId, userGstin]);
+    // Populate headers from AuthContext
+    setHeaders((prev) => ({
+      ...prev,
+      companyid: companyId || "",
+      "x-auth-token": token || "",
+    }));
 
-/* ----------------------------
-   Helpers
----------------------------- */
-
-const updateHeader = (key, value) =>
-  setHeaders((prev) => ({
-    ...prev,
-    [key]: value,
-  }));
-
-const updateBody = (key, value) =>
-  setBody((prev) => ({
-    ...prev,
-    [key]: value,
-  }));
-
-const isReady =
-  !!companyId &&
-  !!token &&
-  !!body.ewbNo &&
-  !!body.userGstin &&
-  !!body.cnlRsn;
+    // Populate body
+    setBody((prev) => ({
+      ...prev,
+      ewbNo: irnEwbData?.EwbNo || "",
+      userGstin: irnEwbData ?.userGstin || "",
+    }));
+  }, [token, companyId, userGstin]);
 
   /* ----------------------------
-     Cancel API Call
+     Helpers
   ---------------------------- */
+
+  const updateHeader = (key, value) => {
+    setHeaders((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const updateBody = (key, value) => {
+    setBody((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const isReady =
+    !!headers.companyid &&
+    !!headers["x-auth-token"] &&
+    !!body.ewbNo &&
+    !!body.userGstin &&
+    !!body.cnlRsn;
+
+  /* ----------------------------
+     Cancel API
+  ---------------------------- */
+
   const cancelEwb = async () => {
     if (!isReady) {
-      alert('Missing required fields');
+      alert("Missing required fields");
       return;
     }
 
@@ -109,160 +111,176 @@ const isReady =
 
     try {
       const res = await fetch(
-        'https://einvoice.fcssoftwares.com/api/gst/einvoice/cancel-ewb',
+        "https://einvoice.fcssoftwares.com/api/gst/einvoice/cancel-ewb",
         {
-          method: 'PUT',
+          method: "PUT",
           headers,
-          body: JSON.stringify(body)
+          body: JSON.stringify(body),
         }
       );
 
       const data = await res.json();
+
       setResponse({
         status: res.status,
         body: data,
-        time: new Date().toLocaleString('en-IN', {
-        timeZone: 'Asia/Kolkata'
-        })
+        time: new Date().toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        }),
       });
 
-      if (res.ok && data.status === 'SUCCESS') {
-        alert('E-Way Bill Cancelled Successfully');
+      if (res.ok && data.status === "SUCCESS") {
+        alert("E-Way Bill Cancelled Successfully");
       }
     } catch (err) {
       setResponse({
-        status: 'NETWORK_ERROR',
-        error: err.message
+        status: "NETWORK_ERROR",
+        error: err.message,
       });
     } finally {
       setLoading(false);
     }
   };
 
-  /* ----------------------------
-     UI
-  ---------------------------- */
   return (
-    <div style={{ padding: '30px', background: '#ffebee', minHeight: '100vh' }}>
-      <h1 style={{ color: '#c62828' }}>Cancel E-Way Bill</h1>
-      <p>Headers & payload auto-loaded • Editable</p>
+    <div
+      style={{
+        padding: "30px",
+        background: "#ffebee",
+        minHeight: "100vh",
+      }}
+    >
+      <h1 style={{ color: "#c62828" }}>Cancel E-Way Bill</h1>
 
       <div
         style={{
-          background: '#fff',
-          padding: '30px',
-          borderRadius: '16px',
-          maxWidth: '900px',
-          margin: 'auto',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.15)'
+          background: "#fff",
+          padding: "30px",
+          borderRadius: "16px",
+          maxWidth: "900px",
+          margin: "auto",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
         }}
       >
-        {/* ---------------- Headers ---------------- */}
-        <h2 style={{ borderBottom: '3px solid #ef5350' }}>
-          Request Headers
-        </h2>
+        {/* Headers */}
 
-        {['companyid', 'x-auth-token'].map(key => (
-          <div key={key} style={{ margin: '12px 0' }}>
-            <strong>{key}</strong>
-            <input
-              value={headers[key]}
-              onChange={e => updateHeader(key, e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '2px solid #ef5350',
-                borderRadius: '6px'
-              }}
-            />
-          </div>
-        ))}
+        <h2>Request Headers</h2>
 
-        {/* ---------------- Payload Preview ---------------- */}
-        <h2
-          style={{
-            marginTop: '30px',
-            borderBottom: '3px solid #ef5350'
-          }}
-        >
-          Request Payload
-        </h2>
+        <div style={{ marginBottom: "15px" }}>
+          <strong>companyid</strong>
+          <input
+            value={headers.companyid}
+            onChange={(e) => updateHeader("companyid", e.target.value)}
+            style={{ width: "100%", padding: "10px" }}
+          />
+        </div>
+
+        <div style={{ marginBottom: "15px" }}>
+          <strong>x-auth-token</strong>
+          <input
+            value={headers["x-auth-token"]}
+            onChange={(e) =>
+              updateHeader("x-auth-token", e.target.value)
+            }
+            style={{ width: "100%", padding: "10px" }}
+          />
+        </div>
+
+        {/* Payload */}
+
+        <h2>Request Payload</h2>
 
         <pre
           style={{
-            background: '#263238',
-            color: '#ff5252',
-            padding: '20px',
-            borderRadius: '12px',
-            marginTop: '15px'
+            background: "#263238",
+            color: "#ff5252",
+            padding: "20px",
+            borderRadius: "10px",
           }}
         >
           {JSON.stringify(body, null, 2)}
         </pre>
 
-        {/* ---------------- Form ---------------- */}
-        <div style={{ marginTop: '25px' }}>
-          <input
-            placeholder="EWB Number"
-            value={body.ewbNo}
-            onChange={e => updateBody('ewbNo', e.target.value)}
-            style={{ width: '100%', padding: '12px', marginBottom: '12px' }}
-          />
+        {/* Form */}
 
-          <select
-            value={body.cnlRsn}
-            onChange={e => updateBody('cnlRsn', e.target.value)}
-            style={{ width: '100%', padding: '12px', marginBottom: '12px' }}
-          >
-            {Object.entries(CANCEL_REASONS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
+        <input
+          placeholder="EWB Number"
+          value={body.ewbNo}
+          onChange={(e) => updateBody("ewbNo", e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginTop: "15px",
+          }}
+        />
 
-          <input
-            placeholder="Cancellation Remark"
-            value={body.cnlRem}
-            onChange={e => updateBody('cnlRem', e.target.value)}
-            style={{ width: '100%', padding: '12px', marginBottom: '12px' }}
-          />
+        <select
+          value={body.cnlRsn}
+          onChange={(e) => updateBody("cnlRsn", e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginTop: "15px",
+          }}
+        >
+          {Object.entries(CANCEL_REASONS).map(([key, value]) => (
+            <option key={key} value={key}>
+              {value}
+            </option>
+          ))}
+        </select>
 
-          <input
-            placeholder="User GSTIN"
-            value={body.userGstin}
-            onChange={e => updateBody('userGstin', e.target.value)}
-            style={{ width: '100%', padding: '12px' }}
-          />
+        <input
+          placeholder="Cancellation Remark"
+          value={body.cnlRem}
+          onChange={(e) => updateBody("cnlRem", e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginTop: "15px",
+          }}
+        />
 
-          <button
-            disabled={!isReady || loading}
-            onClick={cancelEwb}
-            style={{
-              width: '100%',
-              marginTop: '20px',
-              padding: '18px',
-              background: loading ? '#999' : '#d32f2f',
-              color: '#fff',
-              fontSize: '20px',
-              borderRadius: '10px'
-            }}
-          >
-            {loading ? 'Cancelling…' : 'Cancel E-Way Bill'}
-          </button>
-        </div>
+        <input
+          placeholder="User GSTIN"
+          value={body.userGstin}
+          onChange={(e) => updateBody("userGstin", e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            marginTop: "15px",
+          }}
+        />
+
+        <button
+          onClick={cancelEwb}
+          disabled={!isReady || loading}
+          style={{
+            width: "100%",
+            marginTop: "20px",
+            padding: "16px",
+            background: loading ? "#999" : "#d32f2f",
+            color: "#fff",
+            fontSize: "18px",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+          }}
+        >
+          {loading ? "Cancelling..." : "Cancel E-Way Bill"}
+        </button>
       </div>
 
-      {/* ---------------- Response ---------------- */}
       {response && (
-        <div style={{ marginTop: '40px' }}>
+        <div style={{ marginTop: "30px" }}>
           <h2>Response ({response.time})</h2>
+
           <pre
             style={{
-              background: '#1e1e1e',
-              color: '#ff5252',
-              padding: '20px',
-              borderRadius: '12px'
+              background: "#1e1e1e",
+              color: "#ff5252",
+              padding: "20px",
+              borderRadius: "10px",
             }}
           >
             {JSON.stringify(response.body || response.error, null, 2)}
