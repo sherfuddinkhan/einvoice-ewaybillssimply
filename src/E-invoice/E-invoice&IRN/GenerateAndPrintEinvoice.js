@@ -276,8 +276,8 @@ console.log("📦 Product List:", productList);
     // ================= SELLER =================
     sgstin: sellerGstin,
     strdNm: inv?.company_Name || "TEST Company",
-    slglNm: inv?.companyBranches?.nameEng || "TEST PROD",
-    sbnm: inv?.companyBranches?.companyTallyName || "Testing",
+    slglNm: inv?.company_Name  || "TEST PROD",
+    sbnm: inv?.company_Name  || "Testing",
     sflno: "ABC",
     sloc: inv?.companyBranches?.poBox || "BANGALOR32",
     sdst: inv?.company_State|| "BENGALURU",
@@ -346,7 +346,7 @@ console.log("📦 Product List:", productList);
     itemList: productList.map((item, index) => ({
       num: String(index + 1).padStart(5, "0"),
       prdNm: item?.description || item?.prdNm || "New Product",
-      prdDesc: item?.itemName || "Product Line Description",
+      prdDesc:  "Product Description",
       hsnCd: item?.hsncode || "73041190",
       qty: Number(item?.quantity || 1),
       unit: sanitizeUQC(item?.uom),
