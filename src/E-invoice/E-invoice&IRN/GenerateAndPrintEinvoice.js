@@ -200,6 +200,7 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
 
 const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") => {
  const inv = invoiceData;
+ const pid = dynamicId
 
 console.log("📦 FULL INVOICE:", inv);
 
@@ -265,7 +266,7 @@ console.log("📦 Product List:", productList);
     catg: selectedCatg || "B2B",
     dst: "O",
     trnTyp: selectedTrnTyp,
-    no: inv?.refID ? `INV-${inv.refID}` : "INV-001",
+    no: dynamicId ,
     dt: formatDate(inv?.dateofIssue || new Date()),
     pos: buyerStateCode,
     rchrg: "N",
@@ -324,7 +325,7 @@ console.log("📦 Product List:", productList);
     transMode: "1",
     transDist: 0,
     transName: "TEST TRANSPORT",
-    transDocNo: `DOC${inv?.refID || "001"}`,
+    transDocNo: inv?.pid ? `INV-${inv.pid}` : "INV-001",
     transDocDate: formatDate(inv?.dateofIssue || new Date()),
     vehNo: inv?.vehicleNo || "KA01AB1234",
     vehTyp: "R",
@@ -364,7 +365,7 @@ console.log("📦 Product List:", productList);
     invRefPreDtls: [{ oinum: null, oidt: null, othRefNo: null }],
     invRefContDtls: [{ raref: null, radt: null, tendref: null, contref: null, extref: null, projref: null, poref: null, porefdt: null }],
     genIrn: true,
-    genewb: "N",
+    genewb: "Y",
     signedDataReq: true
   };
 };
@@ -381,8 +382,8 @@ const { setLastInvoice } = useAuth();
   const location = useLocation();
   const [manualInvoiceId, setManualInvoiceId] = useState("");
   const receivedData = location.state || {};
-  const invoiceData = receivedData.invoiceData || {};
-  const dynamicId = receivedData.id || invoiceData.pid;
+  const invoiceData = location.state?.invoiceData || {};
+  const dynamicId = receivedData.id || location.state?.pid;
   console.log("invoiceData",invoiceData);
   console.log("dynamicId ",dynamicId);
 
