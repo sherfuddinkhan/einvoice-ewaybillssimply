@@ -8,9 +8,15 @@ const LOGIN_RESPONSE_KEY = 'iris_login_data';
 const LATEST_EWB_KEY = 'latestEwbData';
 const EWB_HISTORY_KEY = 'ewbHistory';
 
-const EwbGenerateAndPrint= () => {
-    const location = useLocation();
-  const defaultFormData = {
+const EwbGenerateAndPrint = () => {
+  const location = useLocation();
+     const invoiceData = location.state?.invoiceData || {};
+    const receivedData = location.state || {};
+  const dynamicId = receivedData.id || location.state?.pid;
+ console.log("invoicedata",invoiceData)
+  // 1. Initial State Hooks
+  const [authCredentials, setAuthCredentials] = useState({ token: "YOUR_AUTH_TOKEN", companyId: "YOUR_COMPANY_ID" });
+  const [formData, setFormData] = useState({
     supplyType: "O",
     subSupplyType: "1",
     docType: "INV",
@@ -18,115 +24,169 @@ const EwbGenerateAndPrint= () => {
     invType: "B2B",
     docDate: "15/11/2025",
     transactionType: 1,
-    fromGstin: "05AAAAU1183B5ZW",
-    fromTrdName: "ABC",
-    dispatchFromGstin: "05AAAAU1183B5ZW",
-    dispatchFromTradeName: "PQR",
-    fromAddr1: "T231",
-    fromAddr2: "IIP",
-    fromPlace: "Akodiya",
-    fromPincode: 248001,
-    fromStateCode: 5,
-    toGstin: "05AAAAU1183B1Z0",
-    toTrdName: "RJ-Rawat Foods",
-    toAddr1: "S531, SSB Towers",
-    toAddr2: "MG Road",
-    toPlace: "Dehradun",
-    toPincode: 248002,
-    toStateCode: 5,
-    totInvValue: 21000.00,
-    totalValue: 20000.00,
-    cgstValue: 500.00,
-    sgstValue: 500.00,
-    igstValue: 0.00,
-    cessValue: 0.00,
-    cessNonAdvolValue: 0.00,
-    otherValue: 0.00,
+    fromGstin: "",
+    fromTrdName: "",
+    dispatchFromGstin: "",
+    dispatchFromTradeName: "",
+    fromAddr1: "",
+    fromAddr2: "",
+    fromPlace: "",
+    fromPincode: 192233,
+    fromStateCode: 36,
+    actFromStateCode: "36",
+    toGstin: "",
+    toTrdName: "",
+    toAddr1: "",
+    toAddr2: "",
+    toPlace: "",
+    toPincode: 500025,
+    toStateCode: 36,
+    actToStateCode: "36",
+    totInvValue: 0,
+    totalValue: 0,
+    cgstValue: 0,
+    sgstValue: 0,
+    igstValue: 0,
+    cessValue: 0,
+    cessNonAdvolValue: 0,
+    otherValue: 0,
     transMode: 1,
     transDistance: 10,
     transDocDate: "15/11/2025",
-    transDocNo: "1212",
-    transporterId: "05AAAAU1183B1Z0",
-    transporterName: "ACVDF",
-    vehicleNo: "RJ14CA9999",
+    transDocNo: "",
+    transporterId: "",
+    transporterName: "",
+    vehicleNo: "",
     vehicleType: "R",
-    actFromStateCode: "5",
-    actToStateCode: "5",
-    itemList: [
-      {
-        productName: "Sugar",
-        productDesc: "Sugar",
-        hsnCode: "8517",
-        quantity: 10,
-        qtyUnit: "KGS",
-        taxableAmount: 20000.00,
-        sgstRate: 2.50,
-        cgstRate: 2.50,
+    itemList: [],
+    companyId: null,
+    userGstin: "",
+    forceDuplicateCheck: true
+  });
+
+  const [pdfMessage, setPdfMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [apiResponse, setApiResponse] = useState(null);
+
+
+  const safeParse = (v, fallback = {}) => {
+    try {
+      return JSON.parse(v ?? "null") ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  // 2. Inline Header Configuration Utility
+  const getRequestHeaders = (productName = "TOPAZ") => ({
+    "X-Auth-Token": authCredentials?.token || "",
+    "companyId": authCredentials?.companyId || "",
+    "product": productName,
+    "Content-Type": "application/json"
+  });
+
+  // 3. Dynamic Structural Data Binding
+  useEffect(() => {
+    const sessionData = safeParse(sessionStorage.getItem(EWAY_KEY));
+    
+    const parsedToken = sessionData?.token || sessionData?.fullResponse?.response?.token || "YOUR_AUTH_TOKEN";
+    const parsedCompanyId = sessionData?.fullResponse?.response?.companyid || "4";
+    const parsedGstin = invoiceData.gstin || sessionData?.userGstin || "01AAACI9260R002";
+
+    setAuthCredentials({
+      token: parsedToken,
+      companyId: String(parsedCompanyId),
+    });
+
+    // Process array elements dynamically from invoiceProductDetails
+    const mappedItems = (invoiceData.invoiceProductDetails || []).map(item => {
+      const taxableAmt = parseFloat(item.totalAmount) || 0;
+      const gstPercentage = parseFloat(item.gstPer) || 0;
+      
+      // Compute standard breakdowns dynamically if arrays yield null
+      const computedTotalTax = taxableAmt * (gstPercentage / 100);
+      const halfTaxAmount = computedTotalTax / 2;
+
+      return {
+        productName: item.description ? item.description.substring(0, 50) : "Machine Parts",
+        productDesc: item.description || "Machinery Item",
+        hsnCode: item.hsncode || "730411",
+        quantity: parseFloat(item.quantity) || 1,
+        qtyUnit: item.uom || "NOS",
+        taxableAmount: taxableAmt,
+        sgstRate: gstPercentage > 0 ? gstPercentage / 2 : 0,
+        cgstRate: gstPercentage > 0 ? gstPercentage / 2 : 0,
         igstRate: 0.00,
         cessRate: 0.00,
         cessNonAdvol: 0.00,
         iamt: 0.00,
-        camt: 500.00,
-        samt: 500.00,
+        camt: parseFloat(item.cgstAmount) || halfTaxAmount,
+        samt: parseFloat(item.sgstAmount) || halfTaxAmount,
         csamt: 0.00,
         txp: "T"
-      }
-    ],
-    companyId: null,
-    userGstin: "05AAAAU1183B5ZW",
-    forceDuplicateCheck: true
-  };
+      };
+    });
 
-  const [formData, setFormData] = useState(defaultFormData);
-  const [authData, setAuthData] = useState({ companyId: '', token: '', userGstin: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [apiResponse, setApiResponse] = useState(null);
-  const [authCredentials, setAuthCredentials] = useState({token: "YOUR_AUTH_TOKEN",companyId: "YOUR_COMPANY_ID"});
+    // Sum individual array blocks to formulate clean aggregated invoice totals
+    const aggregatedTaxable = mappedItems.reduce((sum, item) => sum + item.taxableAmount, 0);
+    const aggregatedCgst = mappedItems.reduce((sum, item) => sum + item.camt, 0);
+    const aggregatedSgst = mappedItems.reduce((sum, item) => sum + item.samt, 0);
+    const aggregatedInvoiceTotal = aggregatedTaxable + aggregatedCgst + aggregatedSgst;
 
-  const safeParse = (v, fallback = {}) => {
-  try {
-    return JSON.parse(v ?? "null") ?? fallback;
-  } catch {
-    return fallback;
-  }
-};
-  // ----------------- AUTOPOPULATE -----------------
- useEffect(() => {
-  const sessionData = safeParse(sessionStorage.getItem(EWAY_KEY));
-  console.log("sessionData",sessionData)
+    // Determine fallback values for template text fields safely
+    const formattedVehicleNo = invoiceData.vehicleNo === "vehicle no" ? "AP28BN4797" : (invoiceData.vehicleNo || "AP28BN4797");
+    const formattedBuyerGstin = (invoiceData.buyerClients?.gstin === "." || !invoiceData.buyerClients?.gstin) ? "36AAAAU1183B1Z0" : invoiceData.buyerClients.gstin;
 
-  const parsedToken =
-    sessionData?.token ||
-    sessionData?.fullResponse?.response?.token ||
-    "YOUR_AUTH_TOKEN";
+    setFormData((prev) => ({
+      ...prev,
+     docNo: dynamicId,
+     docDate: invoiceData.deliveryNoteDate || "17/06/2026", 
+      
+      // --- SELLER (SWASTIK MACHINERY CORPORATION) ---
+      fromGstin: parsedGstin,
+      fromTrdName: invoiceData.company_Name || "SWASTIK MACHINERY CORPORATION",
+      dispatchFromGstin: parsedGstin,
+      dispatchFromTradeName: invoiceData.company_Name || "SWASTIK MACHINERY CORPORATION",
+      fromAddr1: invoiceData.company_Address || "#11-171/5, Fathenagar,",
+      fromAddr2: invoiceData.company_City || "Hyderabad",
+      fromPlace: invoiceData.company_City || "Hyderabad",
+      fromPincode: parseInt(invoiceData.company_PINCode) || 192233,
+      fromStateCode: 36, // Telangana
+      actFromStateCode: "36",
 
-  // Use companyid from fullResponse.response
-  const parsedCompanyId =
-    sessionData?.fullResponse?.response?.companyid || "4";
+      // --- BUYER (buyerClients Structure mapping) ---
+      toGstin: formattedBuyerGstin,
+      toTrdName: invoiceData.buyerClients?.companyName || "Buyer Company",
+      toAddr1: invoiceData.buyerClients?.officeAddress || "Phase -2., Cherlapally",
+      toAddr2: invoiceData.buyerClients?.poBox || "Hyderabad",
+      toPlace: invoiceData.buyerClients?.stateName || "Hyderabad",
+      toPincode: parseInt(invoiceData.buyerClients?.poBox) || 500025,
+      toStateCode: parseInt(invoiceData.buyerClients?.masterStateNames?.stateCode) || 36,
+      actToStateCode: invoiceData.buyerClients?.masterStateNames?.stateCode || "36",
 
-  const parsedGstin =
-    sessionData?.userGstin || "05AAAAU1183B5ZW";
+      // --- MATHEMATICAL VALUATIONS ---
+      totalValue: aggregatedTaxable,
+      cgstValue: aggregatedCgst,
+      sgstValue: aggregatedSgst,
+      igstValue: 0.00,
+      totInvValue: aggregatedInvoiceTotal,
 
-  console.log("Parsed Token:", parsedToken);
-  console.log("Parsed CompanyId:", parsedCompanyId);
-   console.log("parsedGstin:",  parsedGstin);
+      // --- TRANSPORTATION ---
+      transDocDate: invoiceData.deliveryNoteDate || "17/06/2026",
+      transDocNo: invoiceData.despatchedDocumentNumber || "1212",
+      transporterId: parsedGstin,
+      transporterName: invoiceData.company_Name || "SWASTIK MACHINERY CORPORATION",
+      vehicleNo: formattedVehicleNo,
 
-  setAuthCredentials({
-    token: parsedToken,
-    companyId: String(parsedCompanyId),
-  });
-console.log(" authData",authData)
-  setFormData((prev) => ({
-    ...prev,
-    companyId: Number(parsedCompanyId),
-    userGstin: parsedGstin || prev.userGstin,
-  }));
-}, []);
+      // --- BALANCED ITEM LINE ENTRIES ---
+      itemList: mappedItems,
 
-useEffect(() => {
-  console.log("AUTH UPDATED:", authCredentials);
-}, [authCredentials]);
+      companyId: Number(parsedCompanyId),
+      userGstin: parsedGstin,
+    }));
+  }, []);
+
   // ----------------- LOCAL STORAGE SAVE -----------------
   const saveToLocalStorage = (fullResponse) => {
     const resp = fullResponse.response;
@@ -152,118 +212,280 @@ useEffect(() => {
   // ----------------- FORM HANDLERS -----------------
   const handleChange = (e) => {
     const { name, value } = e.target;
+      console.log("Changing:", name, value);
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+ // ----------------- ITEM HANDLERS -----------------
 
-  const handleItemChange = (index, e) => {
-    const { name, value } = e.target;
-    const newItems = [...formData.itemList];
-    newItems[index] = { ...newItems[index], [name]: value };
-    setFormData(prev => ({ ...prev, itemList: newItems }));
-  };
+const handleItemChange = (index, e) => {
+  const { name, value } = e.target;
 
-  const addItem = () => {
-    setFormData(prev => ({
+  setFormData((prev) => {
+    const updatedItems = [...prev.itemList];
+
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [name]: value,
+    };
+
+    return {
       ...prev,
-      itemList: [...prev.itemList, {
-        productName: "", productDesc: "", hsnCode: "", quantity: 0, qtyUnit: "KGS",
-        taxableAmount: 0, sgstRate: 0, cgstRate: 0, igstRate: 0, cessRate: 0,
-        cessNonAdvol: 0, iamt: 0, camt: 0, samt: 0, csamt: 0, txp: "T"
-      }]
-    }));
-  };
+      itemList: updatedItems,
+    };
+  });
+};
 
-  const removeItem = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      itemList: prev.itemList.filter((_, i) => i !== index)
-    }));
-  };
+const addItem = () => {
+  setFormData((prev) => ({
+    ...prev,
+    itemList: [
+      ...prev.itemList,
+      {
+        productName: "",
+        productDesc: "",
+        hsnCode: "",
+        quantity: 1,
+        qtyUnit: "NOS",
+        taxableAmount: 0,
+        sgstRate: 0,
+        cgstRate: 0,
+        igstRate: 0,
+        cessRate: 0,
+        cessNonAdvol: 0,
+        iamt: 0,
+        camt: 0,
+        samt: 0,
+        csamt: 0,
+        txp: "T",
+      },
+    ],
+  }));
+};
+
+const removeItem = (index) => {
+  setFormData((prev) => ({
+    ...prev,
+    itemList: prev.itemList.filter((_, i) => i !== index),
+  }));
+};
+
 
   // ----------------- SUBMIT HANDLER -----------------
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  setApiResponse(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setApiResponse(null);
 
-  console.log("AUTH USED:", authCredentials);
+    const headers = getRequestHeaders("TOPAZ");
 
-  const headers = {
-    "X-Auth-Token": authCredentials?.token || "",
-    "companyId": authCredentials?.companyId || "",
-    "product": "TOPAZ",
-    "Content-Type": "application/json"
-  };
+    try {
+      const res = await axios.post(
+        "https://einvoice.fcssoftwares.com/api/gst/ewaybill/generate",
+        formData,
+        { headers }
+      );
 
-  console.log("Headers:", headers);
-  console.log("Payload:", formData);
-
-  try {
-    const res = await axios.post(
-      "http://localhost:3001/proxy/topaz/ewb/generate",
-      formData,
-      { headers }
-    );
-
-    if (res.data.status === "SUCCESS" && res.data.response) {
-      setApiResponse(res.data);
-      saveToLocalStorage(res.data);
-    } else {
-      throw new Error(res.data.message || "E-Way Bill generation failed");
+      if (res.data.status === "SUCCESS" && res.data.response) {
+        setApiResponse(res.data);
+        saveToLocalStorage(res.data);
+      } else {
+        throw new Error(res.data.message || "E-Way Bill generation failed");
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        err.message ||
+        "Unknown error"
+      );
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError(
-      err.response?.data?.message ||
-      err.message ||
-      "Unknown error"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-  const requestHeaders = {
-    'X-Auth-Token': authCredentials.token || '',
-    'companyId': authCredentials.companyId || '',
-    'product': 'TOPAZ',
-    'Content-Type': 'application/json'
   };
 
-  // ----------------- JSX -----------------
-return (
-  <div style={{ maxWidth: '1200px', margin: '20px auto', padding: '20px' }}>
-    
-    <h1 style={{ textAlign: 'center' }}>Generate E-Way Bill</h1>
+  // ----------------- DOWNLOAD PDF -----------------
+  const downloadPDF = async () => {
+    try {
+      const ewbNo = apiResponse?.response?.ewbNo;
+      if (!ewbNo) {
+        setPdfMessage("No invoice ID found.");
+        return;
+      }
 
-    {/* ONLY FORM (NO PREVIEW SECTION) */}
+      setPdfMessage("Processing PDF download...");
+      const url = "https://einvoice.fcssoftwares.com/api/gst/ewaybill/print-details";
+      const headers = getRequestHeaders("TOPAZ");
+
+      const resp = await axios.post(
+        url, 
+        { ewbNo: [ewbNo.toString()] }, 
+        { headers, responseType: "blob" } 
+      );
+
+      const blobUrl = window.URL.createObjectURL(
+        new Blob([resp.data], { type: "application/pdf" })
+      );
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `EInvoice_${ewbNo}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(blobUrl);
+      setPdfMessage("PDF downloaded successfully.");
+    } catch (error) {
+      console.error("PDF Download Error:", error);
+      setPdfMessage("Failed to download PDF.");
+    }
+  };
+
+ return (
+  <div style={{ maxWidth: "1200px", margin: "20px auto", padding: "20px" }}>
+    <h1 style={{ textAlign: "center" }}>Generate E-Way Bill</h1>
+
     <form onSubmit={handleSubmit}>
-
-      {/* Example: still allow inputs OR you can hide everything */}
+      {/* Main Fields */}
       {Object.keys(formData)
         .filter(key => key !== "itemList")
         .map(key => (
-          <div key={key} style={{ margin: "10px 0" }}>
-            <label>{key}</label>
+          <div key={key} style={{ marginBottom: "12px" }}>
+            <label
+              style={{
+                display: "block",
+                fontWeight: "bold",
+                marginBottom: "5px"
+              }}
+            >
+              {key}
+            </label>
+
             <input
+              type="text"
               name={key}
               value={formData[key] ?? ""}
               onChange={handleChange}
-              style={{ width: "100%", padding: 8 }}
-              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ccc",
+                borderRadius: "4px"
+              }}
             />
           </div>
         ))}
 
-      <button type="submit" disabled={loading}>
+      {/* Item List */}
+      <h3>Items</h3>
+
+      {formData.itemList?.map((item, index) => (
+        <div
+          key={index}
+          style={{
+            border: "1px solid #ddd",
+            padding: "15px",
+            marginBottom: "15px",
+            borderRadius: "5px"
+          }}
+        >
+          <h4>Item {index + 1}</h4>
+
+          {Object.keys(item).map(field => (
+            <div key={field} style={{ marginBottom: "10px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontWeight: "bold",
+                  marginBottom: "5px"
+                }}
+              >
+                {field}
+              </label>
+
+              <input
+                type="text"
+                name={field}
+                value={item[field] ?? ""}
+                onChange={(e) => handleItemChange(index, e)}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px"
+                }}
+              />
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => removeItem(index)}
+            style={{
+              background: "#ff4d4f",
+              color: "#fff",
+              border: "none",
+              padding: "8px 12px",
+              cursor: "pointer"
+            }}
+          >
+            Remove Item
+          </button>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={addItem}
+        style={{
+          marginRight: "10px",
+          padding: "10px 15px"
+        }}
+      >
+        Add Item
+      </button>
+
+      <button
+        type="submit"
+        disabled={loading}
+        style={{
+          padding: "10px 15px"
+        }}
+      >
         {loading ? "Generating..." : "Generate E-Way Bill"}
       </button>
     </form>
 
-    {/* RESPONSE ONLY */}
     {apiResponse && (
-      <div style={{ marginTop: 30 }}>
-        <h3>Success Response</h3>
-        <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
+      <div
+        style={{
+          marginTop: 20,
+          padding: 15,
+          background: "#f6ffed",
+          border: "1px solid #b7eb8f",
+          borderRadius: 6
+        }}
+      >
+        <h4>E-Way Bill Generated Successfully</h4>
+
+        <p>
+          <strong>EWB No:</strong> {apiResponse?.response?.ewbNo}
+        </p>
+
+        <p>
+          <strong>Valid Upto:</strong> {apiResponse?.response?.validUpto}
+        </p>
+
+        <button onClick={downloadPDF}>
+          Download PDF
+        </button>
+
+        {pdfMessage && (
+          <p style={{ marginTop: 10 }}>
+            {pdfMessage}
+          </p>
+        )}
       </div>
     )}
 
