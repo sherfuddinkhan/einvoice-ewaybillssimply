@@ -187,7 +187,7 @@ const EwaybillActions = () => {
       const payload = buildPayload();
 
       const res = await axios.put(
-        "http://localhost:3001/proxy/topaz/ewb/action",
+        "https://einvoice.fcssoftwares.com/api/gst/ewaybill/action",
         payload,
         { headers }
       );

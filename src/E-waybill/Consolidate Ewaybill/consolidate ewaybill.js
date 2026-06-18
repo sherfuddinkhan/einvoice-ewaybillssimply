@@ -118,7 +118,7 @@ const ByDocNumType = () => {
 
     try {
       const res = await axios.get(
-        "http://localhost:3001/proxy/topaz/cewb/details",
+        "https://einvoice.fcssoftwares.com/api/gst/ewaybill/cewb-generate",
         {
           params: payload,
           headers: {

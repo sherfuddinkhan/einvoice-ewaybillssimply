@@ -109,7 +109,7 @@ const UpdateTransporterId = () => {
 
     try {
       const res = await axios.post(
-        "https://stage-api.irisgst.com/irisgst/topaz/api/v0.3/transporter",
+        "https://einvoice.fcssoftwares.com/api/gst/ewaybill/action",
         payload,
         { headers }
       );
