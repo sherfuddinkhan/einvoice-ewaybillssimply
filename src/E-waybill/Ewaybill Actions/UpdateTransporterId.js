@@ -29,36 +29,36 @@ const UpdateTransporterId = () => {
     accept: "application/json",
   };
 
-  useEffect(() => {
-    const last = JSON.parse(
-      localStorage.getItem(LATEST_EWB_KEY) || "{}"
-    );
+useEffect(() => {
+  if (!companyId) return;
 
-    const hist = JSON.parse(
-      localStorage.getItem(EWB_HISTORY_KEY) || "{}"
-    );
+  const last = JSON.parse(
+    localStorage.getItem(LATEST_EWB_KEY) || "{}"
+  );
 
-    const initialForm = {
-      ewbNo: last?.ewbNo || hist?.ewbNo || "",
-      transporterId:
-        last?.response?.transporterId ||
-        hist?.response?.transporterId ||
-        "",
+  const hist = JSON.parse(
+    localStorage.getItem(EWB_HISTORY_KEY) || "{}"
+  );
 
-      transporterName:
-        last?.response?.transporterName ||
-        hist?.response?.transporterName ||
-        "",
+  const initialForm = {
+    ewbNo: last?.ewbNo || hist?.ewbNo || "",
+    transporterId:
+      last?.response?.transporterId ||
+      hist?.response?.transporterId ||
+      "",
+    transporterName:
+      last?.response?.transporterName ||
+      hist?.response?.transporterName ||
+      "",
+    userGstin:
+      last?.response?.fromGstin ||
+      hist?.response?.fromGstin ||
+      "",
+  };
 
-      userGstin:
-        last?.response?.fromGstin ||
-        hist?.response?.fromGstin ||
-        "",
-    };
-
-    setForm(initialForm);
-    updatePayload(initialForm);
-  }, []);
+  setForm(initialForm);
+  updatePayload(initialForm);
+}, [companyId]);
 
   const updatePayload = (formState) => {
     const payloadObj = {

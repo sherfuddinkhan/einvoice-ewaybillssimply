@@ -78,7 +78,7 @@ const GetEwbByDocNum = () => {
     setResult(null);
     try {
       const res = await axios.post(
-        "http://localhost:3001/proxy/topaz/ewb/docNum",
+        "https://einvoice.fcssoftwares.com/api/gst/ewaybill/doc-num",
         payload,
         { headers }
       );

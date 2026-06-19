@@ -178,46 +178,6 @@ const { token, companyId } = useAuth();
           ? JSON.stringify(responseData, null, 2)
           : "No response yet"}
       </pre>
-
-      {Object.keys(autoFields).length > 0 && (
-        <>
-          <h3>Auto Populated Fields</h3>
-
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-            }}
-          >
-            <tbody>
-              {Object.entries(autoFields).map(
-                ([key, value]) => (
-                  <tr key={key}>
-                    <td
-                      style={{
-                        padding: 8,
-                        fontWeight: "bold",
-                        border: "1px solid #ddd",
-                      }}
-                    >
-                      {key}
-                    </td>
-
-                    <td
-                      style={{
-                        padding: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    >
-                      {String(value)}
-                    </td>
-                  </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        </>
-      )}
     </div>
   );
 };

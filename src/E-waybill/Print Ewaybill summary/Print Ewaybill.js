@@ -69,7 +69,7 @@ const PrintEwaybill = () => {
 
     try {
       const res = await axios.post(
-        'http://localhost:3001/proxy/topaz/ewb/printDetails',
+        'https://einvoice.fcssoftwares.com/api/gst/ewaybill/print-details',
         payloadPreview,
         { headers, responseType: 'blob' } // for PDF download
       );

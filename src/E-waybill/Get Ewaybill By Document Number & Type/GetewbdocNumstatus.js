@@ -5,9 +5,9 @@ import axios from "axios";
    API ENDPOINTS
 ---------------------------------- */
 const BULK_STATUS_API =
-  "http://localhost:3001/proxy/topaz/ewb/bulkStatus";
+  "https://einvoice.fcssoftwares.com/api/gst/ewaybill/bulk-status";
 const BULK_DOWNLOAD_API =
-  "http://localhost:3001/proxy/topaz/ewb/bulkDownload";
+  "https://einvoice.fcssoftwares.com/api/gst/ewaybill/bulk-download";
 
 /* ---------------------------------
    LocalStorage Keys (STANDARD)

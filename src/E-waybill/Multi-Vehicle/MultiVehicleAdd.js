@@ -5,7 +5,7 @@ import axios from "axios";
    API
 ---------------------------------- */
 const ADD_VEHICLE_API =
-  "http://localhost:3001/proxy/topaz/multiVehicle/add";
+  "https://einvoice.fcssoftwares.com/api/gst/ewaybill/multi-vehicle-add";
 
 /* ---------------------------------
    LocalStorage Keys (STANDARD)

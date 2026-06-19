@@ -68,7 +68,7 @@ const Ewbprintsummary = () => {
 
     try {
       const res = await axios.post(
-        'http://localhost:3001/proxy/topaz/ewb/printSummary',
+        'https://einvoice.fcssoftwares.com/api/gst/ewaybill/print-summary',
         payloadPreview,
         {
           headers,

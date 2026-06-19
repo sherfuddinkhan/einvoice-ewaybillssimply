@@ -6,9 +6,10 @@ const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
 const EWB_HISTORY_KEY = "ewbHistory";
 
+
 const FetchEWBbyNumber = () => {
   const [ewbNo, setEwbNo] = useState("");
-  
+  const { companyId, token } = useAuth();
   const [userGstin, setUserGstin] = useState("");
   const [updateNeeded, setUpdateNeeded] = useState(true);
 
@@ -20,30 +21,40 @@ const FetchEWBbyNumber = () => {
 
   
   // Load Auth + Last EWB Auto Populate
-  useEffect(() => {
-    const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
-    const latestEwb = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
-    console.log("login",login )
-    console.log("latestEwb",latestEwb)
+ useEffect(() => {
+  const login = JSON.parse(
+    localStorage.getItem(STORAGE_KEY00) || "{}"
+  );
 
-    setAuthData({
-      companyId:login.fullResponse?.response?.companyid || latestEwb?.companyId || "",
-      token: login.fullResponse?.response?.token|| latestEwb?.token || "",
-    });
+  const latestEwb = JSON.parse(
+    localStorage.getItem(LATEST_EWB_KEY) || "{}"
+  );
 
-    if (latestEwb?.ewbNo) setEwbNo(latestEwb.ewbNo);
+  console.log("login", login);
+  console.log("latestEwb", latestEwb);
 
-    const gstin =
-      latestEwb?.fromGstin ||
-      latestEwb?.response?.fromGstin ||
-      latestEwb?.response?.userGstin ||
-      login.userGstin ||
-      "";
+  setAuthData({
+    companyId: companyId || "",
+    token: token || "",
+  });
 
-    setUserGstin(gstin);
+  if (latestEwb?.ewbNo) {
+    setEwbNo(latestEwb.ewbNo);
+  }
 
-    if (latestEwb?.response) setAutoFields(latestEwb.response);
-  }, []);
+  const gstin =
+    latestEwb?.fromGstin ||
+    latestEwb?.fullApiResponse?.response?.dispatchFromGstin ||
+    latestEwb?.response?.userGstin ||
+    login?.userGstin ||
+    "";
+
+  setUserGstin(gstin);
+
+  if (latestEwb?.response) {
+    setAutoFields(latestEwb.response);
+  }
+}, [companyId, token]);
 
   // Save History
   const saveHistory = (entry) => {
@@ -52,7 +63,7 @@ const FetchEWBbyNumber = () => {
     if (history.length > 10) history = history.slice(0, 10);
     localStorage.setItem(EWB_HISTORY_KEY, JSON.stringify(history));
   };
-  const { token, companyId } = useAuth();
+
   // Fetch EWB API
  const fetchEWB = async () => {
 
