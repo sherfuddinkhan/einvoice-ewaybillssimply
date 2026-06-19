@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
+import { useAuth } from "../../components/AuthContext";
 // LocalStorage Keys
 const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
@@ -51,41 +51,73 @@ const FetchEWBbyNumber = () => {
     if (history.length > 10) history = history.slice(0, 10);
     localStorage.setItem(EWB_HISTORY_KEY, JSON.stringify(history));
   };
-
+  const { token, companyId } = useAuth();
   // Fetch EWB API
-  const fetchEWB = async () => {
-    const url = "http://localhost:3001/proxy/topaz/ewb/byNumber";
-    const headers = {
-      accept: "application/json",
-      product: "TOPAZ",
-      companyId: authData.companyId,
-      "x-auth-token": authData.token,
-    };
+ const fetchEWB = async () => {
 
-    const payload = { ewbNo, userGstin, updateNeeded };
+ const headers = {
+  accept: "application/json",
+  product: "TOPAZ",
+  companyId,
+  "X-Auth-Token": token,
+};
 
-    setRequestHeaders(headers);
-    setRequestPayload(payload);
-
-    try {
-      const res = await axios.get(url, { headers, params: payload });
-      setResponseData(res.data);
-
-      const extracted = res.data?.response || {};
-      setAutoFields(extracted);
-
-      // Save latest for auto-fill next time
-      const latestDataToSave = { ewbNo, fromGstin: extracted?.fromGstin || userGstin, response: extracted };
-      localStorage.setItem(LATEST_EWB_KEY, JSON.stringify(latestDataToSave));
-
-      saveHistory({ requestHeaders: headers, requestPayload: payload, response: res.data });
-    } catch (err) {
-      const errorData = err.response?.data || { error: err.message };
-      setResponseData(errorData);
-      saveHistory({ requestHeaders: headers, requestPayload: payload, response: errorData });
-    }
+  const payload = {
+    ewbNo,
+    userGstin,
+    updateNeeded: false,
   };
 
+  setRequestHeaders(headers);
+  setRequestPayload(payload);
+
+  try {
+    const res = await axios.get(
+      "https://einvoice.fcssoftwares.com/api/gst/ewaybill/by-number",
+      {
+        params: payload,
+        headers,
+      }
+    );
+
+    setResponseData(res.data);
+
+    const extracted = res.data?.response || {};
+    setAutoFields(extracted);
+
+    const latestDataToSave = {
+      ewbNo,
+      fromGstin: extracted?.fromGstin || userGstin,
+      response: extracted,
+    };
+
+    localStorage.setItem(
+      LATEST_EWB_KEY,
+      JSON.stringify(latestDataToSave)
+    );
+
+    saveHistory({
+      requestHeaders: headers,
+      requestPayload: payload,
+      response: res.data,
+    });
+  } catch (err) {
+    const errorData =
+      err.response?.data || {
+        error: err.message,
+      };
+
+    console.error("API Error:", errorData);
+
+    setResponseData(errorData);
+
+    saveHistory({
+      requestHeaders: headers,
+      requestPayload: payload,
+      response: errorData,
+    });
+  }
+};
   return (
     <div style={{ padding: 20, maxWidth: 1000, margin: "auto", fontFamily: "Arial, sans-serif" }}>
       <h1 style={{ textAlign: "center" }}>🔍 Fetch E-Waybill By Number</h1>

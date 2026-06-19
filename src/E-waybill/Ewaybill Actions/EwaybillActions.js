@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-
+import { useAuth } from "../../components/AuthContext";
 // LocalStorage keys
 const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
@@ -57,40 +57,41 @@ const EwaybillActions = () => {
   const [response, setResponse] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const { token, companyId } = useAuth();
   // ---------------- LOAD LOCALSTORAGE ----------------
-  useEffect(() => {
-     const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
-    const latestEwb = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
-    const gstin = latestEwb.fromGstin || "";
-        console.log("login",login )
-    console.log("latestEwb",latestEwb)
+useEffect(() => {
+  const latestEwb = load(LATEST_EWB_KEY);
 
+  console.log("Auth Token:", token);
+  console.log("Company ID:", companyId);
+  console.log("Latest EWB:", latestEwb);
 
-    setAuth({
-      token: login.fullResponse?.response?.token || "" || "",
-      headerCompanyId: login.fullResponse?.response?.companyid || "",
-      userGstin: latestEwb?.response?.fromGstin || "",
-      payloadCompanyId: latestEwb?.response?.companyId ||  "",
-    });
+  setAuth({
+    userGstin: latestEwb?.response?.fromGstin || "",
+    payloadCompanyId:
+      latestEwb?.response?.companyId ||
+      companyId ||
+      "",
+  });
 
-    setForm((prev) => ({
-      ...prev,
-       ewbNo: latestEwb?.ewbNo || "",
-      vehicleNo: latestEwb ?.response?.vehicleNo || "",
-      fromPlace: latestEwb ?.response?.fromPlace || "",
-      fromState: latestEwb ?.response?.fromStateCode || "",
-      transDocNo: latestEwb?.response?.transDocNo || "",
-      transDocDate: latestEwb?.response?.transDocDate || "",
-      transMode: latestEwb?.response?.transMode || 1,
-      vehicleType: latestEwb?.response?.vehicleType || "R",
-      fromPincode: latestEwb?.response?.fromPincode || "",
-      userGstin: latestEwb?.response?.fromGstin || "",                    
-      companyId: latestEwb?.response?.companyId || "",
-      payloadCompanyId: latestEwb?.response?.companyId ||  ""
-    }));
-  }, []);
-
+  setForm((prev) => ({
+    ...prev,
+    ewbNo: latestEwb?.ewbNo || "",
+    vehicleNo: latestEwb?.response?.vehicleNo || "",
+    fromPlace: latestEwb?.response?.fromPlace || "",
+    fromState: latestEwb?.response?.fromStateCode || "",
+    transDocNo: latestEwb?.response?.transDocNo || "",
+    transDocDate: latestEwb?.response?.transDocDate || "",
+    transMode: latestEwb?.response?.transMode || 1,
+    vehicleType: latestEwb?.response?.vehicleType || "R",
+    fromPincode: latestEwb?.response?.fromPincode || "",
+    userGstin: latestEwb?.response?.fromGstin || "",
+    companyId:
+      latestEwb?.response?.companyId ||
+      companyId ||
+      "",
+  }));
+}, [companyId, token]);
   // ---------------- CLEAR RESPONSE ON INPUT CHANGE ----------------
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -111,14 +112,12 @@ const EwaybillActions = () => {
     setResponse(null); // 🔥 REQUIRED FIX
     setError("");
   };
-
-  // ---------------- HEADERS ----------------
-  const headers = {
-    "X-Auth-Token": auth.token,
-    companyId: auth.headerCompanyId,
-    product: "TOPAZ",
-    "Content-Type": "application/json",
-  };
+const headers = {
+  accept: "application/json",
+  product: "TOPAZ",
+  companyId,
+  "X-Auth-Token": token,
+};
 
   // ---------------- PAYLOAD BUILDER ----------------
   const buildPayload = () => {
@@ -175,7 +174,6 @@ const EwaybillActions = () => {
         return common;
     }
   };
-
   // ---------------- SUBMIT ----------------
   const handleSubmit = async (e) => {
     e.preventDefault();

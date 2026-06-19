@@ -1,23 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../../components/AuthContext";
 
-
-// LocalStorage keys
-const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
 const EWB_HISTORY_KEY = "ewbHistory";
 
 const UpdateTransporterId = () => {
-  // ---------------- AUTH DATA ----------------
-  const [headers, setHeaders] = useState({
-    "X-Auth-Token": "",
-    companyId: "",
-    product: "TOPAZ",
-    "Content-Type": "application/json",
-    accept: "application/json",
-  });
+  const { token, companyId } = useAuth();
 
-  // ---------------- FORM DATA ----------------
   const [form, setForm] = useState({
     ewbNo: "",
     transporterId: "",
@@ -25,107 +15,140 @@ const UpdateTransporterId = () => {
     userGstin: "",
   });
 
-  // ---------------- PAYLOAD EDITOR ----------------
   const [payloadText, setPayloadText] = useState("{}");
   const [payload, setPayload] = useState({});
-
-  // ---------------- UI STATES ----------------
   const [response, setResponse] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ---------------- LOAD FROM LOCALSTORAGE ----------------
+  const headers = {
+    "X-Auth-Token": token,
+    companyId,
+    product: "TOPAZ",
+    "Content-Type": "application/json",
+    accept: "application/json",
+  };
+
   useEffect(() => {
-    const login = JSON.parse(localStorage.getItem(STORAGE_KEY00 ) || "{}");
-    const last = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
-    const hist = JSON.parse(localStorage.getItem(EWB_HISTORY_KEY) || "{}");
+    const last = JSON.parse(
+      localStorage.getItem(LATEST_EWB_KEY) || "{}"
+    );
 
-    // Auto pick data from last or history
-    const gstin = last?.response?.fromGstin || "";
-    const ewbNo = last.ewbNo || hist.ewbNo || "";
-    const tId = last.response?.transporterId || hist.response?.transporterId || "";
-    const tName = last.response?.transporterName || hist.response?.transporterName || "";
-
-    setHeaders((prev) => ({
-      ...prev,
-      "X-Auth-Token": login.fullResponse?.response?.token || "" || "",
-      companyId: login.fullResponse?.response?.companyid || "",
-    }));
+    const hist = JSON.parse(
+      localStorage.getItem(EWB_HISTORY_KEY) || "{}"
+    );
 
     const initialForm = {
-      ewbNo,
-      transporterId: tId,
-      transporterName: tName,
-      userGstin: gstin,
+      ewbNo: last?.ewbNo || hist?.ewbNo || "",
+      transporterId:
+        last?.response?.transporterId ||
+        hist?.response?.transporterId ||
+        "",
+
+      transporterName:
+        last?.response?.transporterName ||
+        hist?.response?.transporterName ||
+        "",
+
+      userGstin:
+        last?.response?.fromGstin ||
+        hist?.response?.fromGstin ||
+        "",
     };
 
     setForm(initialForm);
     updatePayload(initialForm);
   }, []);
 
-  // ---------------- UPDATE PAYLOAD WHEN FORM CHANGES ----------------
   const updatePayload = (formState) => {
-    const pl = {
+    const payloadObj = {
       ewbNo: formState.ewbNo,
       transporterId: formState.transporterId,
-      userGstin: formState.userGstin,
       transporterName: formState.transporterName,
-      companyId: headers.companyId || null,
+      userGstin: formState.userGstin,
+      companyId,
     };
-    setPayload(pl);
-    setPayloadText(JSON.stringify(pl, null, 2));
+
+    setPayload(payloadObj);
+    setPayloadText(
+      JSON.stringify(payloadObj, null, 2)
+    );
   };
 
-  // ---------------- FORM INPUT HANDLER ----------------
   const handleChange = (e) => {
-    const updated = { ...form, [e.target.name]: e.target.value };
-    setForm(updated);
-    updatePayload(updated);
+    const updatedForm = {
+      ...form,
+      [e.target.name]: e.target.value,
+    };
+
+    setForm(updatedForm);
+    updatePayload(updatedForm);
+
     setResponse(null);
     setError("");
   };
 
-  // ---------------- PAYLOAD TEXTAREA HANDLER ----------------
   const handlePayloadTextChange = (e) => {
     const text = e.target.value;
+
     setPayloadText(text);
 
     try {
-      const obj = JSON.parse(text);
-      setPayload(obj);
+      const parsedPayload = JSON.parse(text);
+
+      setPayload(parsedPayload);
       setError("");
-    } catch (err) {
+    } catch {
       setError("Invalid JSON in payload editor");
     }
+
     setResponse(null);
   };
 
-  // ---------------- SUBMIT HANDLER ----------------
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!token || !companyId) {
+      setError("Token or Company ID not available");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setResponse(null);
 
     try {
-      const res = await axios.post(
+      console.log("Headers:", headers);
+      console.log("Payload:", payload);
+
+      const { data } = await axios.post(
         "https://einvoice.fcssoftwares.com/api/gst/ewaybill/action",
         payload,
         { headers }
       );
 
-      setResponse(res.data);
+      setResponse(data);
 
-      if (res.data.status === "SUCCESS") {
-        alert(`Transporter updated for EWB ${form.ewbNo}`);
+      if (data?.status === "SUCCESS") {
+        alert(
+          `Transporter updated for EWB ${form.ewbNo}`
+        );
       }
     } catch (err) {
-      const errData = err.response?.data || { message: err.message };
-      setError(errData.message);
-      setResponse(errData);
-    }
+      const errorData =
+        err.response?.data ||
+        { message: err.message };
 
-    setLoading(false);
+      setError(
+        errorData?.message || "Request failed"
+      );
+
+      setResponse(errorData);
+
+      console.error("API Error:", errorData);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputStyle = {
@@ -135,56 +158,69 @@ const UpdateTransporterId = () => {
   };
 
   return (
-    <div style={{ maxWidth: "800px", margin: "auto", padding: "20px" }}>
+    <div
+      style={{
+        maxWidth: "800px",
+        margin: "auto",
+        padding: "20px",
+      }}
+    >
       <h2>Update Transporter ID</h2>
 
-      {/* FORM */}
       <form onSubmit={handleSubmit}>
         <input
           style={inputStyle}
           name="ewbNo"
-          required
           placeholder="EWB Number"
           value={form.ewbNo}
           onChange={handleChange}
+          required
         />
 
         <input
           style={inputStyle}
           name="transporterId"
-          required
           placeholder="Transporter ID"
           value={form.transporterId}
           onChange={handleChange}
+          required
         />
 
         <input
           style={inputStyle}
           name="transporterName"
-          required
           placeholder="Transporter Name"
           value={form.transporterName}
           onChange={handleChange}
+          required
         />
 
         <input
           style={inputStyle}
           name="userGstin"
-          required
           placeholder="User GSTIN"
           value={form.userGstin}
           onChange={handleChange}
+          required
         />
 
-        <button style={{ padding: "10px" }} disabled={loading}>
-          {loading ? "Updating..." : "Update Transporter"}
+        <button
+          type="submit"
+          style={{ padding: "10px" }}
+          disabled={loading}
+        >
+          {loading
+            ? "Updating..."
+            : "Update Transporter"}
         </button>
       </form>
 
-      {/* ERROR */}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <p style={{ color: "red" }}>
+          {error}
+        </p>
+      )}
 
-      {/* RESPONSE */}
       {response && (
         <pre
           style={{
@@ -198,9 +234,11 @@ const UpdateTransporterId = () => {
         </pre>
       )}
 
-      {/* PAYLOAD EDITOR */}
       <h3>Editable Payload</h3>
+
       <textarea
+        value={payloadText}
+        onChange={handlePayloadTextChange}
         style={{
           width: "100%",
           height: "250px",
@@ -208,8 +246,6 @@ const UpdateTransporterId = () => {
           fontFamily: "monospace",
           background: "#f7f7f7",
         }}
-        value={payloadText}
-        onChange={handlePayloadTextChange}
       />
     </div>
   );

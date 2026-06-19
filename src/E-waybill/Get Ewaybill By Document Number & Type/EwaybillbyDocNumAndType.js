@@ -1,36 +1,29 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../../components/AuthContext";
 
-/* ---------------------------
-   LocalStorage Keys (STANDARD)
---------------------------- */
 const STORAGE_KEY = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
 
-/* ---------------------------
-   Safe JSON Reader
---------------------------- */
 const readStorage = (key, fallback = {}) => {
   try {
-    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+    return JSON.parse(
+      localStorage.getItem(key) || JSON.stringify(fallback)
+    );
   } catch {
     return fallback;
   }
 };
 
 const FetchByDocNumType = () => {
-  /* ---------------------------
-     Header State
-  --------------------------- */
+  const { token, companyId } = useAuth();
+
   const [headers, setHeaders] = useState({
     companyId: "",
     token: "",
     product: "TOPAZ",
   });
 
-  /* ---------------------------
-     Payload State
-  --------------------------- */
   const [payload, setPayload] = useState({
     userGstin: "",
     docType: "INV",
@@ -41,67 +34,71 @@ const FetchByDocNumType = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /* ============================================================
-     Auto-fill from LocalStorage
-  ============================================================ */
   useEffect(() => {
     const login = readStorage(STORAGE_KEY);
     const lastEwb = readStorage(LATEST_EWB_KEY);
-    console.log("lastEwb",lastEwb)
 
-    /* ---------- Auth ---------- */
-    const companyId = login?.fullResponse?.response?.companyid || "";
-    const token = login?.fullResponse?.response?.token || "";
+    const storedCompanyId =
+      login?.fullResponse?.response?.companyid || "";
 
-    setHeaders({
-      companyId,
-      token,
-      product: "TOPAZ",
-    });
+    const storedToken =
+      login?.fullResponse?.response?.token || "";
 
-    /* ---------- GSTIN ---------- */
-      const userGstin= lastEwb?.userGstin || "";
-    /* ---------- Document Number ---------- */
+    const userGstin =
+      lastEwb?.userGstin ||
+      lastEwb?.fromGstin ||
+      "";
+
     const docNum =
       lastEwb?.fullApiResponse?.response?.transDocNo ||
       lastEwb?.response?.transDocNo ||
       lastEwb?.transDocNo ||
       "";
 
+    setHeaders({
+      companyId: companyId || storedCompanyId,
+      token: token || storedToken,
+      product: "TOPAZ",
+    });
+
     setPayload({
       userGstin,
       docType: "INV",
       docNumList: [docNum],
     });
-  }, []);
+  }, [token, companyId]);
 
-  /* ============================================================
-     Header Update (UI only)
-  ============================================================ */
-  const updateHeader = (key, value) =>
-    setHeaders((prev) => ({ ...prev, [key]: value }));
-
-  /* ============================================================
-     Payload Updates
-  ============================================================ */
-  const updatePayload = (key, value) =>
-    setPayload((prev) => ({ ...prev, [key]: value }));
-
-  const updateDocNum = (index, value) => {
-    const list = [...payload.docNumList];
-    list[index] = value;
-    setPayload({ ...payload, docNumList: list });
+  const updateHeader = (key, value) => {
+    setHeaders((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
-  const addDocRow = () =>
+  const updatePayload = (key, value) => {
+    setPayload((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const updateDocNum = (index, value) => {
+    const updated = [...payload.docNumList];
+    updated[index] = value;
+
+    setPayload((prev) => ({
+      ...prev,
+      docNumList: updated,
+    }));
+  };
+
+  const addDocRow = () => {
     setPayload((prev) => ({
       ...prev,
       docNumList: [...prev.docNumList, ""],
     }));
+  };
 
-  /* ============================================================
-     Submit API (GET – Multiple Docs)
-  ============================================================ */
   const handleSubmit = async () => {
     setLoading(true);
     setError("");
@@ -113,6 +110,14 @@ const FetchByDocNumType = () => {
       for (const docNum of payload.docNumList) {
         if (!docNum?.trim()) continue;
 
+        console.log("Request:", {
+          companyId: headers.companyId,
+          token: headers.token,
+          userGstin: payload.userGstin,
+          docType: payload.docType,
+          docNum,
+        });
+
         const res = await axios.get(
           "http://localhost:3001/proxy/topaz/ewb/getByDocNumAndType",
           {
@@ -122,74 +127,90 @@ const FetchByDocNumType = () => {
               docNum,
             },
             headers: {
-              Accept: "application/json",
+              accept: "application/json",
+              product: "TOPAZ",
               companyId: headers.companyId,
               "X-Auth-Token": headers.token,
-              product: headers.product,
             },
           }
         );
 
-        results.push({ docNum, data: res.data });
+        results.push({
+          docNum,
+          data: res.data,
+        });
       }
 
       setResponse(results);
     } catch (err) {
-      const msg = err.response?.data || err.message;
-      setError(typeof msg === "string" ? msg : JSON.stringify(msg, null, 2));
+      console.error(err);
+
+      const msg =
+        err.response?.data || err.message;
+
+      setError(
+        typeof msg === "string"
+          ? msg
+          : JSON.stringify(msg, null, 2)
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  /* ============================================================
-     UI
-  ============================================================ */
   return (
     <div style={{ padding: 20, maxWidth: 720 }}>
       <h2>EWB Bulk Fetch (By Doc Number)</h2>
 
-      {/* ---------------- HEADERS ---------------- */}
       <div style={{ background: "#f7f7f7", padding: 15, marginBottom: 20 }}>
         <h3>Headers</h3>
 
         <label>Company ID</label>
         <input
           value={headers.companyId}
-          onChange={(e) => updateHeader("companyId", e.target.value)}
+          onChange={(e) =>
+            updateHeader("companyId", e.target.value)
+          }
           style={{ width: "100%", marginBottom: 10 }}
         />
 
         <label>X-Auth-Token</label>
         <input
           value={headers.token}
-          onChange={(e) => updateHeader("token", e.target.value)}
+          onChange={(e) =>
+            updateHeader("token", e.target.value)
+          }
           style={{ width: "100%", marginBottom: 10 }}
         />
 
         <label>Product</label>
         <input
           value={headers.product}
-          onChange={(e) => updateHeader("product", e.target.value)}
+          onChange={(e) =>
+            updateHeader("product", e.target.value)
+          }
           style={{ width: "100%" }}
         />
       </div>
 
-      {/* ---------------- PAYLOAD ---------------- */}
       <div style={{ background: "#eef7ff", padding: 15 }}>
         <h3>Payload</h3>
 
         <label>User GSTIN</label>
         <input
           value={payload.userGstin}
-          onChange={(e) => updatePayload("userGstin", e.target.value)}
+          onChange={(e) =>
+            updatePayload("userGstin", e.target.value)
+          }
           style={{ width: "100%", marginBottom: 10 }}
         />
 
         <label>Document Type</label>
         <select
           value={payload.docType}
-          onChange={(e) => updatePayload("docType", e.target.value)}
+          onChange={(e) =>
+            updatePayload("docType", e.target.value)
+          }
           style={{ width: "100%", marginBottom: 10 }}
         >
           <option value="INV">INV</option>
@@ -200,30 +221,40 @@ const FetchByDocNumType = () => {
         </select>
 
         <label>Document Numbers</label>
-        {payload.docNumList.map((v, i) => (
+
+        {payload.docNumList.map((value, index) => (
           <input
-            key={i}
-            value={v}
-            onChange={(e) => updateDocNum(i, e.target.value)}
+            key={index}
+            value={value}
+            onChange={(e) =>
+              updateDocNum(index, e.target.value)
+            }
             style={{ width: "100%", marginBottom: 6 }}
           />
         ))}
 
-        <button onClick={addDocRow} style={{ marginTop: 10 }}>
+        <button onClick={addDocRow}>
           + Add More
         </button>
       </div>
 
-      {/* ---------------- SUBMIT ---------------- */}
       <button
         onClick={handleSubmit}
         disabled={loading}
-        style={{ marginTop: 20, padding: 10, fontSize: 16 }}
+        style={{
+          marginTop: 20,
+          padding: 10,
+          fontSize: 16,
+        }}
       >
         {loading ? "Fetching..." : "Fetch EWB"}
       </button>
 
-      {error && <p style={{ color: "red", marginTop: 20 }}>{error}</p>}
+      {error && (
+        <pre style={{ color: "red", marginTop: 20 }}>
+          {error}
+        </pre>
+      )}
 
       {response && (
         <pre
@@ -232,7 +263,7 @@ const FetchByDocNumType = () => {
             marginTop: 20,
             padding: 10,
             borderRadius: 6,
-            maxHeight: 350,
+            maxHeight: 400,
             overflow: "auto",
           }}
         >

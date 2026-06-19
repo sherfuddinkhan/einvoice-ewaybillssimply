@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLocation } from "react-router-dom";
-
+import { useAuth } from "../../components/AuthContext";
 // LocalStorage Keys
 const EWAY_KEY = "iris_eway_session";
 const LOGIN_RESPONSE_KEY = 'iris_login_data';
@@ -9,6 +9,9 @@ const LATEST_EWB_KEY = 'latestEwbData';
 const EWB_HISTORY_KEY = 'ewbHistory';
 
 const EwbGenerateAndPrint = () => {
+    const { token, companyId } = useAuth();
+    console.log("token",token)
+    console.log("companyId",companyId )
   const location = useLocation();
      const invoiceData = location.state?.invoiceData || {};
     const receivedData = location.state || {};
