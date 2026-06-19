@@ -8,6 +8,7 @@ const EWB_HISTORY_KEY = "ewbHistory";
 
 const FetchEWBbyNumber = () => {
   const [ewbNo, setEwbNo] = useState("");
+  
   const [userGstin, setUserGstin] = useState("");
   const [updateNeeded, setUpdateNeeded] = useState(true);
 

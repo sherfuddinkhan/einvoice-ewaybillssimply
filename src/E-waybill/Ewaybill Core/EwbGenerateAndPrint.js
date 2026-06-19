@@ -36,7 +36,7 @@ const EwbGenerateAndPrint = () => {
     fromPlace: "",
     fromPincode: 192233,
     fromStateCode: 36,
-    actFromStateCode: "36",
+    //actFromStateCode: "36",
     toGstin: "",
     toTrdName: "",
     toAddr1: "",
@@ -44,7 +44,7 @@ const EwbGenerateAndPrint = () => {
     toPlace: "",
     toPincode: 500025,
     toStateCode: 36,
-    actToStateCode: "36",
+    //actToStateCode: "36",
     totInvValue: 0,
     totalValue: 0,
     cgstValue: 0,
@@ -54,7 +54,7 @@ const EwbGenerateAndPrint = () => {
     cessNonAdvolValue: 0,
     otherValue: 0,
     transMode: 1,
-    transDistance: 10,
+    transDistance:  350,
     transDocDate: "15/11/2025",
     transDocNo: "",
     transporterId: "",
@@ -155,11 +155,17 @@ const EwbGenerateAndPrint = () => {
       fromAddr2: invoiceData.company_City || "Hyderabad",
       fromPlace: invoiceData.company_City || "Hyderabad",
       fromPincode: parseInt(invoiceData.company_PINCode) || 192233,
-      fromStateCode: 36, // Telangana
-      actFromStateCode: "36",
+      fromStateCode: parseInt(invoiceData.clients?.masterStateNames?.stateCode) || 36,
+      actFromStateCode:invoiceData.clients?.masterStateNames?.stateCode || "36",
+   
+
+
+
 
       // --- BUYER (buyerClients Structure mapping) ---
       toGstin: formattedBuyerGstin,
+ 
+    
       toTrdName: invoiceData.buyerClients?.companyName || "Buyer Company",
       toAddr1: invoiceData.buyerClients?.officeAddress || "Phase -2., Cherlapally",
       toAddr2: invoiceData.buyerClients?.poBox || "Hyderabad",
@@ -168,6 +174,7 @@ const EwbGenerateAndPrint = () => {
       toStateCode: parseInt(invoiceData.buyerClients?.masterStateNames?.stateCode) || 36,
       actToStateCode: invoiceData.buyerClients?.masterStateNames?.stateCode || "36",
 
+   
       // --- MATHEMATICAL VALUATIONS ---
       totalValue: aggregatedTaxable,
       cgstValue: aggregatedCgst,
@@ -345,82 +352,108 @@ const removeItem = (index) => {
     }
   };
 
- return (
-  <div style={{ maxWidth: "1200px", margin: "20px auto", padding: "20px" }}>
-    <h1 style={{ textAlign: "center" }}>Generate E-Way Bill</h1>
+return (
+  <div style={{ maxWidth: "1200px", margin: "20px auto", padding: "20px", fontFamily: "sans-serif" }}>
+    <h1 style={{ textAlign: "center", marginBottom: "30px" }}>Generate E-Way Bill</h1>
 
     <form onSubmit={handleSubmit}>
-      {/* Main Fields */}
-      {Object.keys(formData)
-        .filter(key => key !== "itemList")
-        .map(key => (
-          <div key={key} style={{ marginBottom: "12px" }}>
-            <label
-              style={{
-                display: "block",
-                fontWeight: "bold",
-                marginBottom: "5px"
-              }}
-            >
-              {key}
-            </label>
+      {/* Main Fields Layout - CSS Grid for Side-by-Side Alignment */}
+      <div 
+        style={{ 
+          display: "grid", 
+          gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", 
+          gap: "16px",
+          marginBottom: "30px"
+        }}
+      >
+        {Object.keys(formData)
+          .filter(key => key !== "itemList")
+          .map(key => (
+            <div key={key} style={{ display: "flex", flexDirection: "column" }}>
+              <label
+                style={{
+                  fontWeight: "bold",
+                  marginBottom: "6px",
+                  fontSize: "14px",
+                  color: "#333"
+                }}
+              >
+                {key}
+              </label>
 
-            <input
-              type="text"
-              name={key}
-              value={formData[key] ?? ""}
-              onChange={handleChange}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ccc",
-                borderRadius: "4px"
-              }}
-            />
-          </div>
-        ))}
+              <input
+                type="text"
+                name={key}
+                value={formData[key] ?? ""}
+                onChange={handleChange}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  boxSizing: "border-box"
+                }}
+              />
+            </div>
+          ))}
+      </div>
 
-      {/* Item List */}
-      <h3>Items</h3>
+      <hr style={{ border: "0", borderTop: "1px solid #eee", margin: "30px 0" }} />
+
+      {/* Item List Header */}
+      <h3 style={{ marginBottom: "15px" }}>Items</h3>
 
       {formData.itemList?.map((item, index) => (
         <div
           key={index}
           style={{
             border: "1px solid #ddd",
-            padding: "15px",
-            marginBottom: "15px",
-            borderRadius: "5px"
+            padding: "20px",
+            marginBottom: "20px",
+            borderRadius: "6px",
+            background: "#fdfdfd"
           }}
         >
-          <h4>Item {index + 1}</h4>
+          <h4 style={{ marginTop: 0, marginBottom: "15px" }}>Item {index + 1}</h4>
 
-          {Object.keys(item).map(field => (
-            <div key={field} style={{ marginBottom: "10px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontWeight: "bold",
-                  marginBottom: "5px"
-                }}
-              >
-                {field}
-              </label>
+          {/* Item Fields Layout - Side-by-Side Sub Grid */}
+          <div 
+            style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", 
+              gap: "12px",
+              marginBottom: "15px"
+            }}
+          >
+            {Object.keys(item).map(field => (
+              <div key={field} style={{ display: "flex", flexDirection: "column" }}>
+                <label
+                  style={{
+                    fontWeight: "bold",
+                    marginBottom: "5px",
+                    fontSize: "13px",
+                    color: "#555"
+                  }}
+                >
+                  {field}
+                </label>
 
-              <input
-                type="text"
-                name={field}
-                value={item[field] ?? ""}
-                onChange={(e) => handleItemChange(index, e)}
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px"
-                }}
-              />
-            </div>
-          ))}
+                <input
+                  type="text"
+                  name={field}
+                  value={item[field] ?? ""}
+                  onChange={(e) => handleItemChange(index, e)}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+            ))}
+          </div>
 
           <button
             type="button"
@@ -430,7 +463,9 @@ const removeItem = (index) => {
               color: "#fff",
               border: "none",
               padding: "8px 12px",
-              cursor: "pointer"
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "13px"
             }}
           >
             Remove Item
@@ -438,62 +473,86 @@ const removeItem = (index) => {
         </div>
       ))}
 
-      <button
-        type="button"
-        onClick={addItem}
-        style={{
-          marginRight: "10px",
-          padding: "10px 15px"
-        }}
-      >
-        Add Item
-      </button>
+      {/* Form Action Buttons */}
+      <div style={{ marginTop: "20px" }}>
+        <button
+          type="button"
+          onClick={addItem}
+          style={{
+            marginRight: "12px",
+            padding: "10px 20px",
+            backgroundColor: "#fff",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Add Item
+        </button>
 
-      <button
-        type="submit"
-        disabled={loading}
-        style={{
-          padding: "10px 15px"
-        }}
-      >
-        {loading ? "Generating..." : "Generate E-Way Bill"}
-      </button>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#1890ff",
+            color: "#fff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: loading ? "not-allowed" : "pointer"
+          }}
+        >
+          {loading ? "Generating..." : "Generate E-Way Bill"}
+        </button>
+      </div>
     </form>
 
+    {/* API Success Response Layout */}
     {apiResponse && (
       <div
         style={{
-          marginTop: 20,
-          padding: 15,
+          marginTop: 25,
+          padding: 20,
           background: "#f6ffed",
           border: "1px solid #b7eb8f",
           borderRadius: 6
         }}
       >
-        <h4>E-Way Bill Generated Successfully</h4>
+        <h4 style={{ marginTop: 0 }}>E-Way Bill Generated Successfully</h4>
 
         <p>
           <strong>EWB No:</strong> {apiResponse?.response?.ewbNo}
         </p>
 
-        <p>
+        <p style={{ marginBottom: 15 }}>
           <strong>Valid Upto:</strong> {apiResponse?.response?.validUpto}
         </p>
 
-        <button onClick={downloadPDF}>
+        <button 
+          onClick={downloadPDF}
+          style={{
+            padding: "8px 15px",
+            backgroundColor: "#52c41a",
+            color: "#fff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
           Download PDF
         </button>
 
         {pdfMessage && (
-          <p style={{ marginTop: 10 }}>
+          <p style={{ marginTop: 10, color: "#555" }}>
             {pdfMessage}
           </p>
         )}
       </div>
     )}
 
+    {/* API Error Layout */}
     {error && (
-      <div style={{ color: "red", marginTop: 20 }}>
+      <div style={{ color: "#ff4d4f", marginTop: 20, fontWeight: "bold" }}>
         {error}
       </div>
     )}
