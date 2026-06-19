@@ -6,11 +6,9 @@ import { useAuth } from "../components/AuthContext";
 const EwayfeildsDisplay= () => {
 const navigate = useNavigate();
 const { token, companyId } = useAuth();
-
 const [loading, setLoading] = useState(false);
 const [invoiceData, setInvoiceData] = useState([]);
 const [error, setError] = useState("");
-
 const hasFetched = useRef(false);
 
 const getInvoiceData = async () => {
@@ -20,7 +18,7 @@ setError("");
 const payload = {
   orderType: "invoicecumchallan",
   yearName: "24-25",
-  companyValue: "5",
+  companyValue: "6",
   customerName: "",
 };
 
@@ -50,8 +48,6 @@ if (err.response) {
 setLoading(false);
 }
 };
-
-
 
 useEffect(() => {
 if (hasFetched.current) return;
