@@ -146,7 +146,7 @@ console.log(tripSheetEwbBills);
 
     try {
       const res = await axios.post(
-        "http://localhost:3001/proxy/topaz/cewb/generate",
+        "https://einvoice.fcssoftwares.com/api/gst/ewaybill/cewb-generate",
         payload,
         { headers }
       );
