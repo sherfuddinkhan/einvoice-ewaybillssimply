@@ -158,14 +158,8 @@ const EwbGenerateAndPrint = () => {
       fromStateCode: parseInt(invoiceData.clients?.masterStateNames?.stateCode) || 36,
       actFromStateCode:invoiceData.clients?.masterStateNames?.stateCode || "36",
    
-
-
-
-
       // --- BUYER (buyerClients Structure mapping) ---
       toGstin: formattedBuyerGstin,
- 
-    
       toTrdName: invoiceData.buyerClients?.companyName || "Buyer Company",
       toAddr1: invoiceData.buyerClients?.officeAddress || "Phase -2., Cherlapally",
       toAddr2: invoiceData.buyerClients?.poBox || "Hyderabad",
