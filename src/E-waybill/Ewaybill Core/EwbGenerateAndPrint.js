@@ -456,22 +456,6 @@ return (
               </div>
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={() => removeItem(index)}
-            style={{
-              background: "#ff4d4f",
-              color: "#fff",
-              border: "none",
-              padding: "8px 12px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "13px"
-            }}
-          >
-            Remove Item
-          </button>
         </div>
       ))}
 
