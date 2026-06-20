@@ -281,37 +281,39 @@ const removeItem = (index) => {
 
 
   // ----------------- SUBMIT HANDLER -----------------
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setApiResponse(null);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  setApiResponse(null);
 
-    const headers = getRequestHeaders("TOPAZ");
+  const headers = getRequestHeaders("TOPAZ");
 
-    try {
-      const res = await axios.post(
-        "https://einvoice.fcssoftwares.com/api/gst/ewaybill/generate",
-        formData,
-        { headers }
-      );
+  try {
+    const res = await axios.post(
+      "https://einvoice.fcssoftwares.com/api/gst/ewaybill/generate",
+      formData,
+      { headers }
+    );
 
-      if (res.data.status === "SUCCESS" && res.data.response) {
-        setApiResponse(res.data);
-        saveToLocalStorage(res.data);
-      } else {
-        throw new Error(res.data.message || "E-Way Bill generation failed");
-      }
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        err.message ||
-        "Unknown error"
-      );
-    } finally {
-      setLoading(false);
+    if (res.data.status === "SUCCESS" && res.data.response) {
+      setApiResponse(res.data);
+      saveToLocalStorage(res.data);
+    } else {
+      setApiResponse(res.data); // Store failure response also
+      setError(res.data.message || "E-Way Bill generation failed");
     }
-  };
+  } catch (err) {
+    const errorData = err.response?.data || {
+      message: err.message || "Unknown error"
+    };
+
+    setApiResponse(errorData); // Save entire error response
+    setError(errorData.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ----------------- DOWNLOAD PDF -----------------
   const downloadPDF = async () => {
@@ -508,27 +510,21 @@ return (
     </form>
 
     {/* API Success Response Layout */}
-    {apiResponse && (
-      <div
-        style={{
-          marginTop: 25,
-          padding: 20,
-          background: "#f6ffed",
-          border: "1px solid #b7eb8f",
-          borderRadius: 6
-        }}
-      >
-        <h4 style={{ marginTop: 0 }}>E-Way Bill Generated Successfully</h4>
-
+{apiResponse && (
+  <>
+    {apiResponse.status === "SUCCESS" ? (
+      <>
         <p>
-          <strong>EWB No:</strong> {apiResponse?.response?.ewbNo}
+          <strong>EWB No:</strong>{" "}
+          {apiResponse?.response?.ewbNo}
         </p>
 
         <p style={{ marginBottom: 15 }}>
-          <strong>Valid Upto:</strong> {apiResponse?.response?.validUpto}
+          <strong>Valid Upto:</strong>{" "}
+          {apiResponse?.response?.validUpto}
         </p>
 
-        <button 
+        <button
           onClick={downloadPDF}
           style={{
             padding: "8px 15px",
@@ -547,9 +543,31 @@ return (
             {pdfMessage}
           </p>
         )}
-      </div>
-    )}
+      </>
+    ) : (
+      <>
+        <h4 style={{ color: "#cf1322" }}>
+          E-Way Bill Generation Failed
+        </h4>
 
+        <pre
+          style={{
+            background: "#fff1f0",
+            border: "1px solid #ffa39e",
+            padding: "15px",
+            borderRadius: "4px",
+            overflowX: "auto",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+            color: "#cf1322"
+          }}
+        >
+          {JSON.stringify(apiResponse, null, 2)}
+        </pre>
+      </>
+    )}
+  </>
+)}
     {/* API Error Layout */}
     {error && (
       <div style={{ color: "#ff4d4f", marginTop: 20, fontWeight: "bold" }}>
