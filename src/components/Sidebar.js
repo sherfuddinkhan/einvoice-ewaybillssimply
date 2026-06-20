@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -8,6 +9,29 @@ const Sidebar = () => {
 
   // Store open/close state per section
   const [openSections, setOpenSections] = useState({});
+
+ const navigate = useNavigate();
+
+  // 1. Fetch and parse the response saved during login
+  const savedAuth = localStorage.getItem("authResponse");
+  let displayUser = "Calibrecue IT Solutions"; // Fallback name
+
+  if (savedAuth) {
+    try {
+      const parsedData = JSON.parse(savedAuth);
+      
+      // 2. Extract user name (adjust key name based on your API response structure)
+      // e.g., parsedData.userName, parsedData.data.userName, or parsedData.email
+      if (parsedData?.userName) {
+        displayUser = parsedData.userName;
+      } else if (parsedData?.data?.userName) {
+        displayUser = parsedData.data.userName;
+      }
+    } catch (e) {
+      console.error("Failed to parse auth response from localStorage", e);
+    }
+  }
+
 
   const toggle = (title) => {
     setOpenSections((prev) => ({
@@ -210,7 +234,7 @@ const Sidebar = () => {
       }}
     >
       <h3 style={{ textAlign: "center", marginBottom: 20 }}>
-        IRISGST API Portal
+        <h1>{displayUser}</h1>
         {product && (
           <div style={{ fontSize: 13, color: "#B3E5FC" }}>
             ({product})

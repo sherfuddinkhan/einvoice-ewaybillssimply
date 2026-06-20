@@ -113,7 +113,7 @@ const EwbGenerateAndPrint = () => {
 
       return {
         productName: item.description ? item.description.substring(0, 50) : "Machine Parts",
-        productDesc: item.description || "Machinery Item",
+        productDesc:invoiceData.invoiceProductDetails.description || "Machinery Item",
         hsnCode: item.hsncode || "730411",
         quantity: parseFloat(item.quantity) || 1,
         qtyUnit: item.uom || "NOS",
