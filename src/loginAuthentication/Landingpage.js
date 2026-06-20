@@ -6,10 +6,10 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    userName: "",
-    password: "",
+    userName: "swastikmachineryhyd@gmail.com",
+    password: "SMC@123",
     userType: "Admin",
-    loginRef: ""
+    loginRef: "56860"
   });
 
   const [loading, setLoading] = useState(false);
@@ -57,7 +57,7 @@ const LandingPage = () => {
         res.data?.success === true ||
         res.status === 200
       ) {
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
     } catch (err) {
       const errorData = err.response?.data;

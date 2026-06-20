@@ -7,6 +7,7 @@ import RequireAuth from "./components/RequireAuth";
 /* =======================
    LOGIN & AUTH
 ======================= */
+import LandingPage from "./loginAuthentication/LandingPage";
 import EWayBillLoginPage from "./loginAuthentication/EWayBillLoginPage";
 import EInvoiceLoginPage from "./loginAuthentication/EInvoiceLoginPage";
 import EwaybillChangePassword from "./loginAuthentication/EwaybillChangePassword";
@@ -102,7 +103,7 @@ const App = () => {
 
   if (!isAuthReady) return <div>Loading authentication...</div>;
 
-  const EWAY_DEFAULT = "/ewaybill/eway-display";
+ const EWAY_DEFAULT = "/ewaybill/eway-display";
  const invoiceMode =
   sessionStorage.getItem("invoiceMode") || "NORMAL";
 
@@ -116,10 +117,13 @@ const EINVOICE_DEFAULT =
       <Routes>
 
         {/* ================= PUBLIC ================= */}
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-        </Route>
 
+        <Route path="/" element={<LandingPage />} />
+     <Route path="/dashboard" element={<RequireAuth><Layout /></RequireAuth>
+         }
+>
+  <Route index element={<Dashboard />} />
+</Route>
         <Route
           path="/ewaybill-login"
           element={
