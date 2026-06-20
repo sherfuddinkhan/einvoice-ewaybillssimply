@@ -42,7 +42,7 @@ const Sidebar = () => {
   --------------------------------- */
   const menuSections = [
     {
-      title: "Einvoice&  Ewaybill",
+      title: "Einvoice &  Ewaybill",
       items: [{ path: "/login", label: "LandingPage" }],
     },
     {
