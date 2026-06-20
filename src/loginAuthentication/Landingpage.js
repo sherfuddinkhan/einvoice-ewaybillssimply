@@ -26,7 +26,7 @@ const LandingPage = () => {
     }));
   };
 
-  const handleLogin = async (e) => {
+ const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -45,34 +45,37 @@ const LandingPage = () => {
 
       setApiResponse(res.data);
 
-      // Save complete response to localStorage if needed elsewhere
+      // Save the complete object response as a backup
       localStorage.setItem("authResponse", JSON.stringify(res.data));
 
-      // Redirect on successful login
       if (
         res.data?.status === "SUCCESS" ||
         res.data?.success === true ||
         res.status === 200
       ) {
-        // 3. Update global context so RequireAuth knows you are logged in!
-        // Pass your expected context object format (token, etc.)
+        // ========================================================
+        // EXTRACT THE REAL companyID FROM THE RESPONSE ( res.data.data.companyID )
+        // ========================================================
+        const backendCompanyId = res.data?.data?.companyID || res.data?.companyID;
+        
+        if (backendCompanyId) {
+          // Save it as a clean string like "5" or "6"
+          localStorage.setItem("userLoginRef", String(backendCompanyId));
+        }
+
+        // Keep your global context updated as well
         login({
           token: res.data?.token || res.data?.data?.token, 
-          companyId: res.data?.companyId || res.data?.data?.companyId,
+          companyId: backendCompanyId, // Using the verified ID variable here
           userGstin: res.data?.userGstin || res.data?.data?.userGstin
         });
 
-        // 4. Navigate now that global state is updated
         navigate("/dashboard", { replace: true });
       }
     } catch (err) {
       const errorData = err.response?.data;
       setApiResponse(errorData || null);
-      setError(
-        errorData?.message ||
-          err.message ||
-          "Login failed"
-      );
+      setError(errorData?.message || err.message || "Login failed");
     } finally {
       setLoading(false);
     }
