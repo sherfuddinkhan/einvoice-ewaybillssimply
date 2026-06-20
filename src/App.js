@@ -113,109 +113,123 @@ const EINVOICE_DEFAULT =
     : "/einvoice/einvoice-display";
 
   return (
-    <Router>
-      <Routes>
+  <Router>
+    <Routes>
 
-        {/* ================= PUBLIC ================= */}
+      {/* ================= LANDING / LOGIN ================= */}
+      <Route 
+        path="/" 
+        element={
+          isLoggedIn ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <LandingPage />
+          )
+        } 
+      />
 
-        <Route path="/" element={<LandingPage />} />
-     <Route path="/dashboard" element={<RequireAuth><Layout /></RequireAuth>
-         }
->
-  <Route index element={<Dashboard />} />
-</Route>
-        <Route
-          path="/ewaybill-login"
-          element={
-            isLoggedIn && product === "EWAY"
-              ? <Navigate to={EWAY_DEFAULT} />
-              : <EWayBillLoginPage />
-          }
-        />
+      {/* ================= DASHBOARD ================= */}
+      <Route path="/dashboard" element={<RequireAuth><Layout /></RequireAuth>}>
+        <Route index element={<Dashboard />} />
+      </Route>
 
-        <Route
-          path="/einvoice-login"
-          element={
-            isLoggedIn && product === "EINVOICE"
-              ? <Navigate to={EINVOICE_DEFAULT} />
-              : <EInvoiceLoginPage />
-          }
-        />
+      {/* ================= SPECIFIC PRODUCT LOGINS ================= */}
+      <Route
+        path="/ewaybill-login"
+        element={
+          isLoggedIn && product === "EWAY"
+            ? <Navigate to={EWAY_DEFAULT} replace />
+            : <EWayBillLoginPage />
+        }
+      />
 
-        {/* ================= E-WAY BILL ================= */}
-        <Route path="/ewaybill" element={<RequireAuth product="EWAY"> <Layout /> </RequireAuth> }>
-          <Route path="eway-display" element={<EwayfeildsDisplay/>} />
-          <Route path="eway-pewdisplay" element={<EwayprofomofeildsDIsplay/>} />
-          <Route path="eway-generate-print-pewdisplay" element={<GenerateandprintproformoEwaybill />} />
-          <Route path="ewb-generate-print" element={<EwbGenerateAndPrint />} />
-          <Route path="fetch-ewb" element={<FetchEWBbyNumber />} />
-          <Route path="ewb-details" element={<GetEwbDetails />} />
+      <Route
+        path="/einvoice-login"
+        element={
+          isLoggedIn && product === "EINVOICE"
+            ? <Navigate to={EINVOICE_DEFAULT} replace />
+            : <EInvoiceLoginPage />
+        }
+      />
 
-          <Route path="ewb-print" element={<PrintEwaybill />} />
-          <Route path="ewb-print-summary" element={<EwaybillPrintSummary />} />
+      {/* ================= E-WAY BILL ================= */}
+      <Route path="/ewaybill" element={<RequireAuth product="EWAY"><Layout /></RequireAuth>}>
+        {/* Base redirect to prevent blank page */}
+        <Route index element={<Navigate to="eway-display" replace />} />
+        
+        <Route path="eway-display" element={<EwayfeildsDisplay />} />
+        <Route path="eway-pewdisplay" element={<EwayprofomofeildsDIsplay />} />
+        <Route path="eway-generate-print-pewdisplay" element={<GenerateandprintproformoEwaybill />} />
+        <Route path="ewb-generate-print" element={<EwbGenerateAndPrint />} />
+        <Route path="fetch-ewb" element={<FetchEWBbyNumber />} />
+        <Route path="ewb-details" element={<GetEwbDetails />} />
 
-          <Route path="ewb-action" element={<EwaybillActions />} />
-          <Route path="ewb-action/:ewbNo" element={<EwaybillActions />} />
-          <Route path="update-transporter-id" element={<UpdateTransporterId />} />
+        <Route path="ewb-print" element={<PrintEwaybill />} />
+        <Route path="ewb-print-summary" element={<EwaybillPrintSummary />} />
 
-          <Route path="assigned-ewb" element={<AssignedEwbTransporter />} />
-          <Route path="consignee-ewb" element={<ConsigneeEwaybill />} />
-          <Route path="fetch-by-date" element={<FetchByDate />} />
+        <Route path="ewb-action" element={<EwaybillActions />} />
+        <Route path="ewb-action/:ewbNo" element={<EwaybillActions />} />
+        <Route path="update-transporter-id" element={<UpdateTransporterId />} />
 
-          <Route path="by-doc-type" element={<FetchByDocNumType />} />
-          <Route path="generated-by-date" element={<FetchEWBByDate />} />
-          <Route path="get-by-doc-no" element={<GetewbbydocNum />} />
-          <Route path="download-doc" element={<BulkDownload />} />
-          <Route path="get-doc-status" element={<GetewbdocNumstatus />} />
+        <Route path="assigned-ewb" element={<AssignedEwbTransporter />} />
+        <Route path="consignee-ewb" element={<ConsigneeEwaybill />} />
+        <Route path="fetch-by-date" element={<FetchByDate />} />
 
-          <Route path="multi-vehicle-initiate" element={<MultiVehicleInitiate />} />
-          <Route path="multi-vehicle-add" element={<MultiVehicleAdd />} />
-          <Route path="multi-vehicle-edit" element={<MultiVehicleEdit />} />
-          <Route path="multi-vehicle-group-details" element={<MultiVehicleGroupDetails />} />
-          <Route path="multi-vehicle-requests" element={<MultiVehicleRequests />} />
+        <Route path="by-doc-type" element={<FetchByDocNumType />} />
+        <Route path="generated-by-date" element={<FetchEWBByDate />} />
+        <Route path="get-by-doc-no" element={<GetewbbydocNum />} />
+        <Route path="download-doc" element={<BulkDownload />} />
+        <Route path="get-doc-status" element={<GetewbdocNumstatus />} />
 
-          <Route path="consolidated-ewb-details" element={<CEWBDetails />} />
-          <Route path="consolidate-ewb" element={<ByDocNumType />} />
+        <Route path="multi-vehicle-initiate" element={<MultiVehicleInitiate />} />
+        <Route path="multi-vehicle-add" element={<MultiVehicleAdd />} />
+        <Route path="multi-vehicle-edit" element={<MultiVehicleEdit />} />
+        <Route path="multi-vehicle-group-details" element={<MultiVehicleGroupDetails />} />
+        <Route path="multi-vehicle-requests" element={<MultiVehicleRequests />} />
 
-          <Route path="change-password" element={<EwaybillChangePassword />} />
-        </Route>
+        <Route path="consolidated-ewb-details" element={<CEWBDetails />} />
+        <Route path="consolidate-ewb" element={<ByDocNumType />} />
 
-        {/* ================= E-INVOICE ================= */}
-        <Route path="/einvoice" element={<RequireAuth product="EINVOICE"> <Layout /> </RequireAuth>}>
-          <Route path="einvoice-display" element={<EinvfeildsDisplay />} />
-          <Route path="einvoice-pdisplay" element={<EinvprofomofeildsDIsplay/>} />
+        <Route path="change-password" element={<EwaybillChangePassword />} />
+      </Route>
 
-          <Route path="generate-print" element={<GenerateAndPrintEinvoice />} />
-          <Route path="generate-printproformo" element={<Generateandprintproformoinvoice/>} />
+      {/* ================= E-INVOICE ================= */}
+      <Route path="/einvoice" element={<RequireAuth product="EINVOICE"><Layout /></RequireAuth>}>
+        {/* Base redirect to prevent blank page */}
+        <Route index element={<Navigate to="einvoice-display" replace />} />
+        
+        <Route path="einvoice-display" element={<EinvfeildsDisplay />} />
+        <Route path="einvoice-pdisplay" element={<EinvprofomofeildsDIsplay />} />
 
-          <Route path="generateCN-print" element={<GenerateandprintCNinvoice/>} />
-          <Route path="generateCNP-print" element={<GenerateandprintCNproformainvoice />} />
+        <Route path="generate-print" element={<GenerateAndPrintEinvoice />} />
+        <Route path="generate-printproformo" element={<Generateandprintproformoinvoice />} />
 
-      
+        <Route path="generateCN-print" element={<GenerateandprintCNinvoice />} />
+        <Route path="generateCNP-print" element={<GenerateandprintCNproformainvoice />} />
 
-          <Route path="cancel-irn" element={<CancelIRN />} />
-          <Route path="get-by-irn" element={<GetInvByIrn />} />
-          <Route path="get-by-doc" element={<GetIrnByDocDetailsForm />} />
+        <Route path="cancel-irn" element={<CancelIRN />} />
+        <Route path="get-by-irn" element={<GetInvByIrn />} />
+        <Route path="get-by-doc" element={<GetIrnByDocDetailsForm />} />
 
-          <Route path="generate-ewb-by-irn" element={<GenerateEwbByIrn />} />
-          <Route path="cancel-ewb-by-irn" element={<CancelEwb />} />
-          <Route path="get-ewb-by-irn" element={<GetEwbByIrn />} />
+        <Route path="generate-ewb-by-irn" element={<GenerateEwbByIrn />} />
+        <Route path="cancel-ewb-by-irn" element={<CancelEwb />} />
+        <Route path="get-ewb-by-irn" element={<GetEwbByIrn />} />
 
-          <Route path="print-irn" element={<PrintEInvoice />} />
-          <Route path="upload-invoices" element={<UploadInvoice />} />
-          <Route path="uploaded-file-status" element={<UploadStatus />} />
-          <Route path="single-invoice-details" element={<InvoiceDetails />} />
-          <Route path="list-of-invoices" element={<ListEInvoices />} />
+        <Route path="print-irn" element={<PrintEInvoice />} />
+        <Route path="upload-invoices" element={<UploadInvoice />} />
+        <Route path="uploaded-file-status" element={<UploadStatus />} />
+        <Route path="single-invoice-details" element={<InvoiceDetails />} />
+        <Route path="list-of-invoices" element={<ListEInvoices />} />
 
-          <Route path="change-password" element={<EinvoiceChangePassword />} />
-        </Route>
+        <Route path="change-password" element={<EinvoiceChangePassword />} />
+      </Route>
 
-        {/* ================= FALLBACK ================= */}
-        <Route path="*" element={<h2>404 | Page Not Found</h2>} />
+      {/* ================= FALLBACK ================= */}
+      <Route path="*" element={<h2>404 | Page Not Found</h2>} />
 
-      </Routes>
-    </Router>
-  );
+    </Routes>
+  </Router>
+);
 };
 
 export default App;

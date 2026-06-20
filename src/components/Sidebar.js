@@ -18,10 +18,10 @@ const Sidebar = () => {
 
   const isActive = (path) =>
     location.pathname === path ||
-    location.pathname.startsWith(path + "/");
+    (path !== "/" && location.pathname.startsWith(path + "/"));
 
   /* --------------------------------
-     AUTO OPEN SECTION ON ROUTE
+      AUTO OPEN SECTION ON ROUTE
   --------------------------------- */
   useEffect(() => {
     setOpenSections((prev) => {
@@ -38,20 +38,18 @@ const Sidebar = () => {
   }, [location.pathname]);
 
   /* --------------------------------
-     MENU CONFIG
+      MENU CONFIG
   --------------------------------- */
   const menuSections = [
     {
-      title: "Einvoice &  Ewaybill login",
-      items: [{ path: "/login", label: "LandingPage" }],
+      title: "Home",
+      items: [{ path: "/", label: "Landing / Login" }],
     },
 
     {
-  title: "Dashboard",
-  items: [{ path: "/dashboard", label: "Dashboard" }],
-     },
-
-      // ADD THIS SECTION
+      title: "Dashboard",
+      items: [{ path: "/dashboard", label: "Dashboard" }],
+    },
 
     {
       title: "Login / Switch",
@@ -60,7 +58,8 @@ const Sidebar = () => {
         { path: "/einvoice-login", label: "E-Invoice Login" },
       ],
     },
-      {
+    
+    {
       title: "Change Password",
       product: "EWAY",
       items: [{ path: "/ewaybill/change-password", label: "Change Password" }],
@@ -71,10 +70,10 @@ const Sidebar = () => {
       title: "E-Way Bill Core",
       product: "EWAY",
       items: [
-        { path: "/ewaybill/eway-display",label: "E-Waybill Fields" },
+        { path: "/ewaybill/eway-display", label: "E-Waybill Fields" },
         { path: "/ewaybill/ewb-generate-print", label: "Generate & Print" },
-        { path: "/ewaybill/eway-pewdisplay",label: "E-Waybill proformaFields" },
-        { path: "/ewaybill/eway-generate-print-pewdisplay",label: "E-Waybill proformaFields Generate&print" },
+        { path: "/ewaybill/eway-pewdisplay", label: "E-Waybill proformaFields" },
+        { path: "/ewaybill/eway-generate-print-pewdisplay", label: "E-Waybill proformaFields Generate&print" },
         { path: "/ewaybill/fetch-ewb", label: "Fetch by EWB No" },
         { path: "/ewaybill/ewb-details", label: "Get EWB Details" },
       ],
@@ -96,7 +95,7 @@ const Sidebar = () => {
         { path: "/ewaybill/fetch-by-date", label: "Fetch by Date" },
       ],
     },
-     {
+    {
       title: "Consolidate Ewaybill",
       product: "EWAY",
       items: [
@@ -127,7 +126,7 @@ const Sidebar = () => {
         { path: "/ewaybill/multi-vehicle-requests", label: "Requests" },
       ],
     },
-     {
+    {
       title: "EWB Print / Summary",
       product: "EWAY",
       items: [
@@ -146,8 +145,8 @@ const Sidebar = () => {
       title: "E-Invoice Core",
       product: "EINVOICE",
       items: [
-        { path: "/einvoice/einvoice-display",label: "E-Invoice Fields" },
-        { path: "/einvoice/einvoice-pdisplay",label: "E-Invoice proformaFields" },
+        { path: "/einvoice/einvoice-display", label: "E-Invoice Fields" },
+        { path: "/einvoice/einvoice-pdisplay", label: "E-Invoice proformaFields" },
         { path: "/einvoice/generate-print", label: "Generate Invoice and print" },
         { path: "/einvoice/generate-printproformo", label: "Generate Proforma Invoice and print" },
         { path: "/einvoice/generateCN-print", label: "Generate CN Invoice and print" },
@@ -190,7 +189,6 @@ const Sidebar = () => {
          { path: "/einvoice/list-of-invoices", label: "Invoice List" },
       ],
     },
-
   ];
 
   const visibleSections = menuSections.filter(
@@ -198,7 +196,7 @@ const Sidebar = () => {
   );
 
   /* --------------------------------
-     UI
+      UI
   --------------------------------- */
   return (
     <div
@@ -229,9 +227,7 @@ const Sidebar = () => {
               padding: "10px 12px",
               fontWeight: "bold",
               borderRadius: 6,
-              background: openSections[section.title]
-                ? "#2c84f8"
-                : "transparent",
+              background: openSections[section.title] ? "#2c84f8" : "transparent",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",

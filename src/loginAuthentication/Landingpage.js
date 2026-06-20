@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../components/AuthContext"; // 1. Import your auth hook
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth(); // 2. Destructure the login function
 
   const [formData, setFormData] = useState({
     userName: "swastikmachineryhyd@gmail.com",
@@ -18,7 +20,6 @@ const LandingPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value
@@ -27,7 +28,6 @@ const LandingPage = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     setLoading(true);
     setError("");
     setApiResponse(null);
@@ -45,11 +45,8 @@ const LandingPage = () => {
 
       setApiResponse(res.data);
 
-      // Save complete response
-      localStorage.setItem(
-        "authResponse",
-        JSON.stringify(res.data)
-      );
+      // Save complete response to localStorage if needed elsewhere
+      localStorage.setItem("authResponse", JSON.stringify(res.data));
 
       // Redirect on successful login
       if (
@@ -57,13 +54,20 @@ const LandingPage = () => {
         res.data?.success === true ||
         res.status === 200
       ) {
+        // 3. Update global context so RequireAuth knows you are logged in!
+        // Pass your expected context object format (token, etc.)
+        login({
+          token: res.data?.token || res.data?.data?.token, 
+          companyId: res.data?.companyId || res.data?.data?.companyId,
+          userGstin: res.data?.userGstin || res.data?.data?.userGstin
+        });
+
+        // 4. Navigate now that global state is updated
         navigate("/dashboard", { replace: true });
       }
     } catch (err) {
       const errorData = err.response?.data;
-
       setApiResponse(errorData || null);
-
       setError(
         errorData?.message ||
           err.message ||
@@ -94,12 +98,7 @@ const LandingPage = () => {
           boxShadow: "0 2px 12px rgba(0,0,0,0.1)"
         }}
       >
-        <h2
-          style={{
-            textAlign: "center",
-            marginBottom: "25px"
-          }}
-        >
+        <h2 style={{ textAlign: "center", marginBottom: "25px" }}>
           E-Invoice Portal Login
         </h2>
 
@@ -166,13 +165,7 @@ const LandingPage = () => {
         </form>
 
         {error && (
-          <div
-            style={{
-              marginTop: "15px",
-              color: "red",
-              textAlign: "center"
-            }}
-          >
+          <div style={{ marginTop: "15px", color: "red", textAlign: "center" }}>
             {error}
           </div>
         )}
@@ -205,7 +198,6 @@ const styles = {
     borderRadius: "4px",
     boxSizing: "border-box"
   },
-
   button: {
     width: "100%",
     padding: "12px",
