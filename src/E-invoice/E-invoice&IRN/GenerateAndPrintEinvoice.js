@@ -346,7 +346,7 @@ console.log("📦 Product List:", productList);
     itemList: productList.map((item, index) => ({
       num: String(index + 1).padStart(5, "0"),
       prdNm: item?.description || item?.prdNm || "New Product",
-      prdDesc:  " ",
+      //prdDesc: "-",
       hsnCd: item?.hsncode || "73041190",
       qty: Number(item?.quantity || 1),
       unit: sanitizeUQC(item?.uom),
@@ -513,7 +513,7 @@ const { setLastInvoice } = useAuth();
       const newItem = {
         num: String(index + 1).padStart(5, "0"),
         prdNm: product?.description || product?.prdNm || "New Product",
-        prdNm: "purchase order products ",
+        //prdDes: "- ",
         hsnCd: product?.hsncode || "73041190",
         qty: 1,
         unit: sanitizeUQC(product?.uom),
@@ -893,6 +893,7 @@ const finalInvoiceId =
           <div key={idx} style={tableStyles.itemCard}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "15px" }}>
               <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
+                <LabeledInput label="Product Desription" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
               <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
               <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
               <LabeledInput label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
