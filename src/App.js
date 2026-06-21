@@ -12,6 +12,7 @@ import EWayBillLoginPage from "./loginAuthentication/EWayBillLoginPage";
 import EInvoiceLoginPage from "./loginAuthentication/EInvoiceLoginPage";
 import EwaybillChangePassword from "./loginAuthentication/EwaybillChangePassword";
 import EinvoiceChangePassword from "./loginAuthentication/EinvoiceChangePassword";
+import LogoutButton from "./loginAuthentication/LogoutButton";
 
 /* =======================
    COMMON
@@ -223,7 +224,9 @@ const EINVOICE_DEFAULT =
 
         <Route path="change-password" element={<EinvoiceChangePassword />} />
       </Route>
-
+      
+      {/* ================= Logout ================= */}
+       <Route path="logout" element={<LogoutButton />} />
       {/* ================= FALLBACK ================= */}
       <Route path="*" element={<h2>404 | Page Not Found</h2>} />
 

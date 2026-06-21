@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { LogoutOutlined } from "@ant-design/icons";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -213,6 +214,12 @@ const Sidebar = () => {
          { path: "/einvoice/list-of-invoices", label: "Invoice List" },
       ],
     },
+    {
+         title: "Account",
+        items: [
+      {  path: "/logout", label: "Logout", icon: <LogoutOutlined />},
+       ],
+     }
   ];
 
   const visibleSections = menuSections.filter(
