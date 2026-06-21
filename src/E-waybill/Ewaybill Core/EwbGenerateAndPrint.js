@@ -54,7 +54,7 @@ const EwbGenerateAndPrint = () => {
     cessNonAdvolValue: 0,
     otherValue: 0,
     transMode: 1,
-    transDistance:  350,
+    transDistance: "",
     transDocDate: "15/11/2025",
     transDocNo: "",
     transporterId: "",
@@ -185,8 +185,9 @@ const EwbGenerateAndPrint = () => {
 
       // --- BALANCED ITEM LINE ENTRIES ---
       itemList: mappedItems,
-
-      companyId: Number(parsedCompanyId),
+      
+      companyId: "null",
+      //companyId: Number(parsedCompanyId),
       userGstin: parsedGstin,
     }));
   }, []);
