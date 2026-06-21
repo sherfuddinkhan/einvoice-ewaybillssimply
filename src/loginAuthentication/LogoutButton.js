@@ -1,27 +1,45 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../components/AuthContext"; 
+import React from "react";
+import { Button } from "antd";
+import { LogoutOutlined } from "@ant-design/icons";
 
 const LogoutButton = () => {
-  const navigate = useNavigate();
-  const { setAuthData } = useAuth();
-
   const handleLogout = () => {
-    // Reset auth context
-
-
-    // Remove all stored data
     localStorage.clear();
     sessionStorage.clear();
-
-    // Redirect to landing page
-  window.location.replace("/");
+    window.location.replace("/");
   };
 
   return (
-    <button onClick={handleLogout}>
-      Logout
-    </button>
+    <div style={styles.container}>
+      <Button
+        type="primary"
+        icon={<LogoutOutlined />}
+        size="large"
+        onClick={handleLogout}
+        style={styles.button}
+      >
+        Logout
+      </Button>
+    </div>
   );
+};
+
+const styles = {
+  container: {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  button: {
+    height: "55px",
+    width: "180px",
+    borderRadius: "12px",
+    fontSize: "18px",
+    fontWeight: "600",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+  },
 };
 
 export default LogoutButton;
