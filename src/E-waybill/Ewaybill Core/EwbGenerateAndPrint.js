@@ -456,21 +456,6 @@ return (
       {/* Form Action Buttons */}
       <div style={{ marginTop: "20px" }}>
         <button
-          type="button"
-          onClick={addItem}
-          style={{
-            marginRight: "12px",
-            padding: "10px 20px",
-            backgroundColor: "#fff",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer"
-          }}
-        >
-          Add Item
-        </button>
-
-        <button
           type="submit"
           disabled={loading}
           style={{
