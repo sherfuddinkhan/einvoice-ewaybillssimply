@@ -150,24 +150,7 @@ const EinvfeildsDisplay = () => {
 
   return (
     <div style={styles.container}>
-      <div style={styles.headerRow}>
-        <h2 style={styles.heading}>Invoice List</h2>
-        
-        {/* Dropdown UI */}
-        <div style={styles.dropdownContainer}>
-          <label htmlFor="connType" style={styles.label}>Environment: </label>
-          <select 
-            id="connType" 
-            value={connectionType} 
-            onChange={handleConnectionChange} 
-            style={styles.select}
-          >
-            <option value="Default">Default</option>
-            <option value="UAT">UAT</option>
-            <option value="LIVE">LIVE</option>
-          </select>
-        </div>
-      </div>
+     
 
       {loading && (
         <div style={styles.loading}>

@@ -126,17 +126,7 @@ const EwayfeildsDisplay = () => {
 
   return (
     <div style={styles.container}>
-      <div style={styles.headerRow}>
-        <h2 style={styles.heading}>Invoice List</h2>
-        <div style={styles.dropdownContainer}>
-          <label htmlFor="connType" style={styles.label}>Environment: </label>
-          <select id="connType" value={selectedEnv} onChange={handleConnectionChange} style={styles.select}>
-            <option value="Default">Default</option>
-            <option value="UAT">UAT</option>
-            <option value="LIVE">LIVE</option>
-          </select>
-        </div>
-      </div>
+     
 
       {loading && <div style={styles.loading}>Loading Invoice Data...</div>}
       {error && <div style={styles.error}>{error}</div>}
