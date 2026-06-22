@@ -12,12 +12,12 @@ const LandingPage = () => {
     password: "SMC@123",
     userType: "Admin",
     loginRef: "56860",
-    ConnectionType: "DEFAULT"
   });
 
   const [loading, setLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState(null);
   const [error, setError] = useState("");
+  const [connectionType, setConnectionType] = useState("Default");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,7 +39,8 @@ const LandingPage = () => {
         formData,
         {
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+             "ConnectionType": connectionType, 
           }
         }
       );
