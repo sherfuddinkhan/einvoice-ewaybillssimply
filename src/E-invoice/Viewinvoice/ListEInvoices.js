@@ -5,7 +5,10 @@ import { useAuth } from "../../components/AuthContext";
 ---------------------------- */
 const STORAGE_KEY = "iris_einvoice_response";
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 const EINV_DOC_KEY = "iris_einv_doc_map";
+  const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 
 // Helper to convert DD/MM/YYYY to YYYY-MM-DD (ISO format for input[type="date"])
 const convertDMYToYMD = (dateStr) => {
@@ -144,12 +147,17 @@ useEffect(() => {
     console.error("Error loading document map:", e);
   }
 
+   const initialGstin = savedConfig1?.companyUniqueCode
+    || savedConfig?.companyUniqueCode
+    || savedConfig?.userGstin
+    || "";
+console.log("initialGstin",initialGstin)
   // Set company GSTIN from Auth
   setPayload((prev) => ({
     ...prev,
-    companyUniqueCode: userGstin || "",
+    companyUniqueCode: initialGstin || "",
   }));
-}, [userGstin]);
+}, []);
 
     /* -------------------------
         Helpers (Update payload and constraints)
@@ -195,9 +203,14 @@ useEffect(() => {
     ------------------------- */
    
 const fetchInvoices = async () => {
-     console.log("userGstin:", userGstin);
-  console.log("token:", token);
-  console.log("companyId:", companyId);
+      const userGstin = savedConfig1?.companyUniqueCode
+    || savedConfig?.companyUniqueCode
+    || savedConfig?.userGstin
+    || "";
+
+console.log("userGstin:", userGstin);
+console.log("token:", token);
+console.log("companyId:", companyId);
 
   if (!userGstin) {
     alert("Company GSTIN is mandatory");

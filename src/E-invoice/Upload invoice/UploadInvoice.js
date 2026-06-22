@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../components/AuthContext";
 
-const STORAGE_KEY = "iris_einvoice_shared_config";
+
+const STORAGE_KEY = "iris_einvoice_response";
+const STORAGE_KEY1 = "iris_einvoice_shared_config";
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 const STORAGE_KEY4 = "iris_einvoice_uploadfile";
+  const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
+  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 
 const UploadInvoice = () => {
 const { token, companyId, userGstin } = useAuth();
@@ -20,6 +25,10 @@ const headers = {
 };
   // Auto-populate headers & companyUniqueCode from localStorage
  useEffect(() => {
+   const userGstin = savedConfig1?.companyUniqueCode
+    || savedConfig?.companyUniqueCode
+    || savedConfig?.userGstin
+    || "";
   setCompanyUniqueCode(userGstin || "");
 }, [userGstin]);
 

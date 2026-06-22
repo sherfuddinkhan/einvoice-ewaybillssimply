@@ -26,7 +26,8 @@ const CancelIRN  = ({ previousResponse }) => {
     || savedConfig?.companyUniqueCode
     || previousResponse?.userGstin
     || "";
-
+  console.log("initialGstin ",initialGstin )
+    console.log("initialCompanyCode",initialCompanyCode)
 
 const [config, setConfig] = useState({
   proxyBase: "https://einvoice.fcssoftwares.com",
@@ -42,7 +43,7 @@ const [config, setConfig] = useState({
     irn: irn,
     cnlRsn: "1", // 1=Wrong Entry, 2=Duplicate, 3=Order Cancelled, 4=Others
     cnlRem: "Wrong entry",
-    userGstin: initialCompanyCode,
+    userGstin: initialGstin ,
   },
 });
   const [response, setResponse] = useState(null);

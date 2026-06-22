@@ -688,7 +688,7 @@ const getAuthData = () => {
   try {
    const finalPayload = recalculateTotals({
   ...payload,
-  genewb: payload.genewb || "Y",
+  genewb: genEwb,
 });
 
     const res = await fetch(

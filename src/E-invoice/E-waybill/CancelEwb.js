@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../components/AuthContext";
-
+import { useLocation } from "react-router-dom";
 /* ----------------------------
    LocalStorage Key
 ---------------------------- */
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
+const LAST_EWB_DETAILS_KEY = "iris_last_ewb_details";
+const STORAGE_KEY = "iris_einvoice_response";  
+const STORAGE_KEY1 = "iris_einvoice_shared_config";
 
+const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
+const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 /* ----------------------------
    Cancel Reasons
 ---------------------------- */
@@ -16,8 +21,9 @@ const CANCEL_REASONS = {
   "4": "Others",
 };
 
-const CancelEwb = () => {
+const CancelEwb = (invoiceData = {}) => {
   const { token, companyId, userGstin} = useAuth();
+
 
   /* ----------------------------
      Headers
@@ -54,8 +60,12 @@ const CancelEwb = () => {
       localStorage.getItem(STORAGE_KEY2) || "{}"
     );
 
-    console.log("IRN EWB Data :", irnEwbData);
-
+   const initialGstin = savedConfig1?.companyUniqueCode
+    || savedConfig?.companyUniqueCode
+    || savedConfig?.userGstin
+    || "";
+console.log("initialGstin",initialGstin)
+   
     // Populate headers from AuthContext
     setHeaders((prev) => ({
       ...prev,
@@ -66,8 +76,8 @@ const CancelEwb = () => {
     // Populate body
     setBody((prev) => ({
       ...prev,
-      ewbNo: irnEwbData?.EwbNo || "",
-      userGstin: irnEwbData ?.userGstin || "",
+      ewbNo: irnEwbData?.response?.EwbNo || "",
+      userGstin: initialGstin|| "",
     }));
   }, [token, companyId, userGstin]);
 
