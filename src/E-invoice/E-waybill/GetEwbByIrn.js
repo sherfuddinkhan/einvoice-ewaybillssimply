@@ -2,15 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "../../components/AuthContext";
 /* ---------- LocalStorage Keys ---------- */
-const STORAGE_KEY = 'iris_einvoice_shared_config';
 const LAST_IRN_KEY = 'iris_last_used_irn';
 const LAST_EWB_KEY = 'iris_last_ewb_details';
+const STORAGE_KEY = "iris_einvoice_response";  
+const STORAGE_KEY1 = "iris_einvoice_shared_config";
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
+
 console.log("STORAGE_KEY",STORAGE_KEY)
 console.log("LAST_IRN_KEY",LAST_IRN_KEY)
 console.log("LAST_EWB_KEY",LAST_EWB_KEY)
 console.log("STORAGE_KEY2",STORAGE_KEY2)
-  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
+const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
+const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
+
 const GetEwbByIrn = () => {
     const { token, companyId, userGstin } = useAuth();
 /* ---------- Component State ---------- */
@@ -41,7 +45,14 @@ useEffect(() => {
   let userGstin="";
 
   const lastIrn = localStorage.getItem(LAST_IRN_KEY);
-  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
+const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
+const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
+
+    const initialGstin = savedConfig1?.companyUniqueCode
+    || savedConfig?.companyUniqueCode
+    || savedConfig?.userGstin
+    || "";
+console.log("initialGstin",initialGstin)
 
   if (lastIrn) {
     try {
@@ -59,10 +70,10 @@ useEffect(() => {
     params: {
       ...prev.params,
       irn: irnValue,
-      userGstin:  savedConfig ?.userGstin || "",
+      userGstin:  initialGstin || "",
     },
   }));
-}, [token, companyId, userGstin]);
+}, []);
 
 /* ------------------------------------------------------------
    FETCH E-WAY BILL BY IRN
