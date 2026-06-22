@@ -5,30 +5,36 @@ import { useAuth } from "../components/AuthContext";
 
 const EinvfeildsDisplay = () => {
   const navigate = useNavigate();
-  const { token, companyId } = useAuth();
+  
+  // ✅ Pull connectionType from useAuth (aliased to contextType to avoid naming conflicts)
+  const { token, companyId, connectionType: contextType } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState([]);
   const [error, setError] = useState("");
+  
+  // ✅ Auto-populate from Context -> LocalStorage -> Fallback to "Default"
+  const [connectionType, setConnectionType] = useState(
+    contextType || localStorage.getItem("connectionType") || "Default"
+  );
 
   const hasFetched = useRef(false);
 
- const getInvoiceData = async () => {
+  const getInvoiceData = async () => {
     try {
       setLoading(true);
       setError("");
 
-      // Read the backend response token stored via userLoginRef
       const dynamicCompanyValue = localStorage.getItem("userLoginRef") || "5";
 
       const payload = {
         orderType: "invoicecumchallan",
         yearName: "24-25",
-        companyValue: dynamicCompanyValue, // Fully automated dynamic ID!
+        companyValue: dynamicCompanyValue, 
         customerName: "",
       };
 
-      console.log("Sending Invoice Fetch Payload:", payload);
+      console.log(`Sending Invoice Fetch Payload (${connectionType}):`, payload);
 
       const { data } = await axios.post(
         "https://einvoice.fcssoftwares.com/api/OrderList/GetOrderList",
@@ -36,7 +42,8 @@ const EinvfeildsDisplay = () => {
         {
           headers: {
             "Content-Type": "application/json",
-            accept: "*/*",
+            "accept": "*/*",
+            "ConnectionType": connectionType, // Injected dynamically
           },
         }
       );
@@ -53,11 +60,20 @@ const EinvfeildsDisplay = () => {
   };
 
   useEffect(() => {
-    if (hasFetched.current) return;
     if (!token || !companyId) return;
+    if (hasFetched.current) return;
+    
     hasFetched.current = true;
     getInvoiceData();
-  }, [token, companyId]);
+  }, [token, companyId, connectionType]);
+
+  // ✅ Handle Dropdown Change, sync to localStorage, and force refetch
+  const handleConnectionChange = (e) => {
+    const newValue = e.target.value;
+    setConnectionType(newValue);
+    localStorage.setItem("connectionType", newValue); // Keep synced
+    hasFetched.current = false; // Trigger re-fetch
+  };
 
   const handleGenerateEinvoice = async (invoice) => {
     try {
@@ -77,7 +93,8 @@ const EinvfeildsDisplay = () => {
         `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${pid}/invoicecumchallan`,
         {
           headers: {
-            accept: "*/*",
+            "accept": "*/*",
+            "ConnectionType": connectionType, // Injected dynamically
           },
         }
       );
@@ -109,7 +126,24 @@ const EinvfeildsDisplay = () => {
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.heading}>Invoice List</h2>
+      <div style={styles.headerRow}>
+        <h2 style={styles.heading}>Invoice List</h2>
+        
+        {/* Dropdown UI */}
+        <div style={styles.dropdownContainer}>
+          <label htmlFor="connType" style={styles.label}>Environment: </label>
+          <select 
+            id="connType" 
+            value={connectionType} 
+            onChange={handleConnectionChange} 
+            style={styles.select}
+          >
+            <option value="Default">Default</option>
+            <option value="UAT">UAT</option>
+            <option value="LIVE">LIVE</option>
+          </select>
+        </div>
+      </div>
 
       {loading && (
         <div style={styles.loading}>
@@ -195,7 +229,11 @@ const EinvfeildsDisplay = () => {
 
 const styles = {
   container: { padding: "20px", fontFamily: "Arial, sans-serif", background: "#f4f6f9", minHeight: "100vh" },
-  heading: { fontSize: "28px", color: "#1976d2", marginBottom: "20px", fontWeight: "bold" },
+  headerRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" },
+  heading: { fontSize: "28px", color: "#1976d2", fontWeight: "bold", margin: 0 },
+  dropdownContainer: { display: "flex", alignItems: "center", background: "#fff", padding: "8px 16px", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" },
+  label: { fontWeight: "bold", color: "#333", marginRight: "10px", fontSize: "14px" },
+  select: { padding: "8px 12px", borderRadius: "5px", border: "1px solid #ccc", outline: "none", cursor: "pointer", fontSize: "14px" },
   loading: { padding: "10px", marginBottom: "15px", background: "#fff3cd", color: "#856404", borderRadius: "5px" },
   error: { padding: "10px", marginBottom: "15px", background: "#f8d7da", color: "#721c24", borderRadius: "5px" },
   tableWrapper: { overflowX: "auto", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },

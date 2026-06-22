@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
-const MODE_KEY = "invoiceMode";
-
 const EInvoiceLoginPage = () => {
   const [email, setEmail] = useState("ateeq@calibrecue.com");
   const [password, setPassword] = useState("Ateeq@123");
   const [invoiceMode, setInvoiceMode] = useState("NORMAL");
+  
+  // ✅ Added state for connectionType
+  const [connectionType, setConnectionType] = useState("Default");
+  
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 
@@ -28,6 +30,7 @@ const EInvoiceLoginPage = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "ConnectionType": connectionType, // Optional: send to login API if required
           },
           body: JSON.stringify({
             email,
@@ -37,32 +40,35 @@ const EInvoiceLoginPage = () => {
       );
 
       const data = await res.json();
-      console.log("login APi response",data)
+      console.log("login APi response", data);
       setResponse(data);
 
-      // ✅ FIXED LOGIC (was incorrectly outside function)
       if (data?.status === "SUCCESS" && data?.response?.token) {
         const selectedMode = invoiceMode;
 
         const loginData = {
           token: data.response.token,
-          companyId: data.response.companyid,   // ✅ lowercase "id",
+          companyId: data.response.companyid, // lowercase "id"
           userGstin: data.response.userGstin,
           email,
           invoiceMode: selectedMode,
+          connectionType: connectionType, // ✅ Passed to AuthContext
           fullResponse: data,
         };
-       console.log("loginresponse",loginData)
-        // store only in AuthContext
+        console.log("loginresponse", loginData);
+
+        // store in AuthContext
         login(loginData, "EINVOICE");
+        
+        // ✅ Store safely in localStorage to survive window.location.href reload
+        localStorage.setItem("connectionType", connectionType);
 
         // redirect
-       console.log("➡️ Redirecting using window.location");
-
-window.location.href =
-  selectedMode === "PROFORMA"
-    ? "/einvoice/einvoice-pdisplay"
-    : "/einvoice/einvoice-display";
+        console.log("➡️ Redirecting using window.location");
+        window.location.href =
+          selectedMode === "PROFORMA"
+            ? "/einvoice/einvoice-pdisplay"
+            : "/einvoice/einvoice-display";
       }
     } catch (error) {
       setResponse({
@@ -75,41 +81,178 @@ window.location.href =
   };
 
   return (
-    <div>
-      <h2>E-Invoice Login</h2>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={styles.title}>E-Invoice Login</h2>
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <div style={styles.inputGroup}>
+          <label htmlFor="email" style={styles.label}>Email</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={styles.input}
+          />
+        </div>
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <div style={styles.inputGroup}>
+          <label htmlFor="password" style={styles.label}>Password</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={styles.input}
+          />
+        </div>
 
-      <select
-        value={invoiceMode}
-        onChange={(e) => {
-          console.log("Mode Changed:", e.target.value);
-          setInvoiceMode(e.target.value);
-        }}
-      >
-        <option value="NORMAL">Normal E-Invoice</option>
-        <option value="PROFORMA">Proforma E-Invoice</option>
-      </select>
+        <div style={styles.inputGroup}>
+          <label htmlFor="mode" style={styles.label}>Invoice Mode</label>
+          <select
+            id="mode"
+            value={invoiceMode}
+            onChange={(e) => {
+              console.log("Mode Changed:", e.target.value);
+              setInvoiceMode(e.target.value);
+            }}
+            style={styles.input}
+          >
+            <option value="NORMAL">Normal E-Invoice</option>
+            <option value="PROFORMA">Proforma E-Invoice</option>
+          </select>
+        </div>
 
-      <button onClick={handleLogin} disabled={loading}>
-        {loading ? "Logging In..." : "Login"}
-      </button>
+        {/* ✅ Added Environment Connection Type Dropdown */}
+        <div style={styles.inputGroup}>
+          <label htmlFor="connectionType" style={styles.label}>Environment</label>
+          <select
+            id="connectionType"
+            value={connectionType}
+            onChange={(e) => setConnectionType(e.target.value)}
+            style={styles.input}
+          >
+            <option value="Default">Default</option>
+            <option value="UAT">UAT</option>
+            <option value="LIVE">LIVE</option>
+          </select>
+        </div>
 
-      {response && <pre>{JSON.stringify(response, null, 2)}</pre>}
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          style={{
+            ...styles.button,
+            ...(loading ? styles.buttonDisabled : {}),
+          }}
+        >
+          {loading ? "Logging In..." : "Login"}
+        </button>
+
+        {response && (
+          <div style={styles.responseContainer}>
+            <p style={styles.responseTitle}>API Response:</p>
+            <pre style={styles.responseCode}>
+              {JSON.stringify(response, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
     </div>
   );
+};
+
+// ==========================================
+// INLINE STYLES
+// ==========================================
+const styles = {
+  container: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100vh",
+    backgroundColor: "#f4f7f6",
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    padding: "20px",
+    boxSizing: "border-box",
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    width: "100%",
+    maxWidth: "420px",
+    padding: "40px 30px",
+    borderRadius: "12px",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
+    boxSizing: "border-box",
+  },
+  title: {
+    marginTop: "0",
+    marginBottom: "24px",
+    color: "#2c3e50",
+    fontSize: "24px",
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  inputGroup: {
+    marginBottom: "20px",
+    display: "flex",
+    flexDirection: "column",
+  },
+  label: {
+    marginBottom: "8px",
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#34495e",
+  },
+  input: {
+    padding: "12px 16px",
+    fontSize: "15px",
+    border: "1px solid #dce1e6",
+    borderRadius: "8px",
+    backgroundColor: "#fcfcfc",
+    color: "#2c3e50",
+    boxSizing: "border-box",
+    outline: "none",
+  },
+  button: {
+    width: "100%",
+    padding: "14px",
+    marginTop: "10px",
+    backgroundColor: "#3498db",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+  buttonDisabled: {
+    backgroundColor: "#95a5a6",
+    cursor: "not-allowed",
+  },
+  responseContainer: {
+    marginTop: "24px",
+    backgroundColor: "#1e1e1e",
+    borderRadius: "8px",
+    padding: "16px",
+    overflowX: "auto",
+  },
+  responseTitle: {
+    margin: "0 0 10px 0",
+    color: "#a8b2bd",
+    fontSize: "12px",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+  },
+  responseCode: {
+    margin: "0",
+    color: "#4ade80",
+    fontFamily: "'Courier New', Courier, monospace",
+    fontSize: "13px",
+    lineHeight: "1.4",
+  },
 };
 
 export default EInvoiceLoginPage;

@@ -11,7 +11,8 @@ const LandingPage = () => {
     userName: "swastikmachineryhyd@gmail.com",
     password: "SMC@123",
     userType: "Admin",
-    loginRef: "56860"
+    loginRef: "56860",
+    ConnectionType: "DEFAULT"
   });
 
   const [loading, setLoading] = useState(false);
@@ -157,6 +158,19 @@ const LandingPage = () => {
               style={styles.input}
             />
           </div>
+          <div style={{ marginBottom: "15px" }}>
+  <label>Connection Type</label>
+  <select
+    name="connectionType"
+    value={formData.connectionType}
+    onChange={handleChange}
+    style={styles.input}
+  >
+    <option value="DEFAULT">DEFAULT</option>
+    <option value="UAT">UAT</option>
+    <option value="LIVE">LIVE</option>
+  </select>
+</div>
 
           <button
             type="submit"
