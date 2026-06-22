@@ -20,44 +20,68 @@ const EinvfeildsDisplay = () => {
 
   const hasFetched = useRef(false);
 
-  const getInvoiceData = async () => {
-    try {
-      setLoading(true);
-      setError("");
+ const getInvoiceData = async () => {
+  setLoading(true);
+  setError("");
 
-      const dynamicCompanyValue = localStorage.getItem("userLoginRef") || "5";
+  try {
+    // Get company value from localStorage
+    const companyValue =
+      localStorage.getItem("userLoginRef") || "5";
 
-      const payload = {
-        orderType: "invoicecumchallan",
-        yearName: "24-25",
-        companyValue: dynamicCompanyValue, 
-        customerName: "",
-      };
+    // Prepare request payload
+    const payload = {
+      orderType: "invoicecumchallan",
+      yearName: "24-25",
+      companyValue,
+      customerName: "",
+    };
 
-      console.log(`Sending Invoice Fetch Payload (${connectionType}):`, payload);
+    // Prepare request headers
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "*/*",
+      ConnectionType: connectionType || "Default",
+    };
 
-      const { data } = await axios.post(
-        "https://einvoice.fcssoftwares.com/api/OrderList/GetOrderList",
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "accept": "*/*",
-            "ConnectionType": connectionType, // Injected dynamically
-          },
-        }
-      );
+    // API endpoint
+    const url =
+      "https://einvoice.fcssoftwares.com/api/OrderList/GetOrderList";
 
-      console.log("Invoice API Response:", data);
-      setInvoiceData(data || []);
+    console.log("Fetching invoices...");
+    console.log("Connection Type:", connectionType);
+    console.log("Request Payload:", payload);
+    console.log("Request Headers:", headers);
 
-    } catch (err) {
-      console.error("API Error:", err);
-      setError(err.response?.data?.message || err.message || "Failed to fetch invoices");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Make API request
+    const response = await axios.post(
+      url,
+      payload,
+      { headers }
+    );
+
+    console.log(
+      "Invoice API Response:",
+      response.data
+    );
+
+    // Update state with API response
+    setInvoiceData(response.data || []);
+  } catch (error) {
+    console.error(
+      "Error fetching invoice data:",
+      error
+    );
+
+    setError(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch invoices"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (!token || !companyId) return;
