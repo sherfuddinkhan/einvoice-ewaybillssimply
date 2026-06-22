@@ -5,28 +5,34 @@ import { useAuth } from "../components/AuthContext";
 
 const EwayfeildsDisplay = () => {
   const navigate = useNavigate();
-  const { token, companyId } = useAuth();
+  
+  // ✅ Directly pull connectionType from auth context
+  const { token, companyId, connectionType } = useAuth();
+  
   const [loading, setLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState([]);
   const [error, setError] = useState("");
   const hasFetched = useRef(false);
 
-const getInvoiceData = async () => {
+  // ✅ Use 'selectedEnv' to avoid naming conflicts
+  const [selectedEnv, setSelectedEnv] = useState(
+    connectionType || localStorage.getItem("connectionType") || "Default"
+  );
+
+  const getInvoiceData = async () => {
     try {
       setLoading(true);
       setError("");
 
-      // Read the backend response token stored via userLoginRef
       const dynamicCompanyValue = localStorage.getItem("userLoginRef") || "6";
-
       const payload = {
         orderType: "invoicecumchallan",
         yearName: "24-25",
-        companyValue: dynamicCompanyValue, // Fully automated dynamic ID!
+        companyValue: dynamicCompanyValue,
         customerName: "",
       };
 
-      console.log("Sending Invoice Fetch Payload:", payload);
+      console.log(`Sending Invoice Fetch Payload (${selectedEnv}):`, payload);
 
       const { data } = await axios.post(
         "https://einvoice.fcssoftwares.com/api/OrderList/GetOrderList",
@@ -34,14 +40,13 @@ const getInvoiceData = async () => {
         {
           headers: {
             "Content-Type": "application/json",
-            accept: "*/*",
+            "accept": "*/*",
+            "ConnectionType": selectedEnv, // ✅ Use local state
           },
         }
       );
 
-      console.log("Invoice API Response:", data);
       setInvoiceData(data || []);
-
     } catch (err) {
       console.error("API Error:", err);
       setError(err.response?.data?.message || err.message || "Failed to fetch invoices");
@@ -51,11 +56,19 @@ const getInvoiceData = async () => {
   };
 
   useEffect(() => {
-    if (hasFetched.current) return;
     if (!token || !companyId) return;
+    if (hasFetched.current) return;
+    
     hasFetched.current = true;
     getInvoiceData();
-  }, [token, companyId]);
+  }, [token, companyId, selectedEnv]);
+
+  const handleConnectionChange = (e) => {
+    const newValue = e.target.value;
+    setSelectedEnv(newValue);
+    localStorage.setItem("connectionType", newValue);
+    hasFetched.current = false; // Trigger refetch on change
+  };
 
   const handleGenerateEinvoice = async (invoice) => {
     try {
@@ -67,35 +80,24 @@ const getInvoiceData = async () => {
         return;
       }
 
-      console.log("Selected Invoice:", invoice);
-      console.log("Selected PID:", pid);
-
       const { data } = await axios.get(
         `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${pid}/invoicecumchallan`,
         {
           headers: {
-            accept: "*/*",
+            "accept": "*/*",
+            "ConnectionType": selectedEnv, // ✅ Use local state
           },
         }
       );
-
-      console.log("Invoice Details Response:", data);
 
       localStorage.setItem("selectedInvoice", JSON.stringify(data));
       localStorage.setItem("Selected PID", JSON.stringify(data.pid));
 
       navigate("/ewaybill/ewb-generate-print", {
-        state: {
-          invoiceData: data,
-          pid: pid,
-        },
+        state: { invoiceData: data, pid: pid },
       });
     } catch (err) {
       console.error("Invoice Details API Error:", err);
-      if (err.response) {
-        console.log("Status:", err.response.status);
-        console.log("Response:", err.response.data);
-      }
       alert("Failed to fetch invoice details.");
     } finally {
       setLoading(false);
@@ -104,19 +106,20 @@ const getInvoiceData = async () => {
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.heading}>Invoice List</h2>
-
-      {loading && (
-        <div style={styles.loading}>
-          Loading Invoice Data...
+      <div style={styles.headerRow}>
+        <h2 style={styles.heading}>Invoice List</h2>
+        <div style={styles.dropdownContainer}>
+          <label htmlFor="connType" style={styles.label}>Environment: </label>
+          <select id="connType" value={selectedEnv} onChange={handleConnectionChange} style={styles.select}>
+            <option value="Default">Default</option>
+            <option value="UAT">UAT</option>
+            <option value="LIVE">LIVE</option>
+          </select>
         </div>
-      )}
+      </div>
 
-      {error && (
-        <div style={styles.error}>
-          {error}
-        </div>
-      )}
+      {loading && <div style={styles.loading}>Loading Invoice Data...</div>}
+      {error && <div style={styles.error}>{error}</div>}
 
       <div style={styles.tableWrapper}>
         <table style={styles.table}>
@@ -136,7 +139,6 @@ const getInvoiceData = async () => {
               <th style={styles.th}>Action</th>
             </tr>
           </thead>
-
           <tbody>
             {invoiceData.length > 0 ? (
               invoiceData.map((invoice, index) => (
@@ -153,20 +155,13 @@ const getInvoiceData = async () => {
                   <td style={styles.td}>{invoice.eWayBillNumber || "-"}</td>
                   <td style={styles.td}>
                     {invoice.eWayBillNumber ? (
-                      <span style={{ color: "green", fontWeight: "bold" }}>
-                        Generated
-                      </span>
+                      <span style={{ color: "green", fontWeight: "bold" }}>Generated</span>
                     ) : (
-                      <span style={{ color: "red", fontWeight: "bold" }}>
-                        Pending
-                      </span>
+                      <span style={{ color: "red", fontWeight: "bold" }}>Pending</span>
                     )}
                   </td>
                   <td style={styles.actionTd}>
-                    <button
-                      style={styles.einvoiceBtn}
-                      onClick={() => handleGenerateEinvoice(invoice)}
-                    >
+                    <button style={styles.einvoiceBtn} onClick={() => handleGenerateEinvoice(invoice)}>
                       Generate E-Invoice
                     </button>
                   </td>
@@ -175,9 +170,7 @@ const getInvoiceData = async () => {
             ) : (
               !loading && (
                 <tr>
-                  <td colSpan={12} style={styles.noData}>
-                    No Invoice Data Found
-                  </td>
+                  <td colSpan={12} style={styles.noData}>No Invoice Data Found</td>
                 </tr>
               )
             )}
@@ -190,7 +183,11 @@ const getInvoiceData = async () => {
 
 const styles = {
   container: { padding: "20px", fontFamily: "Arial, sans-serif", background: "#f4f6f9", minHeight: "100vh" },
-  heading: { fontSize: "28px", color: "#1976d2", marginBottom: "20px", fontWeight: "bold" },
+  headerRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" },
+  heading: { fontSize: "28px", color: "#1976d2", fontWeight: "bold", margin: 0 },
+  dropdownContainer: { display: "flex", alignItems: "center", background: "#fff", padding: "8px 16px", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" },
+  label: { fontWeight: "bold", color: "#333", marginRight: "10px", fontSize: "14px" },
+  select: { padding: "8px 12px", borderRadius: "5px", border: "1px solid #ccc", outline: "none", cursor: "pointer", fontSize: "14px" },
   loading: { padding: "10px", marginBottom: "15px", background: "#fff3cd", color: "#856404", borderRadius: "5px" },
   error: { padding: "10px", marginBottom: "15px", background: "#f8d7da", color: "#721c24", borderRadius: "5px" },
   tableWrapper: { overflowX: "auto", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
