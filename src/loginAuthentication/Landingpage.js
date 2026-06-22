@@ -40,7 +40,7 @@ const LandingPage = () => {
         {
           headers: {
             "Content-Type": "application/json",
-             "ConnectionType": connectionType, 
+             "ConnectionType": formData.connectionType, 
           }
         }
       );
