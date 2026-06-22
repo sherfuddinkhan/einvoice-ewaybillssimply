@@ -13,11 +13,8 @@ const EWayBillLoginPage = () => {
   const { login, connectionType } = useAuth();
   const navigate = useNavigate();
 
-  // ✅ We use a distinct name for local state: 'selectedEnv'
-  const [selectedEnv, setSelectedEnv] = useState(
-    connectionType || localStorage.getItem("connectionType") || "Default"
-  );
 
+ 
   const handleLogin = async () => {
     console.log("===== EWAY LOGIN START =====");
     setLoading(true);
@@ -25,15 +22,12 @@ const EWayBillLoginPage = () => {
 
     try {
       console.log("Selected Mode:", ewayMode);
-      console.log("Selected Environment:", selectedEnv);
-
       const res = await fetch(
         "https://einvoice.fcssoftwares.com/api/gst/auth/ewaybill-login",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "ConnectionType": selectedEnv, // ✅ Use local state
           },
           body: JSON.stringify({ email, password }),
         }
@@ -57,15 +51,10 @@ const EWayBillLoginPage = () => {
           email,
           fullResponse: data,
           ewayMode,
-          connectionType: selectedEnv, // ✅ Pass local state to context
           lastLogin: new Date().toISOString(),
         };
 
         login(loginData, "EWAY");
-        
-        // ✅ Sync to localStorage
-        localStorage.setItem("connectionType", selectedEnv);
-
         console.log("Login Successful. Redirecting...");
         setTimeout(() => {
           navigate(
@@ -87,13 +76,6 @@ const EWayBillLoginPage = () => {
       setLoading(false);
     }
   };
-
-  const handleConnectionChange = (e) => {
-    const newValue = e.target.value;
-    setSelectedEnv(newValue);
-    localStorage.setItem("connectionType", newValue);
-  };
-
   return (
     <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#F5F5F7", padding: "40px" }}>
       <div style={{ width: "420px", background: "#fff", borderRadius: "16px", padding: "30px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
@@ -111,12 +93,7 @@ const EWayBillLoginPage = () => {
           <option value="PROFORMA">Proforma E-Way Bill</option>
         </select>
 
-        <label>Environment</label>
-        <select value={selectedEnv} onChange={handleConnectionChange} style={{ width: "100%", padding: "12px", marginTop: "6px", marginBottom: "20px", borderRadius: "8px", border: "1px solid #707070" }}>
-          <option value="Default">Default</option>
-          <option value="UAT">UAT</option>
-          <option value="LIVE">LIVE</option>
-        </select>
+       
 
         <button onClick={handleLogin} disabled={loading} style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "none", background: loading ? "#BDBDBD" : "#1A73E8", color: "#fff", fontSize: "16px", fontWeight: "bold", cursor: loading ? "not-allowed" : "pointer" }}>
           {loading ? "Logging In..." : "Login"}

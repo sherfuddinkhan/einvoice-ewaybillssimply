@@ -5,98 +5,106 @@ import { useAuth } from "../components/AuthContext";
 
 const EinvfeildsDisplay = () => {
   const navigate = useNavigate();
-  
-  // ✅ Pull connectionType from useAuth (aliased to contextType to avoid naming conflicts)
-  const { token, companyId, connectionType: contextType } = useAuth();
+
+  // Only get token and companyId from AuthContext
+  const { token, companyId } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState([]);
   const [error, setError] = useState("");
-  
-  // ✅ Auto-populate from Context -> LocalStorage -> Fallback to "Default"
-  const [connectionType, setConnectionType] = useState(
-    contextType || localStorage.getItem("connectionType") || "Default"
-  );
 
   const hasFetched = useRef(false);
 
- const getInvoiceData = async () => {
-  setLoading(true);
-  setError("");
+  // Get values from localStorage
+  const [connectionType, setConnectionType] = useState(
+    localStorage.getItem("connectionType") || "DEFAULT"
+  );
 
-  try {
-    // Get company value from localStorage
-    const companyValue =
-      localStorage.getItem("userLoginRef") || "5";
+  const [yearName, setYearName] = useState(
+    localStorage.getItem("yearName") || "24-25"
+  );
 
-    // Prepare request payload
-    const payload = {
-      orderType: "invoicecumchallan",
-      yearName: "24-25",
-      companyValue,
-      customerName: "",
-    };
+  const getInvoiceData = async () => {
+    setLoading(true);
+    setError("");
 
-    // Prepare request headers
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "*/*",
-      ConnectionType: connectionType || "Default",
-    };
+    try {
+      const companyValue =
+        localStorage.getItem("userLoginRef") || "5";
 
-    // API endpoint
-    const url =
-      "https://einvoice.fcssoftwares.com/api/OrderList/GetOrderList";
+      // Always get latest values from localStorage
+      const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
 
-    console.log("Fetching invoices...");
-    console.log("Connection Type:", connectionType);
-    console.log("Request Payload:", payload);
-    console.log("Request Headers:", headers);
+      const currentYear =
+        localStorage.getItem("yearName") || "24-25";
 
-    // Make API request
-    const response = await axios.post(
-      url,
-      payload,
-      { headers }
-    );
+      const payload = {
+        orderType: "invoicecumchallan",
+        yearName: currentYear,
+        companyValue,
+        customerName: "",
+      };
 
-    console.log(
-      "Invoice API Response:",
-      response.data
-    );
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "*/*",
+        ConnectionType: currentConnectionType,
+      };
 
-    // Update state with API response
-    setInvoiceData(response.data || []);
-  } catch (error) {
-    console.error(
-      "Error fetching invoice data:",
-      error
-    );
+      console.log("Fetching invoices...");
+      console.log("Connection Type:", currentConnectionType);
+      console.log("Financial Year:", currentYear);
+      console.log("Request Payload:", payload);
+      console.log("Request Headers:", headers);
 
-    setError(
-      error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch invoices"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      const response = await axios.post(
+        "https://einvoice.fcssoftwares.com/api/OrderList/GetOrderList",
+        payload,
+        { headers }
+      );
+
+      console.log(
+        "Invoice API Response:",
+        response.data
+      );
+
+      setInvoiceData(response.data || []);
+    } catch (error) {
+      console.error(
+        "Error fetching invoice data:",
+        error
+      );
+
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch invoices"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!token || !companyId) return;
     if (hasFetched.current) return;
-    
+
     hasFetched.current = true;
     getInvoiceData();
-  }, [token, companyId, connectionType]);
+  }, [token, companyId]);
 
-  // ✅ Handle Dropdown Change, sync to localStorage, and force refetch
   const handleConnectionChange = (e) => {
     const newValue = e.target.value;
+
     setConnectionType(newValue);
-    localStorage.setItem("connectionType", newValue); // Keep synced
-    hasFetched.current = false; // Trigger re-fetch
+    localStorage.setItem(
+      "connectionType",
+      newValue
+    );
+
+    hasFetched.current = false;
+    getInvoiceData();
   };
 
   const handleGenerateEinvoice = async (invoice) => {
@@ -113,20 +121,35 @@ const EinvfeildsDisplay = () => {
       console.log("Selected Invoice:", invoice);
       console.log("Selected PID:", pid);
 
+      const currentConnectionType =
+        localStorage.getItem("connectionType") ||
+        "DEFAULT";
+
       const { data } = await axios.get(
         `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${pid}/invoicecumchallan`,
         {
           headers: {
-            "accept": "*/*",
-            "ConnectionType": connectionType, // Injected dynamically
+            accept: "*/*",
+            ConnectionType:
+              currentConnectionType,
           },
         }
       );
 
-      console.log("Invoice Details Response:", data);
+      console.log(
+        "Invoice Details Response:",
+        data
+      );
 
-      localStorage.setItem("selectedInvoice", JSON.stringify(data));
-      localStorage.setItem("Selected PID", JSON.stringify(data.pid));
+      localStorage.setItem(
+        "selectedInvoice",
+        JSON.stringify(data)
+      );
+
+      localStorage.setItem(
+        "Selected PID",
+        JSON.stringify(data.pid)
+      );
 
       navigate("/einvoice/generate-print", {
         state: {
@@ -135,11 +158,20 @@ const EinvfeildsDisplay = () => {
         },
       });
     } catch (err) {
-      console.error("Invoice Details API Error:", err);
+      console.error(
+        "Invoice Details API Error:",
+        err
+      );
 
       if (err.response) {
-        console.log("Status:", err.response.status);
-        console.log("Response:", err.response.data);
+        console.log(
+          "Status:",
+          err.response.status
+        );
+        console.log(
+          "Response:",
+          err.response.data
+        );
       }
 
       alert("Failed to fetch invoice details.");
@@ -150,8 +182,6 @@ const EinvfeildsDisplay = () => {
 
   return (
     <div style={styles.container}>
-     
-
       {loading && (
         <div style={styles.loading}>
           Loading Invoice Data...
@@ -187,31 +217,70 @@ const EinvfeildsDisplay = () => {
             {invoiceData.length > 0 ? (
               invoiceData.map((invoice, index) => (
                 <tr key={invoice.refID || index}>
-                  <td style={styles.td}>{index + 1}</td>
-                  <td style={styles.td}>{invoice.clientCompanyName || "-"}</td>
-                  <td style={styles.td}>{invoice.mobileNo || "-"}</td>
-                  <td style={styles.td}>{invoice.purchaseOrder || "-"}</td>
-                  <td style={styles.td}>{invoice.purchaseOrderDate || "-"}</td>
-                  <td style={styles.td}>{invoice.pid || "-"}</td>
-                  <td style={styles.td}>{invoice.createdOn || "-"}</td>
-                  <td style={styles.td}>{invoice.pid || "-"}</td>
-                  <td style={styles.td}>{invoice.vehicleNo || "-"}</td>
-                  <td style={styles.td}>{invoice.eWayBillNumber || "-"}</td>
+                  <td style={styles.td}>
+                    {index + 1}
+                  </td>
+                  <td style={styles.td}>
+                    {invoice.clientCompanyName ||
+                      "-"}
+                  </td>
+                  <td style={styles.td}>
+                    {invoice.mobileNo || "-"}
+                  </td>
+                  <td style={styles.td}>
+                    {invoice.purchaseOrder || "-"}
+                  </td>
+                  <td style={styles.td}>
+                    {invoice.purchaseOrderDate ||
+                      "-"}
+                  </td>
+                  <td style={styles.td}>
+                    {invoice.pid || "-"}
+                  </td>
+                  <td style={styles.td}>
+                    {invoice.createdOn || "-"}
+                  </td>
+                  <td style={styles.td}>
+                    {invoice.pid || "-"}
+                  </td>
+                  <td style={styles.td}>
+                    {invoice.vehicleNo || "-"}
+                  </td>
+                  <td style={styles.td}>
+                    {invoice.eWayBillNumber ||
+                      "-"}
+                  </td>
+
                   <td style={styles.td}>
                     {invoice.eWayBillNumber ? (
-                      <span style={{ color: "green", fontWeight: "bold" }}>
+                      <span
+                        style={{
+                          color: "green",
+                          fontWeight: "bold",
+                        }}
+                      >
                         Generated
                       </span>
                     ) : (
-                      <span style={{ color: "red", fontWeight: "bold" }}>
+                      <span
+                        style={{
+                          color: "red",
+                          fontWeight: "bold",
+                        }}
+                      >
                         Pending
                       </span>
                     )}
                   </td>
+
                   <td style={styles.actionTd}>
                     <button
                       style={styles.einvoiceBtn}
-                      onClick={() => handleGenerateEinvoice(invoice)}
+                      onClick={() =>
+                        handleGenerateEinvoice(
+                          invoice
+                        )
+                      }
                     >
                       Generate E-Invoice
                     </button>
@@ -221,7 +290,10 @@ const EinvfeildsDisplay = () => {
             ) : (
               !loading && (
                 <tr>
-                  <td colSpan={12} style={styles.noData}>
+                  <td
+                    colSpan={12}
+                    style={styles.noData}
+                  >
                     No Invoice Data Found
                   </td>
                 </tr>
@@ -235,21 +307,101 @@ const EinvfeildsDisplay = () => {
 };
 
 const styles = {
-  container: { padding: "20px", fontFamily: "Arial, sans-serif", background: "#f4f6f9", minHeight: "100vh" },
-  headerRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" },
-  heading: { fontSize: "28px", color: "#1976d2", fontWeight: "bold", margin: 0 },
-  dropdownContainer: { display: "flex", alignItems: "center", background: "#fff", padding: "8px 16px", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" },
-  label: { fontWeight: "bold", color: "#333", marginRight: "10px", fontSize: "14px" },
-  select: { padding: "8px 12px", borderRadius: "5px", border: "1px solid #ccc", outline: "none", cursor: "pointer", fontSize: "14px" },
-  loading: { padding: "10px", marginBottom: "15px", background: "#fff3cd", color: "#856404", borderRadius: "5px" },
-  error: { padding: "10px", marginBottom: "15px", background: "#f8d7da", color: "#721c24", borderRadius: "5px" },
-  tableWrapper: { overflowX: "auto", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
-  table: { width: "100%", borderCollapse: "collapse", minWidth: "1400px" },
-  th: { background: "#1976d2", color: "#fff", padding: "12px", textAlign: "center" },
-  td: { padding: "10px", borderBottom: "1px solid #ddd", textAlign: "center" },
-  actionTd: { padding: "10px", borderBottom: "1px solid #ddd", textAlign: "center" },
-  einvoiceBtn: { background: "#1976d2", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" },
-  noData: { padding: "20px", textAlign: "center", fontWeight: "bold" },
+  container: {
+    padding: "20px",
+    fontFamily: "Arial, sans-serif",
+    background: "#f4f6f9",
+    minHeight: "100vh",
+  },
+  headerRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "20px",
+  },
+  heading: {
+    fontSize: "28px",
+    color: "#1976d2",
+    fontWeight: "bold",
+    margin: 0,
+  },
+  dropdownContainer: {
+    display: "flex",
+    alignItems: "center",
+    background: "#fff",
+    padding: "8px 16px",
+    borderRadius: "8px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+  },
+  label: {
+    fontWeight: "bold",
+    color: "#333",
+    marginRight: "10px",
+    fontSize: "14px",
+  },
+  select: {
+    padding: "8px 12px",
+    borderRadius: "5px",
+    border: "1px solid #ccc",
+    outline: "none",
+    cursor: "pointer",
+    fontSize: "14px",
+  },
+  loading: {
+    padding: "10px",
+    marginBottom: "15px",
+    background: "#fff3cd",
+    color: "#856404",
+    borderRadius: "5px",
+  },
+  error: {
+    padding: "10px",
+    marginBottom: "15px",
+    background: "#f8d7da",
+    color: "#721c24",
+    borderRadius: "5px",
+  },
+  tableWrapper: {
+    overflowX: "auto",
+    background: "#fff",
+    borderRadius: "8px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    minWidth: "1400px",
+  },
+  th: {
+    background: "#1976d2",
+    color: "#fff",
+    padding: "12px",
+    textAlign: "center",
+  },
+  td: {
+    padding: "10px",
+    borderBottom: "1px solid #ddd",
+    textAlign: "center",
+  },
+  actionTd: {
+    padding: "10px",
+    borderBottom: "1px solid #ddd",
+    textAlign: "center",
+  },
+  einvoiceBtn: {
+    background: "#1976d2",
+    color: "#fff",
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: "5px",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+  noData: {
+    padding: "20px",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
 };
 
 export default EinvfeildsDisplay;

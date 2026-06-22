@@ -6,62 +6,62 @@ import { useAuth } from "../components/AuthContext";
 const EwayfeildsDisplay = () => {
   const navigate = useNavigate();
   
-  // ✅ Directly pull connectionType from auth context
-  const { token, companyId, connectionType } = useAuth();
-  
+
+// Get only token and companyId from AuthContext
+const { token, companyId } = useAuth();
+
+// Get values directly from localStorage
+const [selectedEnv, setSelectedEnv] = useState(
+  localStorage.getItem("connectionType") || "DEFAULT"
+);
+
+const [selectedYear, setSelectedYear] = useState(
+  localStorage.getItem("yearName") || "24-25"
+);
   const [loading, setLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState([]);
   const [error, setError] = useState("");
   const hasFetched = useRef(false);
 
-  // ✅ Use 'selectedEnv' to avoid naming conflicts
-  const [selectedEnv, setSelectedEnv] = useState(
-    connectionType || localStorage.getItem("connectionType") || "Default"
-  );
 
- const getInvoiceData = async () => {
+const getInvoiceData = async () => {
   setLoading(true);
   setError("");
 
   try {
-    // Get company value from localStorage
     const companyValue =
       localStorage.getItem("userLoginRef") || "6";
 
-    // Prepare request payload
+    // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
+
+    const currentYear =
+      localStorage.getItem("yearName") || "24-25";
+
     const payload = {
       orderType: "invoicecumchallan",
-      yearName: "24-25",
+      yearName: currentYear,
       companyValue,
       customerName: "",
     };
 
-    // Prepare request headers
     const headers = {
       "Content-Type": "application/json",
       Accept: "*/*",
-      ConnectionType: selectedEnv || "Default",
+      ConnectionType: currentConnectionType,
     };
 
-    console.log("Fetching invoices...");
-    console.log("Environment:", selectedEnv);
-    console.log("Request Payload:", payload);
-    console.log("Request Headers:", headers);
+    console.log("Environment:", currentConnectionType);
+    console.log("Year:", currentYear);
+    console.log("Payload:", payload);
 
-    // API endpoint
-    const url =
-      "https://einvoice.fcssoftwares.com/api/OrderList/GetOrderList";
-
-    // Make API request
     const response = await axios.post(
-      url,
+      "https://einvoice.fcssoftwares.com/api/OrderList/GetOrderList",
       payload,
       { headers }
     );
 
-    console.log("Invoice API Response:", response.data);
-
-    // Update state with response data
     setInvoiceData(response.data || []);
   } catch (error) {
     console.error("Error fetching invoices:", error);
@@ -75,13 +75,15 @@ const EwayfeildsDisplay = () => {
     setLoading(false);
   }
 };
+
+
   useEffect(() => {
     if (!token || !companyId) return;
     if (hasFetched.current) return;
     
     hasFetched.current = true;
     getInvoiceData();
-  }, [token, companyId, selectedEnv]);
+  }, [token, companyId]);
 
   const handleConnectionChange = (e) => {
     const newValue = e.target.value;
@@ -90,39 +92,56 @@ const EwayfeildsDisplay = () => {
     hasFetched.current = false; // Trigger refetch on change
   };
 
-  const handleGenerateEinvoice = async (invoice) => {
-    try {
-      setLoading(true);
-      const pid = invoice?.pid;
 
-      if (!pid) {
-        alert("PID not found");
-        return;
-      }
+const handleGenerateEinvoice = async (invoice) => {
+  try {
+    setLoading(true);
 
-      const { data } = await axios.get(
-        `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${pid}/invoicecumchallan`,
-        {
-          headers: {
-            "accept": "*/*",
-            "ConnectionType": selectedEnv, // ✅ Use local state
-          },
-        }
-      );
+    const pid = invoice?.pid;
 
-      localStorage.setItem("selectedInvoice", JSON.stringify(data));
-      localStorage.setItem("Selected PID", JSON.stringify(data.pid));
-
-      navigate("/ewaybill/ewb-generate-print", {
-        state: { invoiceData: data, pid: pid },
-      });
-    } catch (err) {
-      console.error("Invoice Details API Error:", err);
-      alert("Failed to fetch invoice details.");
-    } finally {
-      setLoading(false);
+    if (!pid) {
+      alert("PID not found");
+      return;
     }
-  };
+
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
+
+    const { data } = await axios.get(
+      `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${pid}/invoicecumchallan`,
+      {
+        headers: {
+          accept: "*/*",
+          ConnectionType: currentConnectionType,
+        },
+      }
+    );
+
+    localStorage.setItem(
+      "selectedInvoice",
+      JSON.stringify(data)
+    );
+
+    localStorage.setItem(
+      "Selected PID",
+      JSON.stringify(data.pid)
+    );
+
+    navigate("/ewaybill/ewb-generate-print", {
+      state: {
+        invoiceData: data,
+        pid,
+      },
+    });
+  } catch (err) {
+    console.error("Invoice Details API Error:", err);
+    alert("Failed to fetch invoice details.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <div style={styles.container}>

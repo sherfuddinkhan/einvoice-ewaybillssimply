@@ -7,9 +7,6 @@ const EInvoiceLoginPage = () => {
   const [password, setPassword] = useState("Ateeq@123");
   const [invoiceMode, setInvoiceMode] = useState("NORMAL");
   
-  // ✅ Added state for connectionType
-  const [connectionType, setConnectionType] = useState("Default");
-  
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 
@@ -30,7 +27,6 @@ const EInvoiceLoginPage = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "ConnectionType": connectionType, // Optional: send to login API if required
           },
           body: JSON.stringify({
             email,
@@ -52,7 +48,6 @@ const EInvoiceLoginPage = () => {
           userGstin: data.response.userGstin,
           email,
           invoiceMode: selectedMode,
-          connectionType: connectionType, // ✅ Passed to AuthContext
           fullResponse: data,
         };
         console.log("loginresponse", loginData);
@@ -60,8 +55,7 @@ const EInvoiceLoginPage = () => {
         // store in AuthContext
         login(loginData, "EINVOICE");
         
-        // ✅ Store safely in localStorage to survive window.location.href reload
-        localStorage.setItem("connectionType", connectionType);
+        
 
         // redirect
         console.log("➡️ Redirecting using window.location");
@@ -124,22 +118,6 @@ const EInvoiceLoginPage = () => {
             <option value="PROFORMA">Proforma E-Invoice</option>
           </select>
         </div>
-
-        {/* ✅ Added Environment Connection Type Dropdown */}
-        <div style={styles.inputGroup}>
-          <label htmlFor="connectionType" style={styles.label}>Environment</label>
-          <select
-            id="connectionType"
-            value={connectionType}
-            onChange={(e) => setConnectionType(e.target.value)}
-            style={styles.input}
-          >
-            <option value="Default">Default</option>
-            <option value="UAT">UAT</option>
-            <option value="LIVE">LIVE</option>
-          </select>
-        </div>
-
         <button
           onClick={handleLogin}
           disabled={loading}
