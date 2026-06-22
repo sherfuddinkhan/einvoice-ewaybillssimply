@@ -379,6 +379,7 @@ const { setLastInvoice } = useAuth();
   const [pdfMessage, setPdfMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("B2B");
   const [lastGeneratedId, setLastGeneratedId] = useState(null);
+  const [genEwb, setGenEwb] = useState("Y");
   const location = useLocation();
   const [manualInvoiceId, setManualInvoiceId] = useState("");
   const receivedData = location.state || {};
@@ -685,7 +686,10 @@ const getAuthData = () => {
   setResponse(null);
 
   try {
-    const finalPayload = recalculateTotals(payload);
+   const finalPayload = recalculateTotals({
+  ...payload,
+  genewb: payload.genewb || "Y",
+});
 
     const res = await fetch(
       "https://einvoice.fcssoftwares.com/api/gst/einvoice/generate-irn",
@@ -790,6 +794,18 @@ const finalInvoiceId =
   return (
     <div style={tableStyles.container}>
       <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
+      <div style={{ marginBottom: "20px" }}>
+  <label><strong>Generate E-Way Bill:</strong></label>
+
+  <select
+    value={genEwb}
+    onChange={(e) => setGenEwb(e.target.value)}
+    style={tableStyles.select}
+  >
+    <option value="Y">Yes</option>
+    <option value="N">No</option>
+  </select>
+</div>
 
       {/* ==================== META CONFIGURATION ==================== */}
       <table style={tableStyles.table}>
