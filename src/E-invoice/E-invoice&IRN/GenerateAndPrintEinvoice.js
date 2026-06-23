@@ -792,60 +792,61 @@ const finalInvoiceId =
 };
 
   return (
-    <div style={tableStyles.container}>
-      <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
-      <div style={{ marginBottom: "20px" }}>
-  <label><strong>Generate E-Way Bill:</strong></label>
+  <div style={tableStyles.container}>
+    <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
+    
+    <div style={{ marginBottom: "15px", display: "flex", alignItems: "center", gap: "10px" }}>
+      <label style={{ fontSize: "13px" }}><strong>Generate E-Way Bill:</strong></label>
+      <select
+        value={genEwb}
+        onChange={(e) => setGenEwb(e.target.value)}
+        style={{ ...tableStyles.select, width: "100px", padding: "4px 8px", height: "28px" }}
+      >
+        <option value="Y">Yes</option>
+        <option value="N">No</option>
+      </select>
+    </div>
 
-  <select
-    value={genEwb}
-    onChange={(e) => setGenEwb(e.target.value)}
-    style={tableStyles.select}
-  >
-    <option value="Y">Yes</option>
-    <option value="N">No</option>
-  </select>
-</div>
+    {/* ==================== META CONFIGURATION ==================== */}
+    <table style={{ ...tableStyles.table, marginBottom: "15px" }}>
+      <thead>
+        <tr><th colSpan={4} style={{ ...tableStyles.th, padding: "6px" }}>Document Meta Configuration</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style={tableStyles.td}>
+            <LabeledSelect label="Invoice Scenario Category" value={selectedCategory} options={["B2B", "B2C", "EXP"]} onChange={handleCategorySelectionChange} />
+          </td>
+          <td style={tableStyles.td}>
+            <LabeledSelect label="Transaction Type" value={payload.trnTyp || "REG"} options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]} onChange={(v) => setField("trnTyp", v)} />
+          </td>
+          <td style={tableStyles.td}><LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} /></td>
+        </tr>
+        <tr>
+          <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} onChange={(v) => setField("no", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
+          <td style={tableStyles.td}>
+            <LabeledSelect label="Supply Type" value={payload.supplyType || "O"} options={["O", "E"]} onChange={(v) => setField("supplyType", v)} />
+          </td>
+          <td style={tableStyles.td}>
+            <LabeledSelect label="Nature" value={payload.ntr || "Inter"} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} />
+          </td>
+        </tr>
+        <tr>
+          <td style={tableStyles.td}><LabeledInput label="Place of Supply (POS)" value={payload.pos} onChange={(v) => setField("pos", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Financial Year" value={payload.fy} onChange={(v) => setField("fy", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="Reverse Charge" value={payload.rchrg} onChange={(v) => setField("rchrg", v)} /></td>
+          <td style={tableStyles.td}><LabeledInput label="ID / Ref ID" value={payload.id} onChange={(v) => setField("id", v)} /></td>
+        </tr>
+      </tbody>
+    </table>
 
-      {/* ==================== META CONFIGURATION ==================== */}
-      <table style={tableStyles.table}>
-        <thead>
-          <tr><th colSpan={4} style={tableStyles.th}>Document Meta Configuration</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style={tableStyles.td}>
-              <LabeledSelect label="Invoice Scenario Category" value={selectedCategory} options={["B2B", "B2C", "EXP"]} onChange={handleCategorySelectionChange} />
-            </td>
-            <td style={tableStyles.td}>
-              <LabeledSelect label="Transaction Type" value={payload.trnTyp || "REG"} options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]} onChange={(v) => setField("trnTyp", v)} />
-            </td>
-            <td style={tableStyles.td}><LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} /></td>
-          </tr>
-          <tr>
-            <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} onChange={(v) => setField("no", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
-            <td style={tableStyles.td}>
-              <LabeledSelect label="Supply Type" value={payload.supplyType || "O"} options={["O", "E"]} onChange={(v) => setField("supplyType", v)} />
-            </td>
-            <td style={tableStyles.td}>
-              <LabeledSelect label="Nature" value={payload.ntr || "Inter"} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} />
-            </td>
-          </tr>
-          <tr>
-            <td style={tableStyles.td}><LabeledInput label="Place of Supply (POS)" value={payload.pos} onChange={(v) => setField("pos", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Financial Year" value={payload.fy} onChange={(v) => setField("fy", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="Reverse Charge" value={payload.rchrg} onChange={(v) => setField("rchrg", v)} /></td>
-            <td style={tableStyles.td}><LabeledInput label="ID / Ref ID" value={payload.id} onChange={(v) => setField("id", v)} /></td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* ==================== SELLER & BUYER INFORMATION ==================== */}
-      <div style={tableStyles.twoColGrid}>
-        <div style={tableStyles.col}>
-          <h3>Seller Information</h3>
+    {/* ==================== SELLER & BUYER INFORMATION ==================== */}
+    <div style={{ ...tableStyles.twoColGrid, gap: "15px" }}>
+      <div style={tableStyles.compactSectionCard}>
+        <h3 style={tableStyles.sectionHeader}>Seller Information</h3>
+        <div style={tableStyles.inlineGridFields}>
           <LabeledInput label="GSTIN" value={payload.sgstin} onChange={(v) => setField("sgstin", v)} />
           <LabeledInput label="Trade Name" value={payload.strdNm} onChange={(v) => setField("strdNm", v)} />
           <LabeledInput label="Legal Name" value={payload.slglNm} onChange={(v) => setField("slglNm", v)} />
@@ -858,8 +859,11 @@ const finalInvoiceId =
           <LabeledInput label="Phone" value={payload.sph} onChange={(v) => setField("sph", v)} />
           <LabeledInput label="Email" value={payload.sem} onChange={(v) => setField("sem", v)} />
         </div>
-        <div style={tableStyles.col}>
-          <h3>Buyer Information</h3>
+      </div>
+      
+      <div style={tableStyles.compactSectionCard}>
+        <h3 style={tableStyles.sectionHeader}>Buyer Information</h3>
+        <div style={tableStyles.inlineGridFields}>
           <LabeledInput label="GSTIN" value={payload.bgstin} onChange={(v) => setField("bgstin", v)} />
           <LabeledInput label="Trade Name" value={payload.btrdNm} onChange={(v) => setField("btrdNm", v)} />
           <LabeledInput label="Legal Name" value={payload.blglNm} onChange={(v) => setField("blglNm", v)} />
@@ -873,11 +877,13 @@ const finalInvoiceId =
           <LabeledInput label="Email" value={payload.bem} onChange={(v) => setField("bem", v)} />
         </div>
       </div>
+    </div>
 
-      {/* ==================== DISPATCH & SHIP TO ==================== */}
-      <div style={{ ...tableStyles.twoColGrid, marginTop: "30px" }}>
-        <div style={tableStyles.col}>
-          <h3>Dispatch From</h3>
+    {/* ==================== DISPATCH & SHIP TO ==================== */}
+    <div style={{ ...tableStyles.twoColGrid, marginTop: "15px", gap: "15px" }}>
+      <div style={tableStyles.compactSectionCard}>
+        <h3 style={tableStyles.sectionHeader}>Dispatch From</h3>
+        <div style={tableStyles.inlineGridFields}>
           <LabeledInput label="GSTIN" value={payload.dgstin} onChange={(v) => setField("dgstin", v)} />
           <LabeledInput label="Trade Name" value={payload.dtrdNm} onChange={(v) => setField("dtrdNm", v)} />
           <LabeledInput label="Legal Name" value={payload.dlglNm} onChange={(v) => setField("dlglNm", v)} />
@@ -886,8 +892,10 @@ const finalInvoiceId =
           <LabeledInput label="State Code" value={payload.dstcd} onChange={(v) => setField("dstcd", v)} />
           <LabeledInput label="Pincode" value={payload.dpin} onChange={(v) => setField("dpin", v)} />
         </div>
-        <div style={{ ...tableStyles.col }}>
-          <h3>Ship To</h3>
+      </div>
+      <div style={tableStyles.compactSectionCard}>
+        <h3 style={tableStyles.sectionHeader}>Ship To</h3>
+        <div style={tableStyles.inlineGridFields}>
           <LabeledInput label="GSTIN" value={payload.togstin} onChange={(v) => setField("togstin", v)} />
           <LabeledInput label="Trade Name" value={payload.totrdNm} onChange={(v) => setField("totrdNm", v)} />
           <LabeledInput label="Legal Name" value={payload.tolglNm} onChange={(v) => setField("tolglNm", v)} />
@@ -897,155 +905,119 @@ const finalInvoiceId =
           <LabeledInput label="Pincode" value={payload.topin} onChange={(v) => setField("topin", v)} />
         </div>
       </div>
+    </div>
 
-      {/* ==================== ITEM MANAGEMENT ==================== */}
-      <div style={{ marginTop: "40px" }}>
-        {payload.itemList?.map((item, idx) => (
-          <div key={idx} style={tableStyles.itemCard}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "15px" }}>
-              <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
-                <LabeledInput label="Product Desription" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
-              <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
-              <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
-              <LabeledInput label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
-            </div>
-
-            <div style={{ fontSize: "12px", color: "#666", background: "#f1f3f4", padding: "8px 12px", borderRadius: "4px" }}>
-              Calculated Breakdown: CGST: ₹{item.camt || 0} | SGST: ₹{item.samt || 0} | IGST: ₹{item.iamt || 0}
-            </div>
+    {/* ==================== TRANSPORT DETAILS ==================== */}
+    {genEwb === "Y" && (
+      <div style={{ ...tableStyles.twoColGrid, marginTop: "15px", gap: "15px" }}>
+        <div style={tableStyles.compactSectionCard}>
+          <h3 style={tableStyles.sectionHeader}>Transport Details</h3>
+          <div style={tableStyles.inlineGridFields}>
+            <LabeledInput label="Supply Type" value={payload.subSplyTyp} onChange={(v) => setField("subSplyTyp", v)} />
+            <LabeledInput label="Transporter ID" value={payload.transId} onChange={(v) => setField("transId", v)} />
+            <LabeledInput label="Transport Mode" value={payload.transMode} onChange={(v) => setField("transMode", v)} />
+            <LabeledInput label="Transport Distance" value={payload.transDist} onChange={(v) => setField("transDist", v)} />
+            <LabeledInput label="Transporter Name" value={payload.transName} onChange={(v) => setField("transName", v)} />
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* ==================== TOTALS BREAKDOWN ==================== */}
-      <div style={{ margin: "30px 0", background: "#fff", padding: "20px", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
-        <h3>Consolidated Invoice Aggregations</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "20px", marginTop: "15px" }}>
-          <div><strong>Total Taxable Value:</strong> <p>₹{payload.tottxval || 0}</p></div>
-          <div><strong>Total CGST:</strong> <p>₹{payload.totcamt || 0}</p></div>
-          <div><strong>Total SGST:</strong> <p>₹{payload.totsamt || 0}</p></div>
-          <div><strong>Total IGST:</strong> <p>₹{payload.totiamt || 0}</p></div>
-          <div><strong>Net Gross Invoice Value:</strong> <p style={{ color: colors.primary, fontWeight: "bold" }}>₹{payload.totinvval || 0}</p></div>
+        <div style={tableStyles.compactSectionCard}>
+          <h3 style={tableStyles.sectionHeader}>Document & Vehicle Details</h3>
+          <div style={tableStyles.inlineGridFields}>
+            <LabeledInput label="Trans Doc No" value={payload.transDocNo} onChange={(v) => setField("transDocNo", v)} />
+            <LabeledInput label="Trans Doc Date" value={payload.transDocDate} onChange={(v) => setField("transDocDate", v)} />
+            <LabeledInput label="Vehicle No" value={payload.vehNo} onChange={(v) => setField("vehNo", v)} />
+            <LabeledInput label="Vehicle Type" value={payload.vehTyp} onChange={(v) => setField("vehTyp", v)} />
+          </div>
         </div>
       </div>
+    )}
 
-      {/* ==================== ACTION CONSOLE ==================== */}
-<div style={{ marginTop: "40px", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
-  
-  {/* Primary Action Button Row Container */}
-  <div style={{ textAlign: "center", marginBottom: "20px" }}>
-    <button 
-      style={tableStyles.btnGenerate(loading, token)} 
-      onClick={handleGenerate}
-      disabled={loading || !token}
-    >
-      {loading ? "Registering Invoice Core..." : "🚀 Generate IRN / E-Invoice"}
-    </button>
-  </div>
+    {/* ==================== ITEM MANAGEMENT ==================== */}
+    <div style={{ marginTop: "20px" }}>
+      {payload.itemList?.map((item, idx) => (
+        <div key={idx} style={{ ...tableStyles.itemCard, padding: "12px", marginBottom: "10px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginBottom: "8px" }}>
+            <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
+            <LabeledInput label="Product Description" value={item.prdDesc} onChange={(v) => updateItem(idx, "prdDesc", v)} />
+            <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
+            <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
+            <LabeledInput label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
+          </div>
 
-  {/* Conditional Template Export UI Controls Wrapper */}
-  {(lastGeneratedId || 
-    response?.status === "SUCCESS" || 
-    response?.response?.id || 
-    response?.response?.Id || 
-    response?.response?.irn) && (
-    <div style={{ 
-      display: "flex", 
-      gap: "15px", 
-      alignItems: "center", 
-      justifyContent: "center", 
-      borderTop: "1px dashed #ccc", 
-      paddingTop: "20px" 
-    }}>
-      <div style={{ width: "250px" }}>
-        <select 
-          style={tableStyles.select} 
-          value={template} 
-          onChange={(e) => setTemplate(e.target.value)}
-        >
-          <option value="STANDARD">Standard Layout</option>
-          <option value="CLASSIC">Classic Invoice</option>
-          <option value="MODERN">Modern Minimalist</option>
-        </select>
-      </div>
-      <button style={tableStyles.btnGreen} onClick={downloadPDF}>
-        Download Tax PDF
-      </button>
+          <div style={{ fontSize: "11px", color: "#666", background: "#f1f3f4", padding: "4px 8px", borderRadius: "4px" }}>
+            Calculated Breakdown: CGST: ₹{item.camt || 0} | SGST: ₹{item.samt || 0} | IGST: ₹{item.iamt || 0}
+          </div>
+        </div>
+      ))}
     </div>
-  )}
-  
-  {pdfMessage && <p style={{ marginTop: "15px", textAlign: "center", color: "#555", fontSize: "14px" }}>{pdfMessage}</p>}
-</div>
-{/* ==================== API RESPONSE ==================== */}
-{response && (
-  <div
-    style={{
-      marginTop: "30px",
-      padding: "20px",
-      borderRadius: "8px",
-      background:
-        response.status === "SUCCESS"
-          ? "#f6ffed"
-          : "#fff1f0",
-      border:
-        response.status === "SUCCESS"
-          ? "1px solid #b7eb8f"
-          : "1px solid #ffa39e",
-    }}
-  >
-    {response.status === "SUCCESS" ? (
-      <>
-        <h3 style={{ color: "#389e0d" }}>
-          E-Invoice Generated Successfully
-        </h3>
 
-        <p>
-          <strong>IRN:</strong>{" "}
-          {response?.response?.irn || "-"}
-        </p>
+    {/* ==================== TOTALS BREAKDOWN ==================== */}
+    <div style={{ margin: "15px 0", background: "#fff", padding: "12px", borderRadius: "6px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #eee" }}>
+      <h3 style={{ ...tableStyles.sectionHeader, marginBottom: "8px" }}>Consolidated Invoice Aggregations</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px", fontSize: "12px" }}>
+        <div><strong>Taxable:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.tottxval || 0}</p></div>
+        <div><strong>CGST:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.totcamt || 0}</p></div>
+        <div><strong>SGST:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.totsamt || 0}</p></div>
+        <div><strong>IGST:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.totiamt || 0}</p></div>
+        <div><strong>Net Gross Value:</strong> <p style={{ color: colors?.primary || "#000", fontWeight: "bold", margin: "2px 0 0" }}>₹{payload.totinvval || 0}</p></div>
+      </div>
+    </div>
 
-        <p>
-          <strong>Ack No:</strong>{" "}
-          {response?.response?.ackNo || "-"}
-        </p>
-
-        <p>
-          <strong>Ack Date:</strong>{" "}
-          {response?.response?.ackDt || "-"}
-        </p>
-
-        {response?.response?.ewbNo && (
-          <p>
-            <strong>EWB No:</strong>{" "}
-            {response.response.ewbNo}
-          </p>
-        )}
-      </>
-    ) : (
-      <>
-        <h3 style={{ color: "#cf1322" }}>
-          E-Invoice Generation Failed
-        </h3>
-
-        <pre
-          style={{
-            background: "#fff1f0",
-            padding: "15px",
-            borderRadius: "5px",
-            overflowX: "auto",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
-            color: "#cf1322",
-          }}
+    {/* ==================== ACTION CONSOLE ==================== */}
+    <div style={{ marginTop: "20px", padding: "15px", background: "#fff", borderRadius: "6px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+      <div style={{ textAlign: "center", marginBottom: "10px" }}>
+        <button 
+          style={{ ...tableStyles.btnGenerate(loading, token), padding: "8px 20px", fontSize: "14px" }} 
+          onClick={handleGenerate}
+          disabled={loading || !token}
         >
-          {JSON.stringify(response, null, 2)}
-        </pre>
-      </>
+          {loading ? "Registering Invoice Core..." : "🚀 Generate IRN / E-Invoice"}
+        </button>
+      </div>
+
+      {(lastGeneratedId || response?.status === "SUCCESS" || response?.response?.id || response?.response?.Id || response?.response?.irn) && (
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center", borderTop: "1px dashed #ccc", paddingTop: "12px" }}>
+          <div style={{ width: "160px" }}>
+            <select style={{ ...tableStyles.select, height: "30px", padding: "4px" }} value={template} onChange={(e) => setTemplate(e.target.value)}>
+              <option value="STANDARD">Standard Layout</option>
+              <option value="CLASSIC">Classic Invoice</option>
+              <option value="MODERN">Modern Minimalist</option>
+            </select>
+          </div>
+          <button style={{ ...tableStyles.btnGreen, padding: "6px 15px", fontSize: "13px" }} onClick={downloadPDF}>Download Tax PDF</button>
+        </div>
+      )}
+      {pdfMessage && <p style={{ marginTop: "10px", textAlign: "center", color: "#555", fontSize: "12px" }}>{pdfMessage}</p>}
+    </div>
+
+    {/* ==================== API RESPONSE ==================== */}
+    {response && (
+      <div style={{
+        marginTop: "15px", padding: "12px", borderRadius: "6px", fontSize: "13px",
+        background: response.status === "SUCCESS" ? "#f6ffed" : "#fff1f0",
+        border: response.status === "SUCCESS" ? "1px solid #b7eb8f" : "1px solid #ffa39e",
+      }}>
+        {response.status === "SUCCESS" ? (
+          <>
+            <h3 style={{ color: "#389e0d", margin: "0 0 8px 0", fontSize: "14px" }}>E-Invoice Generated Successfully</h3>
+            <p style={{ margin: "2px 0" }}><strong>IRN:</strong> {response?.response?.irn || "-"}</p>
+            <p style={{ margin: "2px 0" }}><strong>Ack No:</strong> {response?.response?.ackNo || "-"}</p>
+            <p style={{ margin: "2px 0" }}><strong>Ack Date:</strong> {response?.response?.ackDt || "-"}</p>
+            {response?.response?.ewbNo && <p style={{ margin: "2px 0" }}><strong>EWB No:</strong> {response.response.ewbNo}</p>}
+          </>
+        ) : (
+          <>
+            <h3 style={{ color: "#cf1322", margin: "0 0 8px 0", fontSize: "14px" }}>E-Invoice Generation Failed</h3>
+            <pre style={{ background: "#fff1f0", padding: "8px", borderRadius: "4px", fontSize: "11px", color: "#cf1322", margin: 0 }}>
+              {JSON.stringify(response, null, 2)}
+            </pre>
+          </>
+        )}
+      </div>
     )}
   </div>
-)}
-    </div>
-  );
+);
 };  
 export default GenerateAndPrintEinvoice;
 
