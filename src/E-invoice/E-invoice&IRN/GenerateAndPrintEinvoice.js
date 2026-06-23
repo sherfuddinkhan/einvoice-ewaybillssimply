@@ -900,11 +900,6 @@ const finalInvoiceId =
 
       {/* ==================== ITEM MANAGEMENT ==================== */}
       <div style={{ marginTop: "40px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h3>Line Items Spreadsheet</h3>
-          <button style={tableStyles.btnGreen} onClick={addItem}>+ Add Document Row Item</button>
-        </div>
-
         {payload.itemList?.map((item, idx) => (
           <div key={idx} style={tableStyles.itemCard}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "15px" }}>
@@ -981,6 +976,74 @@ const finalInvoiceId =
   
   {pdfMessage && <p style={{ marginTop: "15px", textAlign: "center", color: "#555", fontSize: "14px" }}>{pdfMessage}</p>}
 </div>
+{/* ==================== API RESPONSE ==================== */}
+{response && (
+  <div
+    style={{
+      marginTop: "30px",
+      padding: "20px",
+      borderRadius: "8px",
+      background:
+        response.status === "SUCCESS"
+          ? "#f6ffed"
+          : "#fff1f0",
+      border:
+        response.status === "SUCCESS"
+          ? "1px solid #b7eb8f"
+          : "1px solid #ffa39e",
+    }}
+  >
+    {response.status === "SUCCESS" ? (
+      <>
+        <h3 style={{ color: "#389e0d" }}>
+          E-Invoice Generated Successfully
+        </h3>
+
+        <p>
+          <strong>IRN:</strong>{" "}
+          {response?.response?.irn || "-"}
+        </p>
+
+        <p>
+          <strong>Ack No:</strong>{" "}
+          {response?.response?.ackNo || "-"}
+        </p>
+
+        <p>
+          <strong>Ack Date:</strong>{" "}
+          {response?.response?.ackDt || "-"}
+        </p>
+
+        {response?.response?.ewbNo && (
+          <p>
+            <strong>EWB No:</strong>{" "}
+            {response.response.ewbNo}
+          </p>
+        )}
+      </>
+    ) : (
+      <>
+        <h3 style={{ color: "#cf1322" }}>
+          E-Invoice Generation Failed
+        </h3>
+
+        <pre
+          style={{
+            background: "#fff1f0",
+            padding: "15px",
+            borderRadius: "5px",
+            overflowX: "auto",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+            color: "#cf1322",
+          }}
+        >
+          {JSON.stringify(response, null, 2)}
+        </pre>
+      </>
+    )}
+  </div>
+)}
     </div>
   );
 };  
