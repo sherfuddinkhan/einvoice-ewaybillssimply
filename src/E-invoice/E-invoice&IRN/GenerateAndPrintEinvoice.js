@@ -2,6 +2,69 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "../../components/AuthContext";
 import { useLocation } from "react-router-dom";
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+
+// ==================== 1. DEFINE PDF SHARP BORDER STYLES ====================
+const pdfStyles = StyleSheet.create({
+  page: {
+    padding: 20,
+    backgroundColor: '#ffffff',
+    fontFamily: 'Helvetica',
+  },
+  container: {
+    width: '100%',
+    border: '1px solid #000000',
+  },
+  header: {
+    borderBottom: '1px solid #000000',
+    padding: 8,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 12,
+    textTransform: 'uppercase',
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    borderBottom: '1px solid #000000',
+  },
+  leftColumn: {
+    flex: 1,
+    padding: 12,
+    borderLeft: '1px solid #000000',
+    borderRight: '1px solid #000000',
+  },
+  rightColumn: {
+    width: 220,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRight: '1px solid #000000',
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  textRow: {
+    fontSize: 10,
+    marginBottom: 4,
+    lineHeight: 1.4,
+  },
+  boldLabel: {
+    fontWeight: 'bold',
+  },
+  qrCode: {
+    width: 150,
+    height: 150,
+  },
+  fallbackText: {
+    fontSize: 10,
+    color: '#666666',
+    fontStyle: 'italic',
+  }
+});
+
 
 
 const colors = {
@@ -372,6 +435,50 @@ console.log("📦 Product List:", productList);
   };
 };
 
+// =========================================================
+// 2. DEFINE THE INLINE PDF DOCUMENT COMPONENT
+// =========================================================
+const EInvoicePdfDocument = ({ irn, ackNo, ackDate, qrCodeBase64 }) => {
+  const qrUri = qrCodeBase64 
+    ? (qrCodeBase64.startsWith('data:image') ? qrCodeBase64 : `data:image/png;base64,${qrCodeBase64}`)
+    : null;
+
+  return (
+    <Document>
+      <Page size="A4" style={pdfStyles.page}>
+        <View style={pdfStyles.container}>
+          <Text style={pdfStyles.header}>Tax Invoice</Text>
+          
+          <View style={pdfStyles.contentRow}>
+            {/* Left Data Column */}
+            <View style={pdfStyles.leftColumn}>
+              <Text style={pdfStyles.sectionTitle}>1. e-Invoice Details</Text>
+              <Text style={pdfStyles.textRow}>
+                <Text style={pdfStyles.boldLabel}>IRN: </Text>{irn || '-'}
+              </Text>
+              <Text style={pdfStyles.textRow}>
+                <Text style={pdfStyles.boldLabel}>Ack. No: </Text>{ackNo || '-'}
+              </Text>
+              <Text style={pdfStyles.textRow}>
+                <Text style={pdfStyles.boldLabel}>Ack. Date: </Text>{ackDate || '-'}
+              </Text>
+            </View>
+            
+            {/* Right QR Column */}
+            <View style={pdfStyles.rightColumn}>
+              {qrUri ? (
+                <Image src={qrUri} style={pdfStyles.qrCode} />
+              ) : (
+                <Text style={pdfStyles.fallbackText}>No Barcode Found</Text>
+              )}
+            </View>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
 export const GenerateAndPrintEinvoice = () => {
 const { token, companyId } = useAuth();
 const { setLastInvoice } = useAuth();
@@ -382,6 +489,7 @@ const { setLastInvoice } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("B2B");
   const [lastGeneratedId, setLastGeneratedId] = useState(null);
   const [genEwb, setGenEwb] = useState("Y");
+  const [showPdf, setShowPdf] = useState(false);
   const location = useLocation();
   const [manualInvoiceId, setManualInvoiceId] = useState("");
   const receivedData = location.state || {};
@@ -395,33 +503,19 @@ const { setLastInvoice } = useAuth();
 
   const [payload, setPayload] = useState({ itemList: [] });
   const initializedRef = useRef(false);
-  const printAreaRef = useRef(null);
-
-  // Print helper formatting logic
-  const apiPrintData = response?.response || response || {};
+const apiPrintData = response?.response || response || {};
   const irnValue = apiPrintData.irn || apiPrintData.irnnumber || "";
   const ackNoValue = apiPrintData.ackNo || apiPrintData.ackno || "";
   const rawDate = apiPrintData.ackDt || apiPrintData.ackdate;
+  
   const formattedPrintDate = rawDate 
     ? new Date(String(rawDate).replace(" ", "T")).toLocaleString('en-GB', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
       }).replace(',', '')
     : "";
-  const qrCodeBase64 = apiPrintData.qrCode || apiPrintData.einvoiceqrcode || "";
-
-  const handlePrintBox = () => {
-    if (!response) {
-      alert("No data available to print. Please generate the invoice first.");
-      return;
-    }
-    const printContent = printAreaRef.current.innerHTML;
-    const originalContent = document.body.innerHTML;
-    document.body.innerHTML = printContent;
-    window.print();
-    document.body.innerHTML = originalContent;
-    window.location.reload();
-  };
+    
+  const qrCodeBase64 = apiPrintData.qrCode || apiPrintData.einvoiceqrcode || apiPrintData.qrcodeBase64 || apiPrintData.SignedQRCode || "";
 
 
   const recalculateTotals = useCallback((currentPayload) => {
@@ -707,6 +801,7 @@ const getAuthData = () => {
 };
 
  const handleGenerate = async () => {
+  setShowPdf(false);
    //const { token, companyid } = useAuth(); // ✅ SESSION STORAGE
   console.log("tokenvalue",token)
   console.log("companyIdvalue",companyId)
@@ -1049,10 +1144,13 @@ return (
         <div><strong>Net Gross Value:</strong> <p style={{ color: colors?.primary || "#000", fontWeight: "bold", margin: "2px 0 0" }}>₹{payload.totinvval || 0}</p></div>
       </div>
     </div>
-
+    
     {/* ==================== ACTION CONSOLE ==================== */}
+   {/* ==================== ACTION CONSOLE ==================== */}
     <div style={{ marginTop: "20px", padding: "15px", background: "#fff", borderRadius: "6px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-      <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "12px" }}>
+      <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "12px", flexWrap: "wrap" }}>
+        
+        {/* Button 1: Generate Invoice */}
         <button 
           style={{ ...tableStyles.btnGenerate(loading, token), padding: "8px 16px", fontSize: "13px" }} 
           onClick={handleGenerate}
@@ -1061,6 +1159,7 @@ return (
           {loading ? "Registering Invoice Core..." : "🚀 Generate IRN / E-Invoice"}
         </button>
 
+        {/* Button 2: Update Database */}
         {response && (
           <button 
             style={{ 
@@ -1079,70 +1178,44 @@ return (
             {loading ? "Syncing Record..." : "💾 Update Invoice in DB"}
           </button>
         )}
-      </div>
-      
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
-        <button onClick={handlePrintBox} disabled={!response} style={{ ...tableStyles.btnGreen, background: "#6b7280", padding: "6px 15px", fontSize: "13px" }}>
-          Print Details Card
-        </button>
-      </div>
 
-      {/* --- HIDDEN JAVASCRIPT PRINT CONTAINER (Renders sharp borders automatically) --- */}
-     {/* --- HIDDEN JAVASCRIPT PRINT CONTAINER (Fully framed layout) --- */}
-      <div style={{ display: "none" }}>
-        <div ref={printAreaRef} style={{ width: "100%", maxWidth: "750px", border: "1px solid #000", background: "#fff", color: "#000", fontFamily: "sans-serif", boxSizing: "border-box" }}>
-          
-          {/* Header Section */}
-          <div style={{ borderBottom: "1px solid #000", padding: "10px", textAlign: "center", fontWeight: "bold", textTransform: "uppercase", fontSize: "14px" }}>
-            Tax Invoice
-          </div>
-          
-          {/* Content Row Grid Container */}
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: "1fr 220px", 
-            alignItems: "stretch",
-            borderBottom: "1px solid #000"
-          }}>
-            
-            {/* Left Content Column */}
-            <div style={{ 
-              padding: "15px", 
-              display: "flex", 
-              flexDirection: "column", 
-              gap: "12px", 
-              borderLeft: "1px solid #000",
-              borderRight: "1px solid #000", 
-              fontSize: "13px" 
-            }}>
-              <h3 style={{ margin: "0 0 5px 0", fontWeight: "bold", fontSize: "14px" }}>1. e-Invoice Details</h3>
-              <div style={{ wordBreak: "break-all", lineHeight: "1.4" }}><span style={{ fontWeight: "bold" }}>IRN: </span>{irnValue}</div>
-              <div><span style={{ fontWeight: "bold" }}>Ack. No: </span>{ackNoValue}</div>
-              <div><span style={{ fontWeight: "bold" }}>Ack. Date: </span>{formattedPrintDate}</div>
-            </div>
-            
-            {/* Right QR Code Column */}
-            <div style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center", 
-              padding: "15px",
-              borderRight: "1px solid #000"
-            }}>
-              {qrCodeBase64 ? (
-                <img 
-                  src={qrCodeBase64.startsWith('data:image') ? qrCodeBase64 : `data:image/png;base64,${qrCodeBase64}`} 
-                  alt="e-Invoice Signatory QR Code" 
-                  style={{ width: "160px", height: "160px", objectFit: "contain", imageRendering: "crisp-edges" }} 
-                />
-              ) : (
-                <div style={{ fontSize: "11px", color: "#666", fontStyle: "italic" }}>No Barcode Found</div>
-              )}
-            </div>
-            
-          </div>
-        </div>
+        {/* Button 3: Instant PDF Generation and Download */}
+        {response && (irnValue || response.status === "SUCCESS") && (
+          <PDFDownloadLink
+            document={
+              <EInvoicePdfDocument 
+                irn={irnValue}
+                ackNo={ackNoValue}
+                ackDate={formattedPrintDate}
+                qrCodeBase64={qrCodeBase64}
+              />
+            }
+            fileName={`E-Invoice_${ackNoValue || 'Document'}.pdf`}
+            style={{ textDecoration: 'none' }}
+          >
+            {({ loading: pdfLoading }) => (
+              <button
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "13px",
+                  backgroundColor: pdfLoading ? "#d9d9d9" : "#722ed1",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: pdfLoading ? "not-allowed" : "pointer",
+                  fontWeight: "500"
+                }}
+                disabled={pdfLoading}
+              >
+                {pdfLoading ? "⏳ Compiling PDF..." : "📥 Download E-Invoice PDF"}
+              </button>
+            )}
+          </PDFDownloadLink>
+        )}
       </div>
+    </div>
+      
+    
 
       {/* Conditional Template Export UI Controls Wrapper */}
       {(lastGeneratedId || response?.status === "SUCCESS" || response?.irnnumber || response?.response?.irn) && (
@@ -1158,7 +1231,7 @@ return (
         </div>
       )}
       {pdfMessage && <p style={{ marginTop: "10px", textAlign: "center", color: "#555", fontSize: "12px" }}>{pdfMessage}</p>}
-    </div>
+    
 
     {/* ==================== API RESPONSE DISPLAY ==================== */}
     {response && (
