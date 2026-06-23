@@ -748,57 +748,52 @@ const getAuthData = () => {
 };
 const handleSaveToDB = async () => {
   if (!response) {
-    alert("No response data available to save.");
+    alert("No data available to save.");
     return;
   }
 
-  // Target the true nested response block from your payload
+  // Extract data from your generation response
   const apiData = response.response || response;
 
-  // Build the payload matching your Swagger schema perfectly
+  // 🌟 Define your dynamic ID lookup
+  const dynamicId = receivedData?.id || location.state?.pid;
+
   const putPayload = {
-    id: Number(apiData.id || payload.id) || 0,
+    // 🌟 Assign dynamicId here, falling back to apiData or payload id if needed, normalized as a Number
+    id: Number(dynamicId || apiData.id || payload.id) || 0,
     
-    // Extracts your real generated E-Way Bill Number ('EwbNo')
-    eWayBillNumber: String(apiData.EwbNo || apiData.eWayBillNumber || ""),
-    
-    // Extracts the real IRN key ('irn')
-    irnnumber: apiData.irn || apiData.irnnumber || "",
-    
-    // Extracts the real Acknowledgment Number ('ackNo') 
+    eWayBillNumber: String(apiData.eWayBillNumber || apiData.EwbNo || ""),
+    irnnumber: apiData.irnnumber || apiData.irn || "",
     ackno: String(apiData.ackNo || apiData.ackno || ""),
-    
-    // Parses 'ackDt' ("2026-06-23 19:35:58") into standard ISO format required by your schema
-    ackdate: apiData.ackDt || apiData.ackdate
-      ? new Date(String(apiData.ackDt || apiData.ackdate).replace(" ", "T")).toISOString()
+    ackdate: apiData.ackdate || apiData.ackDt 
+      ? new Date(apiData.ackdate || apiData.ackDt).toISOString() 
       : new Date().toISOString(),
-      
-    // Extracts the generated base64 string ('qrCode')
-    einvoiceqrcode: apiData.qrCode || apiData.einvoiceqrcode || ""
+    einvoiceqrcode: apiData.einvoiceqrcode || apiData.qrCode || ""
   };
 
   try {
     setLoading(true);
-    
-    
-    const res = await fetch(`https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice`, {
+
+    const res = await fetch("https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "ConnectionType": connectionType,
+        "ConnectionType": connectionType || "Online", 
         ...(token && { "Authorization": `Bearer ${token}` })
       },
       body: JSON.stringify(putPayload),
     });
 
     if (res.ok) {
-      alert("🎉 Invoice database state successfully updated!");
+      const data = await res.json();
+      console.log("Database updated successfully:", data);
+      alert("🎉 Invoice updated in DB successfully!");
     } else {
       const errText = await res.text();
-      throw new Error(errText || "Backend validation error during update operation.");
+      throw new Error(errText || "The server rejected the payload.");
     }
   } catch (error) {
-    console.error("API Error Syncing with Database:", error);
+    console.error("Database Save Error:", error);
     alert(`Failed to save to database: ${error.message}`);
   } finally {
     setLoading(false);
