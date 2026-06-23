@@ -327,7 +327,7 @@ console.log("📦 Product List:", productList);
     transMode: "1",
     transDist: 0,
     transName: "TEST TRANSPORT",
-    transDocNo: inv?.pid ? `INV-${inv.pid}` : "INV-001",
+    transDocNo: dynamicId,
     transDocDate: formatDate(inv?.dateofIssue || new Date()),
     vehNo: inv?.vehicleNo || "KA01AB1234",
     vehTyp: "R",
@@ -395,6 +395,34 @@ const { setLastInvoice } = useAuth();
 
   const [payload, setPayload] = useState({ itemList: [] });
   const initializedRef = useRef(false);
+  const printAreaRef = useRef(null);
+
+  // Print helper formatting logic
+  const apiPrintData = response?.response || response || {};
+  const irnValue = apiPrintData.irn || apiPrintData.irnnumber || "";
+  const ackNoValue = apiPrintData.ackNo || apiPrintData.ackno || "";
+  const rawDate = apiPrintData.ackDt || apiPrintData.ackdate;
+  const formattedPrintDate = rawDate 
+    ? new Date(String(rawDate).replace(" ", "T")).toLocaleString('en-GB', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }).replace(',', '')
+    : "";
+  const qrCodeBase64 = apiPrintData.qrCode || apiPrintData.einvoiceqrcode || "";
+
+  const handlePrintBox = () => {
+    if (!response) {
+      alert("No data available to print. Please generate the invoice first.");
+      return;
+    }
+    const printContent = printAreaRef.current.innerHTML;
+    const originalContent = document.body.innerHTML;
+    document.body.innerHTML = printContent;
+    window.print();
+    document.body.innerHTML = originalContent;
+    window.location.reload();
+  };
+
 
   const recalculateTotals = useCallback((currentPayload) => {
     if (!currentPayload?.itemList) return currentPayload;
@@ -849,7 +877,7 @@ const finalInvoiceId =
   }
 };
 
- return (
+return (
   <div style={tableStyles.container}>
     <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
     
@@ -1033,7 +1061,6 @@ const finalInvoiceId =
           {loading ? "Registering Invoice Core..." : "🚀 Generate IRN / E-Invoice"}
         </button>
 
-        {/* Dynamic DB update selector running alongside generation logs */}
         {response && (
           <button 
             style={{ 
@@ -1052,6 +1079,69 @@ const finalInvoiceId =
             {loading ? "Syncing Record..." : "💾 Update Invoice in DB"}
           </button>
         )}
+      </div>
+      
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
+        <button onClick={handlePrintBox} disabled={!response} style={{ ...tableStyles.btnGreen, background: "#6b7280", padding: "6px 15px", fontSize: "13px" }}>
+          Print Details Card
+        </button>
+      </div>
+
+      {/* --- HIDDEN JAVASCRIPT PRINT CONTAINER (Renders sharp borders automatically) --- */}
+     {/* --- HIDDEN JAVASCRIPT PRINT CONTAINER (Fully framed layout) --- */}
+      <div style={{ display: "none" }}>
+        <div ref={printAreaRef} style={{ width: "100%", maxWidth: "750px", border: "1px solid #000", background: "#fff", color: "#000", fontFamily: "sans-serif", boxSizing: "border-box" }}>
+          
+          {/* Header Section */}
+          <div style={{ borderBottom: "1px solid #000", padding: "10px", textAlign: "center", fontWeight: "bold", textTransform: "uppercase", fontSize: "14px" }}>
+            Tax Invoice
+          </div>
+          
+          {/* Content Row Grid Container */}
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "1fr 220px", 
+            alignItems: "stretch",
+            borderBottom: "1px solid #000"
+          }}>
+            
+            {/* Left Content Column */}
+            <div style={{ 
+              padding: "15px", 
+              display: "flex", 
+              flexDirection: "column", 
+              gap: "12px", 
+              borderLeft: "1px solid #000",
+              borderRight: "1px solid #000", 
+              fontSize: "13px" 
+            }}>
+              <h3 style={{ margin: "0 0 5px 0", fontWeight: "bold", fontSize: "14px" }}>1. e-Invoice Details</h3>
+              <div style={{ wordBreak: "break-all", lineHeight: "1.4" }}><span style={{ fontWeight: "bold" }}>IRN: </span>{irnValue}</div>
+              <div><span style={{ fontWeight: "bold" }}>Ack. No: </span>{ackNoValue}</div>
+              <div><span style={{ fontWeight: "bold" }}>Ack. Date: </span>{formattedPrintDate}</div>
+            </div>
+            
+            {/* Right QR Code Column */}
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              padding: "15px",
+              borderRight: "1px solid #000"
+            }}>
+              {qrCodeBase64 ? (
+                <img 
+                  src={qrCodeBase64.startsWith('data:image') ? qrCodeBase64 : `data:image/png;base64,${qrCodeBase64}`} 
+                  alt="e-Invoice Signatory QR Code" 
+                  style={{ width: "160px", height: "160px", objectFit: "contain", imageRendering: "crisp-edges" }} 
+                />
+              ) : (
+                <div style={{ fontSize: "11px", color: "#666", fontStyle: "italic" }}>No Barcode Found</div>
+              )}
+            </div>
+            
+          </div>
+        </div>
       </div>
 
       {/* Conditional Template Export UI Controls Wrapper */}
