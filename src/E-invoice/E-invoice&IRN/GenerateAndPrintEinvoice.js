@@ -155,6 +155,8 @@ const LAST_IRN_KEY = "iris_last_used_irn";
 const LAST_SIGNED_QR_JWT_KEY = "iris_last_signed_qr_jwt";
 const LAST_EWB_DETAILS_KEY = "iris_last_ewb_details";
 
+
+
 // ==================== SANITIZERS ====================
 const sanitizeUQC = (uom) => {
   const validUQCs = new Set([
@@ -385,6 +387,9 @@ const { setLastInvoice } = useAuth();
   const receivedData = location.state || {};
   const invoiceData = location.state?.invoiceData || {};
   const dynamicId = receivedData.id || location.state?.pid;
+    const [connectionType, setConnectionType] = useState(
+      localStorage.getItem("connectionType") || "DEFAULT"
+    );
   console.log("invoiceData",invoiceData);
   console.log("dynamicId ",dynamicId);
 
@@ -681,7 +686,6 @@ const getAuthData = () => {
     alert("Login required!");
     return;
   }
-
   setLoading(true);
   setResponse(null);
 
@@ -742,6 +746,65 @@ const getAuthData = () => {
     setLoading(false);
   }
 };
+const handleSaveToDB = async () => {
+  if (!response) {
+    alert("No response data available to save.");
+    return;
+  }
+
+  // Target the true nested response block from your payload
+  const apiData = response.response || response;
+
+  // Build the payload matching your Swagger schema perfectly
+  const putPayload = {
+    id: Number(apiData.id || payload.id) || 0,
+    
+    // Extracts your real generated E-Way Bill Number ('EwbNo')
+    eWayBillNumber: String(apiData.EwbNo || apiData.eWayBillNumber || ""),
+    
+    // Extracts the real IRN key ('irn')
+    irnnumber: apiData.irn || apiData.irnnumber || "",
+    
+    // Extracts the real Acknowledgment Number ('ackNo') 
+    ackno: String(apiData.ackNo || apiData.ackno || ""),
+    
+    // Parses 'ackDt' ("2026-06-23 19:35:58") into standard ISO format required by your schema
+    ackdate: apiData.ackDt || apiData.ackdate
+      ? new Date(String(apiData.ackDt || apiData.ackdate).replace(" ", "T")).toISOString()
+      : new Date().toISOString(),
+      
+    // Extracts the generated base64 string ('qrCode')
+    einvoiceqrcode: apiData.qrCode || apiData.einvoiceqrcode || ""
+  };
+
+  try {
+    setLoading(true);
+    
+    
+    const res = await fetch(`https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "ConnectionType": connectionType,
+        ...(token && { "Authorization": `Bearer ${token}` })
+      },
+      body: JSON.stringify(putPayload),
+    });
+
+    if (res.ok) {
+      alert("🎉 Invoice database state successfully updated!");
+    } else {
+      const errText = await res.text();
+      throw new Error(errText || "Backend validation error during update operation.");
+    }
+  } catch (error) {
+    console.error("API Error Syncing with Database:", error);
+    alert(`Failed to save to database: ${error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
  
   /// downloading the pdf of invoice with respect to last generated id of invoice
  const downloadPDF = async () => {
@@ -791,7 +854,7 @@ const finalInvoiceId =
   }
 };
 
-  return (
+ return (
   <div style={tableStyles.container}>
     <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
     
@@ -966,17 +1029,38 @@ const finalInvoiceId =
 
     {/* ==================== ACTION CONSOLE ==================== */}
     <div style={{ marginTop: "20px", padding: "15px", background: "#fff", borderRadius: "6px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-      <div style={{ textAlign: "center", marginBottom: "10px" }}>
+      <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "12px" }}>
         <button 
-          style={{ ...tableStyles.btnGenerate(loading, token), padding: "8px 20px", fontSize: "14px" }} 
+          style={{ ...tableStyles.btnGenerate(loading, token), padding: "8px 16px", fontSize: "13px" }} 
           onClick={handleGenerate}
           disabled={loading || !token}
         >
           {loading ? "Registering Invoice Core..." : "🚀 Generate IRN / E-Invoice"}
         </button>
+
+        {/* Dynamic DB update selector running alongside generation logs */}
+        {response && (
+          <button 
+            style={{ 
+              padding: "8px 16px", 
+              fontSize: "13px", 
+              backgroundColor: "#1890ff", 
+              color: "#fff", 
+              border: "none", 
+              borderRadius: "4px", 
+              cursor: loading ? "not-allowed" : "pointer",
+              fontWeight: "500"
+            }} 
+            onClick={handleSaveToDB}
+            disabled={loading}
+          >
+            {loading ? "Syncing Record..." : "💾 Update Invoice in DB"}
+          </button>
+        )}
       </div>
 
-      {(lastGeneratedId || response?.status === "SUCCESS" || response?.response?.id || response?.response?.Id || response?.response?.irn) && (
+      {/* Conditional Template Export UI Controls Wrapper */}
+      {(lastGeneratedId || response?.status === "SUCCESS" || response?.irnnumber || response?.response?.irn) && (
         <div style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center", borderTop: "1px dashed #ccc", paddingTop: "12px" }}>
           <div style={{ width: "160px" }}>
             <select style={{ ...tableStyles.select, height: "30px", padding: "4px" }} value={template} onChange={(e) => setTemplate(e.target.value)}>
@@ -991,24 +1075,31 @@ const finalInvoiceId =
       {pdfMessage && <p style={{ marginTop: "10px", textAlign: "center", color: "#555", fontSize: "12px" }}>{pdfMessage}</p>}
     </div>
 
-    {/* ==================== API RESPONSE ==================== */}
+    {/* ==================== API RESPONSE DISPLAY ==================== */}
     {response && (
       <div style={{
         marginTop: "15px", padding: "12px", borderRadius: "6px", fontSize: "13px",
-        background: response.status === "SUCCESS" ? "#f6ffed" : "#fff1f0",
-        border: response.status === "SUCCESS" ? "1px solid #b7eb8f" : "1px solid #ffa39e",
+        background: (response.status === "SUCCESS" || response.irnnumber) ? "#f6ffed" : "#fff1f0",
+        border: (response.status === "SUCCESS" || response.irnnumber) ? "1px solid #b7eb8f" : "1px solid #ffa39e",
       }}>
-        {response.status === "SUCCESS" ? (
+        {response.irnnumber || response.status === "SUCCESS" || response?.response?.irn ? (
           <>
-            <h3 style={{ color: "#389e0d", margin: "0 0 8px 0", fontSize: "14px" }}>E-Invoice Generated Successfully</h3>
-            <p style={{ margin: "2px 0" }}><strong>IRN:</strong> {response?.response?.irn || "-"}</p>
-            <p style={{ margin: "2px 0" }}><strong>Ack No:</strong> {response?.response?.ackNo || "-"}</p>
-            <p style={{ margin: "2px 0" }}><strong>Ack Date:</strong> {response?.response?.ackDt || "-"}</p>
-            {response?.response?.ewbNo && <p style={{ margin: "2px 0" }}><strong>EWB No:</strong> {response.response.ewbNo}</p>}
+            <h3 style={{ color: "#389e0d", margin: "0 0 6px 0", fontSize: "14px" }}>E-Invoice Operation Matrix</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "6px 15px" }}>
+              <p style={{ margin: 0 }}><strong>ID:</strong> {response.id ?? response?.response?.id ?? "-"}</p>
+              <p style={{ margin: 0 }}><strong>IRN:</strong> {response.irnnumber || response?.response?.irn || "-"}</p>
+              <p style={{ margin: 0 }}><strong>Ack No:</strong> {response.ackno || response?.response?.ackNo || "-"}</p>
+              <p style={{ margin: 0 }}><strong>Ack Date:</strong> {response.ackdate || response?.response?.ackDt ? new Date(response.ackdate || response?.response?.ackDt).toLocaleString() : "-"}</p>
+              {(response.eWayBillNumber || response?.response?.ewbNo) && (
+                <p style={{ margin: 0, gridColumn: "1 / -1" }}>
+                  <strong>EWB No:</strong> {response.eWayBillNumber || response?.response?.ewbNo}
+                </p>
+              )}
+            </div>
           </>
         ) : (
           <>
-            <h3 style={{ color: "#cf1322", margin: "0 0 8px 0", fontSize: "14px" }}>E-Invoice Generation Failed</h3>
+            <h3 style={{ color: "#cf1322", margin: "0 0 6px 0", fontSize: "14px" }}>Execution Exception Block</h3>
             <pre style={{ background: "#fff1f0", padding: "8px", borderRadius: "4px", fontSize: "11px", color: "#cf1322", margin: 0 }}>
               {JSON.stringify(response, null, 2)}
             </pre>
