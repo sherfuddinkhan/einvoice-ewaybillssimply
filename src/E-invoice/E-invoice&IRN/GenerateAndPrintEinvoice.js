@@ -376,222 +376,400 @@ console.log("📦 Product List:", productList);
   };
 };
 
-// =========================================================
-// 2. DEFINE THE INLINE PDF DOCUMENT COMPONENT
-// =========================================================
+
+
 export const EinvoicePDF = ({
-  invoiceData = {},
+ invoiceData,
   irn,
   ackNo,
   ackDate,
-  qrCodeBase64
+  qrCodeBase64,
+  ewayBillNo,
+  ewayBillDate
 }) => {
-  // Ensure base64 exact header protocol formatting
+  // Safe base64 protocol string formatting for the QR graphic element
   const qrUri = qrCodeBase64 
     ? (qrCodeBase64.startsWith('data:') ? qrCodeBase64 : `data:image/png;base64,${qrCodeBase64}`)
     : null;
 
-  // Defensive array binding to handle both raw database and structural mapped objects
-  const items = invoiceData?.invoiceProductDetails || invoiceData?.itemList || [];
+  // Unified resolution array capturing both direct payload arrays and deep data properties
+  const items = invoiceData?.itemList || invoiceData?.invoiceProductDetails || [];
+  console.log("invoicedata for pdf", invoiceData)
 
-  // Core Math Breakdowns for Consolidated Value Metrics (with multi-key database schema fallbacks)
-  const totalTaxable = items.reduce((sum, item) => sum + Number(item?.totalAmount || item?.txval || 0), 0);
-  const totalCGST = items.reduce((sum, item) => sum + Number(item?.cgstAmount || item?.camt || 0), 0);
-  const totalSGST = items.reduce((sum, item) => sum + Number(item?.sgstAmount || item?.samt || 0), 0);
-  const totalIGST = items.reduce((sum, item) => sum + Number(item?.igstAmount || item?.iamt || 0), 0);
-  
+  // Complete Financial Ledger Matrix Computation Calculations
+  const totalTaxable = items.reduce((sum, item) => sum + Number(item?.txval || item?.totalAmount || 0), 0);
+  const totalCGST = items.reduce((sum, item) => sum + Number(item?.camt || item?.cgstAmount || 0), 0);
+  const totalSGST = items.reduce((sum, item) => sum + Number(item?.samt || item?.sgstAmount || 0), 0);
+  const totalIGST = items.reduce((sum, item) => sum + Number(item?.iamt || item?.igstAmount || 0), 0);
   const grandTotal = totalTaxable + totalCGST + totalSGST + totalIGST;
-
-  // Safe string reading for state extract routing
-  const fallbackSellerGstin = invoiceData?.gstin || invoiceData?.sellerGstin || invoiceData?.sgstin || "";
-  const fallbackBuyerGstin = invoiceData?.buyerClients?.gstin || invoiceData?.buyerGstin || invoiceData?.bgstin || "";
 
   return (
     <Document>
-      <Page size="A4" style={pdfStyles.page}>
-        <View style={pdfStyles.container}>
-
-          {/* ================= HEADER ================= */}
-          <View style={pdfStyles.header}>
-            <Text style={pdfStyles.invoiceTitle}>TAX INVOICE</Text>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.outerBorder}>
+          
+          {/* TITLE SECTION BANNER */}
+          <View style={styles.titleBanner}>
+            <Text style={styles.mainTitle}>TAX INVOICE</Text>
+            <Text style={styles.subtitle}>Original Invoice Of Recipient</Text>
           </View>
-
-          {/* ================= 1. E-INVOICE DETAILS & QR ================= */}
-          <View style={pdfStyles.contentRow}>
-            <View style={pdfStyles.leftColumn}>
-              <Text style={pdfStyles.sectionTitle}>1. e-Invoice Details</Text>
-
-              <Text style={pdfStyles.textRow}>
-                <Text style={pdfStyles.boldLabel}>IRN: </Text>
-                <Text style={pdfStyles.irnText}>{irn || "-"}</Text>
-              </Text>
-
-              <Text style={pdfStyles.textRow}>
-                <Text style={pdfStyles.boldLabel}>Ack. No: </Text>{ackNo || "-"}
-              </Text>
-
-              <Text style={pdfStyles.textRow}>
-                <Text style={pdfStyles.boldLabel}>Ack. Date: </Text>{ackDate || "-"}
-              </Text>
+             {/* ================= GOVT PROTOCOL E-INVOICE SYSTEM METRICS BAR ================= */}
+          <View style={[styles.rowFlex, styles.borderTop, styles.borderBottom, styles.pad4, { backgroundColor: '#fdfdfd' }]}>
+            <View style={{ width: '82%', flexDirection: 'column', justifyContent: 'center' }}>
+              <Text style={styles.textLine}><Text style={styles.bold}>IRN: </Text><Text style={{ fontFamily: 'Courier', fontSize: 7.5 }}>{irn || "-"}</Text></Text>
+              <Text style={styles.textLine}><Text style={styles.bold}>Ack No: </Text>{ackNo || "-"}   |   <Text style={styles.bold}>Ack Date: </Text>{ackDate || "-"}</Text>
             </View>
-
-            <View style={pdfStyles.rightColumn}>
-              {qrUri ? (
-                <Image src={qrUri} style={pdfStyles.qrCode} />
-              ) : (
-                <Text style={{ fontSize: 7, color: '#999', textAlign: 'center' }}>No QR Code Provided</Text>
-              )}
+            <View style={{ width: '18%', alignItems: 'center', justifyContent: 'center' }}>
+              {qrUri ? <Image src={qrUri} style={{ width: 42, height: 42 }} /> : <Text style={{ fontSize: 6, color: '#999' }}>No QR Data</Text>}
             </View>
           </View>
 
-          {/* ================= 2. TRANSACTION DETAILS ================= */}
-          <View style={pdfStyles.sectionBlock}>
-            <Text style={pdfStyles.sectionTitle}>2. Transaction Details</Text>
-            <View style={pdfStyles.inlineFieldsRow}>
-              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Category: </Text>{invoiceData?.category || "B2B"}</Text>
-              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Reverse Charge: </Text>{invoiceData?.reverseCharge || "No"}</Text>
-              <Text style={pdfStyles.textRow}>
-                <Text style={pdfStyles.boldLabel}>Transaction Type: </Text>
-                {totalIGST > 0 ? "INTER" : "INTRA"}
-              </Text>
+       {/* ================= ERP PROFILE MATRIX ================= */}
+<View style={styles.rowFlex}>
+
+  {/* Supplier Details */}
+  <View style={[styles.profileLeftBlock, styles.pad6]}>
+
+    <Text style={styles.companyName}>
+      {invoiceData?.strdNm ||
+        invoiceData?.slglNm ||
+        invoiceData?.sbnm ||
+        "-"}
+    </Text>
+
+    <Text style={styles.companySub}>
+      {[invoiceData?.sflno, invoiceData?.sloc]
+        .filter(Boolean)
+        .join(", ")}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>GSTIN/UIN: </Text>
+      {invoiceData?.sgstin || "-"}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>State Name: </Text>
+      {invoiceData?.sdst || "-"}
+      {invoiceData?.sstcd
+        ? `, Code: ${invoiceData?.sstcd}`
+        : ""}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>Email: </Text>
+      {invoiceData?.sem || "-"}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>Phone: </Text>
+      {invoiceData?.sph || "-"}
+    </Text>
+
+  </View>
+
+  {/* Invoice Header Details */}
+  <View style={styles.profileRightGrid}>
+
+    <View style={[styles.rowFlex, styles.borderBottom, { height: 32 }]}>
+      <View style={[styles.flexHalf, styles.pad4, styles.borderRight]}>
+        <Text style={styles.labelHeader}>Invoice No.</Text>
+        <Text style={styles.valText}>
+          {invoiceData?.no || "-"}
+        </Text>
+      </View>
+
+      <View style={[styles.flexHalf, styles.pad4]}>
+        <Text style={styles.labelHeader}>Dated</Text>
+        <Text style={styles.valText}>
+          {invoiceData?.dt || "-"}
+        </Text>
+      </View>
+    </View>
+
+    <View style={[styles.rowFlex, styles.borderBottom, { height: 32 }]}>
+      <View style={[styles.flexHalf, styles.pad4, styles.borderRight]}>
+        <Text style={styles.labelHeader}>D.C. No.</Text>
+        <Text style={styles.valText}>
+          {invoiceData?.transDocNo || "-"}
+        </Text>
+      </View>
+
+      <View style={[styles.flexHalf, styles.pad4]}>
+        <Text style={styles.labelHeader}>D.C. Date</Text>
+        <Text style={styles.valText}>
+          {invoiceData?.transDocDate || "-"}
+        </Text>
+      </View>
+    </View>
+
+    <View style={[styles.rowFlex, { minHeight: 35 }]}>
+
+      <View style={[styles.flexHalf, styles.pad4, styles.borderRight]}>
+        <Text style={styles.labelHeader}>
+          Purchase Order No.
+        </Text>
+
+        <Text style={styles.valText}>
+          {invoiceData?.invRefContDtls?.[0]?.poref || "-"}
+        </Text>
+      </View>
+
+      <View style={[styles.flexHalf, styles.pad4]}>
+        <Text style={styles.labelHeader}>
+          Mode/Terms of Payment
+        </Text>
+
+        <Text style={styles.valText}>
+          {invoiceData?.modeorTermsOfPayment || "-"}
+        </Text>
+      </View>
+
+    </View>
+
+  </View>
+</View>
+      
+          {/* ================= CLIENT PARTY DETAILS ================= */}
+<View style={[styles.rowFlex, styles.borderTop]}>
+
+  {/* Ship To */}
+  <View
+    style={[
+      styles.flexHalf,
+      styles.pad6,
+      styles.borderRight,
+      { minHeight: 85 }
+    ]}
+  >
+    <Text style={styles.sectionHeaderTitle}>
+      Consignee (Ship To):
+    </Text>
+
+    <Text style={styles.partyName}>
+      {invoiceData?.totrdNm ||
+        invoiceData?.btrdNm ||
+        "-"}
+    </Text>
+
+    <Text style={styles.textLine}>
+      {invoiceData?.toloc ||
+        invoiceData?.bloc ||
+        "-"}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>GSTIN/UIN: </Text>
+
+      {invoiceData?.togstin ||
+        invoiceData?.bgstin ||
+        "-"}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>State Name: </Text>
+
+      {invoiceData?.tostcd ||
+        invoiceData?.bdst ||
+        "-"}
+
+      {invoiceData?.tostcd
+        ? `, Code: ${invoiceData?.tostcd}`
+        : ""}
+    </Text>
+
+  </View>
+
+  {/* Bill To */}
+  <View
+    style={[
+      styles.flexHalf,
+      styles.pad6,
+      { minHeight: 85 }
+    ]}
+  >
+    <Text style={styles.sectionHeaderTitle}>
+      Buyer (Bill To / if other than consignee):
+    </Text>
+
+    <Text style={styles.partyName}>
+      {invoiceData?.btrdNm ||
+        invoiceData?.blglNm ||
+        invoiceData?.bbnm ||
+        "-"}
+    </Text>
+
+    <Text style={styles.textLine}>
+      {[invoiceData?.bflno, invoiceData?.bloc]
+        .filter(Boolean)
+        .join(", ")}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>GSTIN/UIN: </Text>
+      {invoiceData?.bgstin || "-"}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>State Name: </Text>
+      {invoiceData?.bdst || "-"}
+      {invoiceData?.bstcd
+        ? `, Code: ${invoiceData?.bstcd}`
+        : ""}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>Email: </Text>
+      {invoiceData?.bem || "-"}
+    </Text>
+
+    <Text style={styles.textLine}>
+      <Text style={styles.bold}>Phone: </Text>
+      {invoiceData?.bph || "-"}
+    </Text>
+
+  </View>
+    </View>
+       
+
+          {/* ================= GOODS LINE ITEMS ACCOUNTING TABLE ================= */}
+          <View style={styles.tableContainer}>
+            <View style={styles.tableHeader}>
+              <Text style={styles.colSl}>SI. No</Text>
+              <Text style={styles.colDesc}>Description of Goods</Text>
+              <Text style={styles.colHsn}>HSN/SAC</Text>
+              <Text style={styles.colQty}>Quantity</Text>
+              <Text style={styles.colRate}>Rate</Text>
+              <Text style={styles.colPer}>Per</Text>
+              <Text style={styles.colAmount}>Amount</Text>
             </View>
-          </View>
 
-          {/* ================= 3. PARTY DETAILS (SELLER & PURCHASER) ================= */}
-          <View style={pdfStyles.sectionBlock}>
-            <Text style={pdfStyles.sectionTitle}>3. Party Details</Text>
-            <View style={pdfStyles.invoiceDetailsContainer}>
-              {/* Seller Details Section */}
-              <View style={pdfStyles.leftBox}>
-                <Text style={pdfStyles.boxTitle}>Seller</Text>
-                <Text style={pdfStyles.textRow}>
-                  <Text style={pdfStyles.boldLabel}>GSTIN: </Text>{fallbackSellerGstin || "-"}
-                </Text>
-                <Text style={[pdfStyles.textRow, pdfStyles.companyName]}>
-                  {invoiceData?.company_Name || invoiceData?.sellerLegalName || invoiceData?.slglNm || "-"}
-                </Text>
-                <Text style={pdfStyles.textRow}>
-                  {invoiceData?.company_Address || invoiceData?.sellerBuildingName || invoiceData?.sbnm || "-"}
-                </Text>
-                <Text style={pdfStyles.textRow}>
-                  {invoiceData?.company_City || invoiceData?.sellerLocation || invoiceData?.sloc || ""} PIN: {invoiceData?.company_PINCode || invoiceData?.sellerPincode || invoiceData?.spin || "-"}
-                </Text>
-                <Text style={pdfStyles.textRow}>
-                  {invoiceData?.company_State || invoiceData?.sdst || "-"}
-                </Text>
-                <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Document No: </Text>{invoiceData?.invoiceNo || invoiceData?.no || "-"}</Text>
-                <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Document Date: </Text>{invoiceData?.invoiceDate || invoiceData?.dt || "-"}</Text>
-                <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Place of Supply: </Text>{invoiceData?.sellerStateCode || fallbackSellerGstin.substring(0, 2) || "27"}</Text>
-              </View>
-
-              {/* Purchaser / Buyer Details Section */}
-              <View style={pdfStyles.rightBox}>
-                <Text style={pdfStyles.boxTitle}>Purchaser</Text>
-                <Text style={pdfStyles.textRow}>
-                  <Text style={pdfStyles.boldLabel}>GSTIN: </Text>{fallbackBuyerGstin || "-"}
-                </Text>
-                <Text style={[pdfStyles.textRow, pdfStyles.companyName]}>
-                  {invoiceData?.buyerClients?.companyName || invoiceData?.buyerLegalName || invoiceData?.blglNm || "-"}
-                </Text>
-                <Text style={pdfStyles.textRow}>
-                  {invoiceData?.buyerClients?.officeAddress || invoiceData?.buyerBuildingName || invoiceData?.bbnm || "-"}
-                </Text>
-                <Text style={pdfStyles.textRow}>
-                  {invoiceData?.buyerClients?.masterStateNames?.stateName || invoiceData?.buyerDistrict || invoiceData?.bdst || "-"} PIN: {invoiceData?.buyerClients?.poBox || invoiceData?.buyerPincode || invoiceData?.bpin || "-"}
-                </Text>
-                <Text style={pdfStyles.textRow}>Mobile: {invoiceData?.buyerClients?.mobile || invoiceData?.buyerPhone || invoiceData?.bph || "-"}</Text>
-                <Text style={pdfStyles.textRow}>Email: {invoiceData?.buyerClients?.email || invoiceData?.buyerEmail || invoiceData?.bem || "-"}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* ================= 4. GOODS / SERVICES ITEM DETAILS ================= */}
-          <View style={pdfStyles.sectionBlock}>
-            <Text style={pdfStyles.sectionTitle}>4. Goods/Services Details - Item Details</Text>
-            <View style={pdfStyles.table}>
-              <View style={pdfStyles.tableHeader} fixed>
-                <Text style={pdfStyles.colSl}>Sr No</Text>
-                <Text style={pdfStyles.colDesc}>Product Name</Text>
-                <Text style={pdfStyles.colHsn}>HSN</Text>
-                <Text style={pdfStyles.colQty}>Qty</Text>
-                <Text style={pdfStyles.colUnit}>Unit</Text>
-                <Text style={pdfStyles.colRate}>Unit Price</Text>
-                <Text style={pdfStyles.colTaxable}>Taxable Value</Text>
-                <Text style={pdfStyles.colGstRate}>GST %</Text>
-                <Text style={pdfStyles.colTotal}>Total Value</Text>
-              </View>
-
-              {items.length === 0 ? (
-                <View style={pdfStyles.tableRow}>
-                  <Text style={{ width: '100%', textAlign: 'center', color: '#888', paddingVertical: 6 }}>No item records found</Text>
+            {items.map((item, index) => {
+              const itemTaxable = Number(item?.txval || item?.totalAmount || 0);
+              return (
+                <View key={index} style={styles.tableRow} wrap={false}>
+                  <Text style={styles.colSl}>{index + 1}</Text>
+                  <Text style={styles.colDesc}>{item?.prdNm || item?.description || "-"}</Text>
+                  <Text style={styles.colHsn}>{item?.hsnCd || item?.hsncode || "-"}</Text>
+                  <Text style={styles.colQty}>{Number(item?.qty || item?.quantity || 0).toFixed(0)} {item?.unit || item?.uom || "NOS"}</Text>
+                  <Text style={styles.colRate}>{Number(item?.unitPrice || item?.quantityAmount || 0).toFixed(2)}</Text>
+                  <Text style={styles.colPer}>{item?.unit || item?.uom || "NOS"}</Text>
+                  <Text style={styles.colAmount}>{itemTaxable.toFixed(2)}</Text>
                 </View>
-              ) : (
-                items.map((item, index) => {
-                  const prdName = item?.productName || item?.prdNm || item?.description || "Services";
-                  const itemTaxable = Number(item?.totalAmount || item?.txval || 0);
-                  const itemTaxTotal = Number(item?.cgstAmount || item?.camt || 0) + 
-                                       Number(item?.sgstAmount || item?.samt || 0) + 
-                                       Number(item?.igstAmount || item?.iamt || 0);
-                  const itemTotal = itemTaxable + itemTaxTotal;
+              );
+            })}
 
-                  return (
-                    <View key={index} style={pdfStyles.tableRow} wrap={false}>
-                      <Text style={pdfStyles.colSl}>{index + 1}</Text>
-                      <Text style={pdfStyles.colDesc}>{prdName}</Text>
-                      <Text style={pdfStyles.colHsn}>{item?.hsncode || item?.hsnCd || "-"}</Text>
-                      <Text style={pdfStyles.colQty}>{Number(item?.quantity || item?.qty || 1).toFixed(2)}</Text>
-                      <Text style={pdfStyles.colUnit}>{item?.uom || item?.unit || "OTH"}</Text>
-                      <Text style={pdfStyles.colRate}>{(Number(item?.quantityAmount || item?.unitPrice || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                      <Text style={pdfStyles.colTaxable}>{itemTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                      <Text style={pdfStyles.colGstRate}>{item?.gstPer || item?.rt || 0}%</Text>
-                      <Text style={pdfStyles.colTotal}>{itemTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                    </View>
-                  );
-                })
+            <View style={styles.tableTotalRow} wrap={false}>
+              <Text style={styles.colSl}></Text>
+              <Text style={[styles.colDesc, { fontWeight: 'bold' }]}>Total Taxable Base Value</Text>
+              <Text style={styles.colHsn}></Text>
+              <Text style={styles.colQty}></Text>
+              <Text style={styles.colRate}></Text>
+              <Text style={styles.colPer}></Text>
+              <Text style={[styles.colAmount, { fontWeight: 'bold' }]}>{totalTaxable.toFixed(2)}</Text>
+            </View>
+          </View>
+
+          {/* ================= HSN / SAC TAX COMPONENT SUMMARY MATRIX ================= */}
+          <View style={styles.hsnTableContainer} wrap={false}>
+            <View style={styles.hsnTableHeader}>
+              <Text style={{ width: '15%', borderRightWidth: 0.5, borderColor: '#000', padding: 2 }}>HSN/SAC</Text>
+              <Text style={{ width: '20%', borderRightWidth: 0.5, borderColor: '#000', padding: 2 }}>Taxable Value</Text>
+              <Text style={{ width: '25%', borderRightWidth: 0.5, borderColor: '#000', padding: 2 }}>Central Tax (Rate / Amt)</Text>
+              <Text style={{ width: '25%', borderRightWidth: 0.5, borderColor: '#000', padding: 2 }}>State Tax (Rate / Amt)</Text>
+              <Text style={{ width: '15%', padding: 2 }}>Total Tax Amount</Text>
+            </View>
+
+            {items.map((item, index) => {
+              const itemTaxable = Number(item?.txval || item?.totalAmount || 0);
+              const rate = Number(item?.rt || item?.gstPer || 0);
+              const halfRate = (rate / 2).toFixed(1) + "%";
+              const cgst = Number(item?.camt || item?.cgstAmount || 0);
+              const sgst = Number(item?.samt || item?.sgstAmount || 0);
+              const totalTax = cgst + sgst + Number(item?.iamt || item?.igstAmount || 0);
+
+              return (
+                <View key={index} style={styles.hsnTableRow}>
+                  <Text style={{ width: '15%', borderRightWidth: 0.5, borderColor: '#cccccc', padding: 2 }}>{item?.hsnCd || item?.hsncode || "-"}</Text>
+                  <Text style={{ width: '20%', borderRightWidth: 0.5, borderColor: '#cccccc', padding: 2, textAlign: 'right' }}>{itemTaxable.toFixed(2)}</Text>
+                  <Text style={{ width: '25%', borderRightWidth: 0.5, borderColor: '#cccccc', padding: 2, textAlign: 'right' }}>{halfRate} / {cgst.toFixed(2)}</Text>
+                  <Text style={{ width: '25%', borderRightWidth: 0.5, borderColor: '#cccccc', padding: 2, textAlign: 'right' }}>{halfRate} / {sgst.toFixed(2)}</Text>
+                  <Text style={{ width: '15%', textAlign: 'right', padding: 2 }}>{totalTax.toFixed(2)}</Text>
+                </View>
+              );
+            })}
+
+            <View style={[styles.hsnTableRow, { fontWeight: 'bold', backgroundColor: '#f9f9f9' }]}>
+              <Text style={{ width: '15%', borderRightWidth: 0.5, borderColor: '#cccccc', padding: 2 }}>Total</Text>
+              <Text style={{ width: '20%', borderRightWidth: 0.5, borderColor: '#cccccc', padding: 2, textAlign: 'right' }}>{totalTaxable.toFixed(2)}</Text>
+              <Text style={{ width: '25%', borderRightWidth: 0.5, borderColor: '#cccccc', padding: 2, textAlign: 'right' }}>{totalCGST.toFixed(2)}</Text>
+              <Text style={{ width: '25%', borderRightWidth: 0.5, borderColor: '#cccccc', padding: 2, textAlign: 'right' }}>{totalSGST.toFixed(2)}</Text>
+              <Text style={{ width: '15%', textAlign: 'right', padding: 2 }}>{(totalCGST + totalSGST + totalIGST).toFixed(2)}</Text>
+            </View>
+          </View>
+
+          {/* ================= FINAL CALCULATIONS TOTALS & METADATA BANK BLOCK ================= */}
+          <View style={[styles.rowFlex, styles.borderTop]} wrap={false}>
+            <View style={[styles.flexHalf, styles.pad6, styles.borderRight, { justifyContent: 'space-between' }]}>
+              <View>
+                <Text style={{ fontSize: 7.5, fontWeight: 'bold' }}>Amount Chargeable (In Words):</Text>
+                <Text style={{ fontSize: 7.5, fontStyle: 'italic', marginTop: 2 }}>INR {grandTotal.toFixed(2)} Only.</Text>
+              </View>
+              <View style={{ borderTopWidth: 0.5, borderColor: '#ccc', paddingTop: 4, marginTop: 10 }}>
+                <Text style={styles.textLine}><Text style={styles.bold}>Bank Name: </Text>AXIS BANK</Text>
+                <Text style={styles.textLine}><Text style={styles.bold}>A/c No: </Text>xxx000xxx000</Text>
+                <Text style={styles.textLine}><Text style={styles.bold}>IFS Code: </Text>UTIB0000211</Text>
+              </View>
+            </View>
+
+            <View style={[styles.flexHalf, { backgroundColor: '#fafafa' }]}>
+              <View style={[styles.rowFlex, styles.pad4, { justifyContent: 'space-between', borderBottomWidth: 0.5, borderColor: '#eee' }]}>
+                <Text style={styles.bold}>Total Taxable Value:</Text>
+                <Text>{totalTaxable.toFixed(2)}</Text>
+              </View>
+              <View style={[styles.rowFlex, styles.pad4, { justifyContent: 'space-between', borderBottomWidth: 0.5, borderColor: '#eee' }]}>
+                <Text style={styles.bold}>Central Tax (CGST):</Text>
+                <Text>{totalCGST.toFixed(2)}</Text>
+              </View>
+              <View style={[styles.rowFlex, styles.pad4, { justifyContent: 'space-between', borderBottomWidth: 0.5, borderColor: '#eee' }]}>
+                <Text style={styles.bold}>State Tax (SGST):</Text>
+                <Text>{totalSGST.toFixed(2)}</Text>
+              </View>
+              {totalIGST > 0 && (
+                <View style={[styles.rowFlex, styles.pad4, { justifyContent: 'space-between', borderBottomWidth: 0.5, borderColor: '#eee' }]}>
+                  <Text style={styles.bold}>Integrated Tax (IGST):</Text>
+                  <Text>{totalIGST.toFixed(2)}</Text>
+                </View>
               )}
-            </View>
-          </View>
-
-          {/* ================= TOTAL VALUE MATRIX DETAILS ================= */}
-          <View style={pdfStyles.sectionBlock} wrap={false}>
-            <Text style={pdfStyles.sectionTitle}>Total Value Details (Rs)</Text>
-            <View style={pdfStyles.matrixTable}>
-              <View style={pdfStyles.matrixHeader}>
-                <Text style={pdfStyles.mCol}>Total Taxable Value</Text>
-                <Text style={pdfStyles.mCol}>Total CGST</Text>
-                <Text style={pdfStyles.mCol}>Total SGST</Text>
-                <Text style={pdfStyles.mCol}>Total IGST</Text>
-                <Text style={pdfStyles.mColBold}>Final Invoice Value</Text>
-              </View>
-              <View style={pdfStyles.matrixRow}>
-                <Text style={pdfStyles.mCol}>₹{totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                <Text style={pdfStyles.mCol}>₹{totalCGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                <Text style={pdfStyles.mCol}>₹{totalSGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                <Text style={pdfStyles.mCol}>₹{totalIGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
-                <Text style={pdfStyles.mColBold}>₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+              <View style={[styles.rowFlex, styles.pad6, { justifyContent: 'space-between', backgroundColor: '#eef3f7' }]}>
+                <Text style={{ fontWeight: 'bold', fontSize: 9.5 }}>Final Invoice Value:</Text>
+                <Text style={{ fontWeight: 'bold', fontSize: 9.5 }}>₹{grandTotal.toFixed(2)}</Text>
               </View>
             </View>
           </View>
 
-          {/* ================= 5. E-WAYBILL DETAILS ================= */}
-          <View style={pdfStyles.sectionBlock} wrap={false}>
-            <Text style={pdfStyles.sectionTitle}>5. E-WayBill Details</Text>
-            <View style={pdfStyles.inlineFieldsRow}>
-              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Eway Bill No: </Text>{invoiceData?.eWayBillNumber || invoiceData?.ewayBillNo || "-"}</Text>
-              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Eway Bill Date: </Text>{invoiceData?.ewayBillDate || "-"}</Text>
-              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Vehicle No: </Text>{invoiceData?.vehicleNo || "-"}</Text>
+          {/* ================= 5. TRANSPORT / EWAY BILL PROFILE MATRIX ================= */}
+          <View style={[styles.sectionBlock, styles.borderTop]} wrap={false}>
+            <Text style={[styles.sectionHeaderTitle, { backgroundColor: '#eaeaea', padding: 3, marginBottom: 0, textDecoration: 'none' }]}>5. E-WayBill & Transport Details</Text>
+            <View style={[styles.rowFlex, styles.pad4]}>
+              <Text style={{ marginRight: 25 }}><Text style={styles.bold}>Eway Bill No: </Text>{ewayBillNo || "-"}</Text>
+              <Text style={{ marginRight: 25 }}><Text style={styles.bold}>Eway Bill Date: </Text>{ewayBillDate || "-"}</Text>
+              <Text><Text style={styles.bold}>Vehicle No: </Text>{invoiceData?.vehicleNo ||invoiceData?.vehNo || "-"}</Text>
             </View>
           </View>
 
-          {/* ================= FOOTER SIGN-OFF ================= */}
-          <View style={pdfStyles.footerBlock} wrap={false}>
-            <Text style={pdfStyles.declaration}>
-              We declare that this invoice shows the actual price of the goods/services described 
-              and that all particulars are true and correct.
-            </Text>
-            <View style={pdfStyles.signatureSection}>
-              <Text style={pdfStyles.signatureCompany}>For {invoiceData?.company_Name || invoiceData?.sellerLegalName || "The Supplier"}</Text>
-              <Text style={{ marginTop: 30, fontSize: 8, color: '#555' }}>Authorized Signatory</Text>
+          {/* TRADITIONAL ACCOUNTING REMARKS & SIGNATURE BLOCK */}
+          <View style={[styles.rowFlex, styles.borderTop, { minHeight: 60 }]} wrap={false}>
+            <View style={[styles.flexHalf, styles.pad6, styles.borderRight]}>
+              <Text style={{ fontSize: 6.5, color: '#555' }}>
+                Subjected to Hyderabad Jurisdiction. We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.
+              </Text>
+            </View>
+            <View style={[styles.flexHalf, styles.pad6, { alignItems: 'center', justifyContent: 'space-between' }]}>
+              <Text style={{ fontSize: 8, fontWeight: 'bold' }}>For {invoiceData?.strdNm ||
+     invoiceData?.slglNm ||
+     "SWASTIK MACHINERY CORPORATION"}</Text>
+              <Text style={{ fontSize: 8, color: '#444' }}>Authorised Signatory</Text>
             </View>
           </View>
 
@@ -600,6 +778,153 @@ export const EinvoicePDF = ({
     </Document>
   );
 };
+
+/* ================= TRADITIONAL BUSINESS ENTERPRISE STYLING RULE SETS ================= */
+const styles = StyleSheet.create({
+  page: {
+    padding: 20,
+    fontSize: 8,
+    fontFamily: 'Helvetica',
+    color: '#000000',
+    backgroundColor: '#ffffff'
+  },
+  outerBorder: {
+    borderWidth: 1,
+    borderColor: '#000000',
+    flexDirection: 'column'
+  },
+  titleBanner: {
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: '#000000',
+    paddingVertical: 3,
+    backgroundColor: '#fafafa'
+  },
+  mainTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 0.5
+  },
+  subtitle: {
+    fontSize: 7,
+    marginTop: 1,
+    color: '#333333'
+  },
+  rowFlex: {
+    flexDirection: 'row'
+  },
+  flexHalf: {
+    width: '50%'
+  },
+  profileLeftBlock: {
+    width: '55%',
+    borderRightWidth: 1,
+    borderColor: '#000000'
+  },
+  profileRightGrid: {
+    width: '45%'
+  },
+  pad4: { padding: 4 },
+  pad6: { padding: 6 },
+  borderRight: { borderRightWidth: 1, borderColor: '#000000' },
+  borderBottom: { borderBottomWidth: 1, borderColor: '#000000' },
+  borderTop: { borderTopWidth: 1, borderColor: '#000000' },
+  bold: { fontWeight: 'bold' },
+  textLine: {
+    marginBottom: 2,
+    lineHeight: 1.2
+  },
+  companyName: {
+    fontSize: 9.5,
+    fontWeight: 'bold',
+    marginBottom: 1
+  },
+  companySub: {
+    fontSize: 7.5,
+    color: '#333333',
+    marginBottom: 3
+  },
+  labelHeader: {
+    fontSize: 7,
+    color: '#555555',
+    fontWeight: 'bold'
+  },
+  valText: {
+    fontSize: 8,
+    marginTop: 1
+  },
+  sectionHeaderTitle: {
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    textDecoration: 'underline',
+    marginBottom: 3
+  },
+  partyName: {
+    fontWeight: 'bold',
+    fontSize: 8.5,
+    marginVertical: 1
+  },
+  sectionBlock: {
+    flexDirection: 'column'
+  },
+  tableContainer: {
+    width: '100%',
+    borderTopWidth: 1,
+    borderColor: '#000000'
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#eaeaea',
+    borderBottomWidth: 1,
+    borderColor: '#000000',
+    fontWeight: 'bold',
+    paddingVertical: 3,
+    textAlign: 'center'
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#dddddd',
+    paddingVertical: 3,
+    textAlign: 'center'
+  },
+  tableTotalRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#000000',
+    paddingVertical: 3,
+    backgroundColor: '#fafafa',
+    textAlign: 'center'
+  },
+  colSl: { width: '8%', borderRightWidth: 0.5, borderColor: '#eee' },
+  colDesc: { width: '40%', textAlign: 'left', paddingLeft: 4, borderRightWidth: 0.5, borderColor: '#eee' },
+  colHsn: { width: '12%', borderRightWidth: 0.5, borderColor: '#eee' },
+  colQty: { width: '10%', borderRightWidth: 0.5, borderColor: '#eee' },
+  colRate: { width: '10%', textAlign: 'right', paddingRight: 4, borderRightWidth: 0.5, borderColor: '#eee' },
+  colPer: { width: '8%', borderRightWidth: 0.5, borderColor: '#eee' },
+  colAmount: { width: '12%', textAlign: 'right', paddingRight: 4 },
+  hsnTableContainer: {
+    width: '100%',
+    borderTopWidth: 1,
+    borderColor: '#000000',
+    fontSize: 7.5
+  },
+  hsnTableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#eaeaea',
+    borderBottomWidth: 1,
+    borderColor: '#000000',
+    fontWeight: 'bold',
+    textAlign: 'center'
+  },
+  hsnTableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderColor: '#cccccc',
+    textAlign: 'center'
+  }
+});
 
 /* ================= COMPACT GOVERNMENT INVOICE STYLING SHEET ================= */
 const pdfStyles = StyleSheet.create({
@@ -1459,7 +1784,7 @@ return (
       </div>
     </div>
     
-    {/* ==================== ACTION CONSOLE ==================== */}
+
    {/* ==================== ACTION CONSOLE ==================== */}
     <div style={{ marginTop: "20px", padding: "15px", background: "#fff", borderRadius: "6px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
       <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "12px", flexWrap: "wrap" }}>
@@ -1494,38 +1819,78 @@ return (
         )}
 
         {/* Button 3: Instant PDF Generation and Download */}
-        {response && (irnValue || response.status === "SUCCESS") && (
-          <PDFDownloadLink
-            document={
-              <EinvoicePDF
-                irn={irnValue}
-                ackNo={ackNoValue}
-                ackDate={formattedPrintDate}
-                qrCodeBase64={qrCodeBase64}
-              />
-            }
-            fileName={`E-Invoice_${ackNoValue || 'Document'}.pdf`}
-            style={{ textDecoration: 'none' }}
+     {/* Button 3: Instant PDF Generation and Download */}
+    {/* Button 3: Instant PDF Generation and Download */}
+{response && (irnValue || response.status === "SUCCESS") && (
+  <PDFDownloadLink
+    document={
+      <EinvoicePDF
+        // 🌟 Bind directly to the active live frontend state
+        invoiceData={payload} 
+        irn={irnValue}
+        ackNo={ackNoValue}
+        ackDate={formattedPrintDate}
+        qrCodeBase64={qrCodeBase64}
+        
+        // 🌟 Pass E-Way Bill metrics down as explicit props
+        ewayBillNo={response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo || "-"}
+        ewayBillDate={
+          response.ewayBillDate || response?.response?.ewbDt 
+            ? new Date(response.ewayBillDate || response?.response?.ewbDt).toLocaleDateString() 
+            : "-"
+        }
+      />
+    }
+    fileName={`E-Invoice_${ackNoValue || 'Document'}.pdf`}
+    style={{ textDecoration: 'none' }}
+  >
+    {({ blob, url, loading: pdfLoading, error }) => {
+      if (error) {
+        console.error("PDF Compilation Error:", error);
+        return (
+          <button
+            style={{
+              padding: "8px 16px",
+              fontSize: "13px",
+              backgroundColor: "#ff4d4f",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "not-allowed",
+              fontWeight: "500"
+            }}
+            disabled
           >
-            {({ loading: pdfLoading }) => (
-              <button
-                style={{
-                  padding: "8px 16px",
-                  fontSize: "13px",
-                  backgroundColor: pdfLoading ? "#d9d9d9" : "#722ed1",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: pdfLoading ? "not-allowed" : "pointer",
-                  fontWeight: "500"
-                }}
-                disabled={pdfLoading}
-              >
-                {pdfLoading ? "⏳ Compiling PDF..." : "📥 Download E-Invoice PDF"}
-              </button>
-            )}
-          </PDFDownloadLink>
-        )}
+            ❌ PDF Generation Failed
+          </button>
+        );
+      }
+
+      return (
+        <button
+          style={{
+            padding: "8px 16px",
+            fontSize: "13px",
+            backgroundColor: pdfLoading ? "#d9d9d9" : "#722ed1",
+            color: "#fff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: pdfLoading ? "not-allowed" : "pointer",
+            fontWeight: "500",
+            transition: "all 0.3s ease"
+          }}
+          disabled={pdfLoading}
+        >
+          {pdfLoading ? (
+            <span>⏳ Compiling Data ({payload.itemList?.length || 0} Items)...</span>
+          ) : (
+            <span>📥 Download E-Invoice PDF</span>
+          )}
+        </button>
+      );
+    }}
+  </PDFDownloadLink>
+)}
       </div>
     </div>
       
@@ -1548,37 +1913,48 @@ return (
     
 
     {/* ==================== API RESPONSE DISPLAY ==================== */}
-    {response && (
-      <div style={{
-        marginTop: "15px", padding: "12px", borderRadius: "6px", fontSize: "13px",
-        background: (response.status === "SUCCESS" || response.irnnumber) ? "#f6ffed" : "#fff1f0",
-        border: (response.status === "SUCCESS" || response.irnnumber) ? "1px solid #b7eb8f" : "1px solid #ffa39e",
-      }}>
-        {response.irnnumber || response.status === "SUCCESS" || response?.response?.irn ? (
-          <>
-            <h3 style={{ color: "#389e0d", margin: "0 0 6px 0", fontSize: "14px" }}>E-Invoice Operation Matrix</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "6px 15px" }}>
-              <p style={{ margin: 0 }}><strong>ID:</strong> {response.id ?? response?.response?.id ?? "-"}</p>
-              <p style={{ margin: 0 }}><strong>IRN:</strong> {response.irnnumber || response?.response?.irn || "-"}</p>
-              <p style={{ margin: 0 }}><strong>Ack No:</strong> {response.ackno || response?.response?.ackNo || "-"}</p>
-              <p style={{ margin: 0 }}><strong>Ack Date:</strong> {response.ackdate || response?.response?.ackDt ? new Date(response.ackdate || response?.response?.ackDt).toLocaleString() : "-"}</p>
-              {(response.eWayBillNumber || response?.response?.ewbNo) && (
-                <p style={{ margin: 0, gridColumn: "1 / -1" }}>
-                  <strong>EWB No:</strong> {response.eWayBillNumber || response?.response?.ewbNo}
-                </p>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <h3 style={{ color: "#cf1322", margin: "0 0 6px 0", fontSize: "14px" }}>Execution Exception Block</h3>
-            <pre style={{ background: "#fff1f0", padding: "8px", borderRadius: "4px", fontSize: "11px", color: "#cf1322", margin: 0 }}>
-              {JSON.stringify(response, null, 2)}
-            </pre>
-          </>
-        )}
-      </div>
+   {response && (
+  <div style={{
+    marginTop: "15px", padding: "12px", borderRadius: "6px", fontSize: "13px",
+    background: (response.status === "SUCCESS" || response.irnnumber) ? "#f6ffed" : "#fff1f0",
+    border: (response.status === "SUCCESS" || response.irnnumber) ? "1px solid #b7eb8f" : "1px solid #ffa39e",
+  }}>
+    {response.irnnumber || response.status === "SUCCESS" || response?.response?.irn ? (
+      <>
+        <h3 style={{ color: "#389e0d", margin: "0 0 6px 0", fontSize: "14px" }}>E-Invoice Operation Matrix</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "6px 15px" }}>
+          <p style={{ margin: 0 }}><strong>ID:</strong> {response.id ?? response?.response?.id ?? "-"}</p>
+          <p style={{ margin: 0 }}><strong>IRN:</strong> {response.irnnumber || response?.response?.irn || "-"}</p>
+          <p style={{ margin: 0 }}><strong>Ack No:</strong> {response.ackno || response?.response?.ackNo || "-"}</p>
+          <p style={{ margin: 0 }}><strong>Ack Date:</strong> {response.ackdate || response?.response?.ackDt ? new Date(response.ackdate || response?.response?.ackDt).toLocaleString() : "-"}</p>
+          
+          {/* ================= UPDATED E-WAY BILL METRICS MATRIX ================= */}
+          {(response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo) && (
+            <>
+              <p style={{ margin: 0 }}>
+                <strong>Eway Bill No:</strong> {response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo || "-"}
+              </p>
+              <p style={{ margin: 0 }}>
+                <strong>Eway Bill Date:</strong> {
+                  response.ewayBillDate || response?.response?.ewbDt 
+                    ? new Date(response.ewayBillDate || response?.response?.ewbDt).toLocaleDateString() 
+                    : "-"
+                }
+              </p>
+            </>
+          )}
+        </div>
+      </>
+    ) : (
+      <>
+        <h3 style={{ color: "#cf1322", margin: "0 0 6px 0", fontSize: "14px" }}>Execution Exception Block</h3>
+        <pre style={{ background: "#fff1f0", padding: "8px", borderRadius: "4px", fontSize: "11px", color: "#cf1322", margin: 0 }}>
+          {JSON.stringify(response, null, 2)}
+        </pre>
+      </>
     )}
+  </div>
+)}
   </div>
 );
 };  
