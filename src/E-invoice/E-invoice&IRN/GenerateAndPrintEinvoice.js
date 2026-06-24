@@ -4,67 +4,8 @@ import { useAuth } from "../../components/AuthContext";
 import { useLocation } from "react-router-dom";
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
-// ==================== 1. DEFINE PDF SHARP BORDER STYLES ====================
-const pdfStyles = StyleSheet.create({
-  page: {
-    padding: 20,
-    backgroundColor: '#ffffff',
-    fontFamily: 'Helvetica',
-  },
-  container: {
-    width: '100%',
-    border: '1px solid #000000',
-  },
-  header: {
-    borderBottom: '1px solid #000000',
-    padding: 8,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 12,
-    textTransform: 'uppercase',
-  },
-  contentRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    borderBottom: '1px solid #000000',
-  },
-  leftColumn: {
-    flex: 1,
-    padding: 12,
-    borderLeft: '1px solid #000000',
-    borderRight: '1px solid #000000',
-  },
-  rightColumn: {
-    width: 220,
-    padding: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRight: '1px solid #000000',
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  textRow: {
-    fontSize: 10,
-    marginBottom: 4,
-    lineHeight: 1.4,
-  },
-  boldLabel: {
-    fontWeight: 'bold',
-  },
-  qrCode: {
-    width: 150,
-    height: 150,
-  },
-  fallbackText: {
-    fontSize: 10,
-    color: '#666666',
-    fontStyle: 'italic',
-  }
-});
 
+/* ================= COMPACT GOVERNMENT INVOICE STYLING SHEET ================= */
 
 
 const colors = {
@@ -438,46 +379,419 @@ console.log("📦 Product List:", productList);
 // =========================================================
 // 2. DEFINE THE INLINE PDF DOCUMENT COMPONENT
 // =========================================================
-const EInvoicePdfDocument = ({ irn, ackNo, ackDate, qrCodeBase64 }) => {
+export const EinvoicePDF = ({
+  invoiceData = {},
+  irn,
+  ackNo,
+  ackDate,
+  qrCodeBase64
+}) => {
+  // Ensure base64 exact header protocol formatting
   const qrUri = qrCodeBase64 
-    ? (qrCodeBase64.startsWith('data:image') ? qrCodeBase64 : `data:image/png;base64,${qrCodeBase64}`)
+    ? (qrCodeBase64.startsWith('data:') ? qrCodeBase64 : `data:image/png;base64,${qrCodeBase64}`)
     : null;
+
+  // Defensive array binding to handle both raw database and structural mapped objects
+  const items = invoiceData?.invoiceProductDetails || invoiceData?.itemList || [];
+
+  // Core Math Breakdowns for Consolidated Value Metrics (with multi-key database schema fallbacks)
+  const totalTaxable = items.reduce((sum, item) => sum + Number(item?.totalAmount || item?.txval || 0), 0);
+  const totalCGST = items.reduce((sum, item) => sum + Number(item?.cgstAmount || item?.camt || 0), 0);
+  const totalSGST = items.reduce((sum, item) => sum + Number(item?.sgstAmount || item?.samt || 0), 0);
+  const totalIGST = items.reduce((sum, item) => sum + Number(item?.igstAmount || item?.iamt || 0), 0);
+  
+  const grandTotal = totalTaxable + totalCGST + totalSGST + totalIGST;
+
+  // Safe string reading for state extract routing
+  const fallbackSellerGstin = invoiceData?.gstin || invoiceData?.sellerGstin || invoiceData?.sgstin || "";
+  const fallbackBuyerGstin = invoiceData?.buyerClients?.gstin || invoiceData?.buyerGstin || invoiceData?.bgstin || "";
 
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
         <View style={pdfStyles.container}>
-          <Text style={pdfStyles.header}>Tax Invoice</Text>
-          
+
+          {/* ================= HEADER ================= */}
+          <View style={pdfStyles.header}>
+            <Text style={pdfStyles.invoiceTitle}>TAX INVOICE</Text>
+          </View>
+
+          {/* ================= 1. E-INVOICE DETAILS & QR ================= */}
           <View style={pdfStyles.contentRow}>
-            {/* Left Data Column */}
             <View style={pdfStyles.leftColumn}>
               <Text style={pdfStyles.sectionTitle}>1. e-Invoice Details</Text>
+
               <Text style={pdfStyles.textRow}>
-                <Text style={pdfStyles.boldLabel}>IRN: </Text>{irn || '-'}
+                <Text style={pdfStyles.boldLabel}>IRN: </Text>
+                <Text style={pdfStyles.irnText}>{irn || "-"}</Text>
               </Text>
+
               <Text style={pdfStyles.textRow}>
-                <Text style={pdfStyles.boldLabel}>Ack. No: </Text>{ackNo || '-'}
+                <Text style={pdfStyles.boldLabel}>Ack. No: </Text>{ackNo || "-"}
               </Text>
+
               <Text style={pdfStyles.textRow}>
-                <Text style={pdfStyles.boldLabel}>Ack. Date: </Text>{ackDate || '-'}
+                <Text style={pdfStyles.boldLabel}>Ack. Date: </Text>{ackDate || "-"}
               </Text>
             </View>
-            
-            {/* Right QR Column */}
+
             <View style={pdfStyles.rightColumn}>
               {qrUri ? (
                 <Image src={qrUri} style={pdfStyles.qrCode} />
               ) : (
-                <Text style={pdfStyles.fallbackText}>No Barcode Found</Text>
+                <Text style={{ fontSize: 7, color: '#999', textAlign: 'center' }}>No QR Code Provided</Text>
               )}
             </View>
           </View>
+
+          {/* ================= 2. TRANSACTION DETAILS ================= */}
+          <View style={pdfStyles.sectionBlock}>
+            <Text style={pdfStyles.sectionTitle}>2. Transaction Details</Text>
+            <View style={pdfStyles.inlineFieldsRow}>
+              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Category: </Text>{invoiceData?.category || "B2B"}</Text>
+              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Reverse Charge: </Text>{invoiceData?.reverseCharge || "No"}</Text>
+              <Text style={pdfStyles.textRow}>
+                <Text style={pdfStyles.boldLabel}>Transaction Type: </Text>
+                {totalIGST > 0 ? "INTER" : "INTRA"}
+              </Text>
+            </View>
+          </View>
+
+          {/* ================= 3. PARTY DETAILS (SELLER & PURCHASER) ================= */}
+          <View style={pdfStyles.sectionBlock}>
+            <Text style={pdfStyles.sectionTitle}>3. Party Details</Text>
+            <View style={pdfStyles.invoiceDetailsContainer}>
+              {/* Seller Details Section */}
+              <View style={pdfStyles.leftBox}>
+                <Text style={pdfStyles.boxTitle}>Seller</Text>
+                <Text style={pdfStyles.textRow}>
+                  <Text style={pdfStyles.boldLabel}>GSTIN: </Text>{fallbackSellerGstin || "-"}
+                </Text>
+                <Text style={[pdfStyles.textRow, pdfStyles.companyName]}>
+                  {invoiceData?.company_Name || invoiceData?.sellerLegalName || invoiceData?.slglNm || "-"}
+                </Text>
+                <Text style={pdfStyles.textRow}>
+                  {invoiceData?.company_Address || invoiceData?.sellerBuildingName || invoiceData?.sbnm || "-"}
+                </Text>
+                <Text style={pdfStyles.textRow}>
+                  {invoiceData?.company_City || invoiceData?.sellerLocation || invoiceData?.sloc || ""} PIN: {invoiceData?.company_PINCode || invoiceData?.sellerPincode || invoiceData?.spin || "-"}
+                </Text>
+                <Text style={pdfStyles.textRow}>
+                  {invoiceData?.company_State || invoiceData?.sdst || "-"}
+                </Text>
+                <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Document No: </Text>{invoiceData?.invoiceNo || invoiceData?.no || "-"}</Text>
+                <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Document Date: </Text>{invoiceData?.invoiceDate || invoiceData?.dt || "-"}</Text>
+                <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Place of Supply: </Text>{invoiceData?.sellerStateCode || fallbackSellerGstin.substring(0, 2) || "27"}</Text>
+              </View>
+
+              {/* Purchaser / Buyer Details Section */}
+              <View style={pdfStyles.rightBox}>
+                <Text style={pdfStyles.boxTitle}>Purchaser</Text>
+                <Text style={pdfStyles.textRow}>
+                  <Text style={pdfStyles.boldLabel}>GSTIN: </Text>{fallbackBuyerGstin || "-"}
+                </Text>
+                <Text style={[pdfStyles.textRow, pdfStyles.companyName]}>
+                  {invoiceData?.buyerClients?.companyName || invoiceData?.buyerLegalName || invoiceData?.blglNm || "-"}
+                </Text>
+                <Text style={pdfStyles.textRow}>
+                  {invoiceData?.buyerClients?.officeAddress || invoiceData?.buyerBuildingName || invoiceData?.bbnm || "-"}
+                </Text>
+                <Text style={pdfStyles.textRow}>
+                  {invoiceData?.buyerClients?.masterStateNames?.stateName || invoiceData?.buyerDistrict || invoiceData?.bdst || "-"} PIN: {invoiceData?.buyerClients?.poBox || invoiceData?.buyerPincode || invoiceData?.bpin || "-"}
+                </Text>
+                <Text style={pdfStyles.textRow}>Mobile: {invoiceData?.buyerClients?.mobile || invoiceData?.buyerPhone || invoiceData?.bph || "-"}</Text>
+                <Text style={pdfStyles.textRow}>Email: {invoiceData?.buyerClients?.email || invoiceData?.buyerEmail || invoiceData?.bem || "-"}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* ================= 4. GOODS / SERVICES ITEM DETAILS ================= */}
+          <View style={pdfStyles.sectionBlock}>
+            <Text style={pdfStyles.sectionTitle}>4. Goods/Services Details - Item Details</Text>
+            <View style={pdfStyles.table}>
+              <View style={pdfStyles.tableHeader} fixed>
+                <Text style={pdfStyles.colSl}>Sr No</Text>
+                <Text style={pdfStyles.colDesc}>Product Name</Text>
+                <Text style={pdfStyles.colHsn}>HSN</Text>
+                <Text style={pdfStyles.colQty}>Qty</Text>
+                <Text style={pdfStyles.colUnit}>Unit</Text>
+                <Text style={pdfStyles.colRate}>Unit Price</Text>
+                <Text style={pdfStyles.colTaxable}>Taxable Value</Text>
+                <Text style={pdfStyles.colGstRate}>GST %</Text>
+                <Text style={pdfStyles.colTotal}>Total Value</Text>
+              </View>
+
+              {items.length === 0 ? (
+                <View style={pdfStyles.tableRow}>
+                  <Text style={{ width: '100%', textAlign: 'center', color: '#888', paddingVertical: 6 }}>No item records found</Text>
+                </View>
+              ) : (
+                items.map((item, index) => {
+                  const prdName = item?.productName || item?.prdNm || item?.description || "Services";
+                  const itemTaxable = Number(item?.totalAmount || item?.txval || 0);
+                  const itemTaxTotal = Number(item?.cgstAmount || item?.camt || 0) + 
+                                       Number(item?.sgstAmount || item?.samt || 0) + 
+                                       Number(item?.igstAmount || item?.iamt || 0);
+                  const itemTotal = itemTaxable + itemTaxTotal;
+
+                  return (
+                    <View key={index} style={pdfStyles.tableRow} wrap={false}>
+                      <Text style={pdfStyles.colSl}>{index + 1}</Text>
+                      <Text style={pdfStyles.colDesc}>{prdName}</Text>
+                      <Text style={pdfStyles.colHsn}>{item?.hsncode || item?.hsnCd || "-"}</Text>
+                      <Text style={pdfStyles.colQty}>{Number(item?.quantity || item?.qty || 1).toFixed(2)}</Text>
+                      <Text style={pdfStyles.colUnit}>{item?.uom || item?.unit || "OTH"}</Text>
+                      <Text style={pdfStyles.colRate}>{(Number(item?.quantityAmount || item?.unitPrice || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                      <Text style={pdfStyles.colTaxable}>{itemTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                      <Text style={pdfStyles.colGstRate}>{item?.gstPer || item?.rt || 0}%</Text>
+                      <Text style={pdfStyles.colTotal}>{itemTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+          </View>
+
+          {/* ================= TOTAL VALUE MATRIX DETAILS ================= */}
+          <View style={pdfStyles.sectionBlock} wrap={false}>
+            <Text style={pdfStyles.sectionTitle}>Total Value Details (Rs)</Text>
+            <View style={pdfStyles.matrixTable}>
+              <View style={pdfStyles.matrixHeader}>
+                <Text style={pdfStyles.mCol}>Total Taxable Value</Text>
+                <Text style={pdfStyles.mCol}>Total CGST</Text>
+                <Text style={pdfStyles.mCol}>Total SGST</Text>
+                <Text style={pdfStyles.mCol}>Total IGST</Text>
+                <Text style={pdfStyles.mColBold}>Final Invoice Value</Text>
+              </View>
+              <View style={pdfStyles.matrixRow}>
+                <Text style={pdfStyles.mCol}>₹{totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                <Text style={pdfStyles.mCol}>₹{totalCGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                <Text style={pdfStyles.mCol}>₹{totalSGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                <Text style={pdfStyles.mCol}>₹{totalIGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+                <Text style={pdfStyles.mColBold}>₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* ================= 5. E-WAYBILL DETAILS ================= */}
+          <View style={pdfStyles.sectionBlock} wrap={false}>
+            <Text style={pdfStyles.sectionTitle}>5. E-WayBill Details</Text>
+            <View style={pdfStyles.inlineFieldsRow}>
+              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Eway Bill No: </Text>{invoiceData?.eWayBillNumber || invoiceData?.ewayBillNo || "-"}</Text>
+              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Eway Bill Date: </Text>{invoiceData?.ewayBillDate || "-"}</Text>
+              <Text style={pdfStyles.textRow}><Text style={pdfStyles.boldLabel}>Vehicle No: </Text>{invoiceData?.vehicleNo || "-"}</Text>
+            </View>
+          </View>
+
+          {/* ================= FOOTER SIGN-OFF ================= */}
+          <View style={pdfStyles.footerBlock} wrap={false}>
+            <Text style={pdfStyles.declaration}>
+              We declare that this invoice shows the actual price of the goods/services described 
+              and that all particulars are true and correct.
+            </Text>
+            <View style={pdfStyles.signatureSection}>
+              <Text style={pdfStyles.signatureCompany}>For {invoiceData?.company_Name || invoiceData?.sellerLegalName || "The Supplier"}</Text>
+              <Text style={{ marginTop: 30, fontSize: 8, color: '#555' }}>Authorized Signatory</Text>
+            </View>
+          </View>
+
         </View>
       </Page>
     </Document>
   );
 };
+
+/* ================= COMPACT GOVERNMENT INVOICE STYLING SHEET ================= */
+const pdfStyles = StyleSheet.create({
+  page: {
+    padding: 24,
+    backgroundColor: '#ffffff',
+    fontSize: 9,
+    fontFamily: 'Helvetica',
+    color: '#222222',
+  },
+  container: {
+    flexDirection: 'column',
+  },
+  header: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#111111',
+    paddingBottom: 4,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  invoiceTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  sectionBlock: {
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    backgroundColor: '#f2f2f2',
+    padding: '3 6',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    color: '#111111',
+  },
+  contentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    padding: 6,
+  },
+  leftColumn: {
+    width: '78%',
+  },
+  rightColumn: {
+    width: '20%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  irnText: {
+    fontSize: 7.5,
+    fontFamily: 'Courier',
+  },
+  textRow: {
+    marginBottom: 2,
+    lineHeight: 1.2,
+  },
+  boldLabel: {
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  inlineFieldsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: '4 6',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    borderTopWidth: 0,
+  },
+  invoiceDetailsContainer: {
+    flexDirection: 'row',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    borderTopWidth: 0,
+  },
+  leftBox: {
+    width: '50%',
+    padding: 6,
+    borderRightWidth: 0.5,
+    borderRightColor: '#cccccc',
+  },
+  rightBox: {
+    width: '50%',
+    padding: 6,
+  },
+  boxTitle: {
+    fontWeight: 'bold',
+    textDecoration: 'underline',
+    marginBottom: 4,
+    fontSize: 9,
+  },
+  companyName: {
+    fontWeight: 'bold',
+    fontSize: 9,
+    marginVertical: 1,
+  },
+  qrCode: {
+    width: 75,
+    height: 75,
+  },
+  table: {
+    width: '100%',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    borderTopWidth: 0,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#fafafa',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#cccccc',
+    fontWeight: 'bold',
+    paddingVertical: 4,
+    textAlign: 'center',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#eeeeee',
+    paddingVertical: 4,
+    textAlign: 'center',
+  },
+  colSl: { width: '6%' },
+  colDesc: { width: '28%', textAlign: 'left', paddingLeft: 4 },
+  colHsn: { width: '10%' },
+  colQty: { width: '8%' },
+  colUnit: { width: '8%' },
+  colRate: { width: '12%', textAlign: 'right', paddingRight: 4 },
+  colTaxable: { width: '12%', textAlign: 'right', paddingRight: 4 },
+  colGstRate: { width: '6%' },
+  colTotal: { width: '10%', textAlign: 'right', paddingRight: 4, fontWeight: 'bold' },
+
+  matrixTable: {
+    width: '100%',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    borderTopWidth: 0,
+    textAlign: 'center',
+  },
+  matrixHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#fafafa',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#cccccc',
+    fontWeight: 'bold',
+    paddingVertical: 4,
+  },
+  matrixRow: {
+    flexDirection: 'row',
+    paddingVertical: 4,
+  },
+  mCol: {
+    width: '20%',
+    fontSize: 8.5,
+  },
+  mColBold: {
+    width: '20%',
+    fontWeight: 'bold',
+    fontSize: 9,
+    color: '#000000',
+  },
+  footerBlock: {
+    marginTop: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 0.5,
+    borderTopColor: '#cccccc',
+    paddingTop: 8,
+  },
+  declaration: {
+    width: '60%',
+    fontSize: 7.5,
+    fontStyle: 'italic',
+    color: '#555555',
+    lineHeight: 1.3,
+  },
+  signatureSection: {
+    width: '35%',
+    alignItems: 'center',
+    textAlign: 'center',
+  },
+  signatureCompany: {
+    fontWeight: 'bold',
+    fontSize: 8,
+  },
+});
+
+
 
 export const GenerateAndPrintEinvoice = () => {
 const { token, companyId } = useAuth();
@@ -1183,7 +1497,7 @@ return (
         {response && (irnValue || response.status === "SUCCESS") && (
           <PDFDownloadLink
             document={
-              <EInvoicePdfDocument 
+              <EinvoicePDF
                 irn={irnValue}
                 ackNo={ackNoValue}
                 ackDate={formattedPrintDate}
