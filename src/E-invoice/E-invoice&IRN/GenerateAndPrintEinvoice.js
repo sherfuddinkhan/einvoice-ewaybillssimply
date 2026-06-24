@@ -7,6 +7,341 @@ import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '
 
 /* ================= COMPACT GOVERNMENT INVOICE STYLING SHEET ================= */
 
+/* ================= TRADITIONAL BUSINESS ENTERPRISE STYLING RULE SETS ================= */
+const styles = StyleSheet.create({
+  page: {
+    padding: 20,
+    fontSize: 8,
+    fontFamily: 'Helvetica',
+    color: '#000000',
+    backgroundColor: '#ffffff'
+  },
+  outerBorder: {
+    borderWidth: 1,
+    borderColor: '#000000',
+    flexDirection: 'column'
+  },
+  titleBanner: {
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: '#000000',
+    paddingVertical: 3,
+    backgroundColor: '#fafafa'
+  },
+  mainTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 0.5
+  },
+  subtitle: {
+    fontSize: 7,
+    marginTop: 1,
+    color: '#333333'
+  },
+  rowFlex: {
+    flexDirection: 'row'
+  },
+  flexHalf: {
+    width: '50%'
+  },
+  profileLeftBlock: {
+    width: '55%',
+    borderRightWidth: 1,
+    borderColor: '#000000'
+  },
+  profileRightGrid: {
+    width: '45%'
+  },
+  pad4: { padding: 4 },
+  pad6: { padding: 6 },
+  borderRight: { borderRightWidth: 1, borderColor: '#000000' },
+  borderBottom: { borderBottomWidth: 1, borderColor: '#000000' },
+  borderTop: { borderTopWidth: 1, borderColor: '#000000' },
+  bold: { fontWeight: 'bold' },
+  textLine: {
+    marginBottom: 2,
+    lineHeight: 1.2
+  },
+  companyName: {
+    fontSize: 9.5,
+    fontWeight: 'bold',
+    marginBottom: 1
+  },
+  companySub: {
+    fontSize: 7.5,
+    color: '#333333',
+    marginBottom: 3
+  },
+  labelHeader: {
+    fontSize: 7,
+    color: '#555555',
+    fontWeight: 'bold'
+  },
+  valText: {
+    fontSize: 8,
+    marginTop: 1
+  },
+  sectionHeaderTitle: {
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    textDecoration: 'underline',
+    marginBottom: 3
+  },
+  partyName: {
+    fontWeight: 'bold',
+    fontSize: 8.5,
+    marginVertical: 1
+  },
+  sectionBlock: {
+    flexDirection: 'column'
+  },
+  tableContainer: {
+    width: '100%',
+    borderTopWidth: 1,
+    borderColor: '#000000'
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#eaeaea',
+    borderBottomWidth: 1,
+    borderColor: '#000000',
+    fontWeight: 'bold',
+    paddingVertical: 3,
+    textAlign: 'center'
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#dddddd',
+    paddingVertical: 3,
+    textAlign: 'center'
+  },
+  tableTotalRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#000000',
+    paddingVertical: 3,
+    backgroundColor: '#fafafa',
+    textAlign: 'center'
+  },
+  colSl: { width: '8%', borderRightWidth: 0.5, borderColor: '#eee' },
+  colDesc: { width: '40%', textAlign: 'left', paddingLeft: 4, borderRightWidth: 0.5, borderColor: '#eee' },
+  colHsn: { width: '12%', borderRightWidth: 0.5, borderColor: '#eee' },
+  colQty: { width: '10%', borderRightWidth: 0.5, borderColor: '#eee' },
+  colRate: { width: '10%', textAlign: 'right', paddingRight: 4, borderRightWidth: 0.5, borderColor: '#eee' },
+  colPer: { width: '8%', borderRightWidth: 0.5, borderColor: '#eee' },
+  colAmount: { width: '12%', textAlign: 'right', paddingRight: 4 },
+  hsnTableContainer: {
+    width: '100%',
+    borderTopWidth: 1,
+    borderColor: '#000000',
+    fontSize: 7.5
+  },
+  hsnTableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#eaeaea',
+    borderBottomWidth: 1,
+    borderColor: '#000000',
+    fontWeight: 'bold',
+    textAlign: 'center'
+  },
+  hsnTableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderColor: '#cccccc',
+    textAlign: 'center'
+  }
+});
+/* ================= COMPACT GOVERNMENT INVOICE STYLING SHEET ================= */
+const pdfStyles = StyleSheet.create({
+  page: {
+    padding: 24,
+    backgroundColor: '#ffffff',
+    fontSize: 9,
+    fontFamily: 'Helvetica',
+    color: '#222222',
+  },
+  container: {
+    flexDirection: 'column',
+  },
+  header: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#111111',
+    paddingBottom: 4,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  invoiceTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  sectionBlock: {
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    backgroundColor: '#f2f2f2',
+    padding: '3 6',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    color: '#111111',
+  },
+  contentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    padding: 6,
+  },
+  leftColumn: {
+    width: '78%',
+  },
+  rightColumn: {
+    width: '20%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  irnText: {
+    fontSize: 7.5,
+    fontFamily: 'Courier',
+  },
+  textRow: {
+    marginBottom: 2,
+    lineHeight: 1.2,
+  },
+  boldLabel: {
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  inlineFieldsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: '4 6',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    borderTopWidth: 0,
+  },
+  invoiceDetailsContainer: {
+    flexDirection: 'row',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    borderTopWidth: 0,
+  },
+  leftBox: {
+    width: '50%',
+    padding: 6,
+    borderRightWidth: 0.5,
+    borderRightColor: '#cccccc',
+  },
+  rightBox: {
+    width: '50%',
+    padding: 6,
+  },
+  boxTitle: {
+    fontWeight: 'bold',
+    textDecoration: 'underline',
+    marginBottom: 4,
+    fontSize: 9,
+  },
+  companyName: {
+    fontWeight: 'bold',
+    fontSize: 9,
+    marginVertical: 1,
+  },
+  qrCode: {
+    width: 75,
+    height: 75,
+  },
+  table: {
+    width: '100%',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    borderTopWidth: 0,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#fafafa',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#cccccc',
+    fontWeight: 'bold',
+    paddingVertical: 4,
+    textAlign: 'center',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#eeeeee',
+    paddingVertical: 4,
+    textAlign: 'center',
+  },
+  colSl: { width: '6%' },
+  colDesc: { width: '28%', textAlign: 'left', paddingLeft: 4 },
+  colHsn: { width: '10%' },
+  colQty: { width: '8%' },
+  colUnit: { width: '8%' },
+  colRate: { width: '12%', textAlign: 'right', paddingRight: 4 },
+  colTaxable: { width: '12%', textAlign: 'right', paddingRight: 4 },
+  colGstRate: { width: '6%' },
+  colTotal: { width: '10%', textAlign: 'right', paddingRight: 4, fontWeight: 'bold' },
+
+  matrixTable: {
+    width: '100%',
+    borderWidth: 0.5,
+    borderColor: '#cccccc',
+    borderTopWidth: 0,
+    textAlign: 'center',
+  },
+  matrixHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#fafafa',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#cccccc',
+    fontWeight: 'bold',
+    paddingVertical: 4,
+  },
+  matrixRow: {
+    flexDirection: 'row',
+    paddingVertical: 4,
+  },
+  mCol: {
+    width: '20%',
+    fontSize: 8.5,
+  },
+  mColBold: {
+    width: '20%',
+    fontWeight: 'bold',
+    fontSize: 9,
+    color: '#000000',
+  },
+  footerBlock: {
+    marginTop: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 0.5,
+    borderTopColor: '#cccccc',
+    paddingTop: 8,
+  },
+  declaration: {
+    width: '60%',
+    fontSize: 7.5,
+    fontStyle: 'italic',
+    color: '#555555',
+    lineHeight: 1.3,
+  },
+  signatureSection: {
+    width: '35%',
+    alignItems: 'center',
+    textAlign: 'center',
+  },
+  signatureCompany: {
+    fontWeight: 'bold',
+    fontSize: 8,
+  },
+});
 
 const colors = {
   primary: "#1A73E8",
@@ -149,6 +484,7 @@ const tableStyles = {
     marginTop: "30px"
   }),
 };
+
 
 // Storage Keys
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
@@ -779,345 +1115,6 @@ export const EinvoicePDF = ({
   );
 };
 
-/* ================= TRADITIONAL BUSINESS ENTERPRISE STYLING RULE SETS ================= */
-const styles = StyleSheet.create({
-  page: {
-    padding: 20,
-    fontSize: 8,
-    fontFamily: 'Helvetica',
-    color: '#000000',
-    backgroundColor: '#ffffff'
-  },
-  outerBorder: {
-    borderWidth: 1,
-    borderColor: '#000000',
-    flexDirection: 'column'
-  },
-  titleBanner: {
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderColor: '#000000',
-    paddingVertical: 3,
-    backgroundColor: '#fafafa'
-  },
-  mainTitle: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    letterSpacing: 0.5
-  },
-  subtitle: {
-    fontSize: 7,
-    marginTop: 1,
-    color: '#333333'
-  },
-  rowFlex: {
-    flexDirection: 'row'
-  },
-  flexHalf: {
-    width: '50%'
-  },
-  profileLeftBlock: {
-    width: '55%',
-    borderRightWidth: 1,
-    borderColor: '#000000'
-  },
-  profileRightGrid: {
-    width: '45%'
-  },
-  pad4: { padding: 4 },
-  pad6: { padding: 6 },
-  borderRight: { borderRightWidth: 1, borderColor: '#000000' },
-  borderBottom: { borderBottomWidth: 1, borderColor: '#000000' },
-  borderTop: { borderTopWidth: 1, borderColor: '#000000' },
-  bold: { fontWeight: 'bold' },
-  textLine: {
-    marginBottom: 2,
-    lineHeight: 1.2
-  },
-  companyName: {
-    fontSize: 9.5,
-    fontWeight: 'bold',
-    marginBottom: 1
-  },
-  companySub: {
-    fontSize: 7.5,
-    color: '#333333',
-    marginBottom: 3
-  },
-  labelHeader: {
-    fontSize: 7,
-    color: '#555555',
-    fontWeight: 'bold'
-  },
-  valText: {
-    fontSize: 8,
-    marginTop: 1
-  },
-  sectionHeaderTitle: {
-    fontSize: 7.5,
-    fontWeight: 'bold',
-    textDecoration: 'underline',
-    marginBottom: 3
-  },
-  partyName: {
-    fontWeight: 'bold',
-    fontSize: 8.5,
-    marginVertical: 1
-  },
-  sectionBlock: {
-    flexDirection: 'column'
-  },
-  tableContainer: {
-    width: '100%',
-    borderTopWidth: 1,
-    borderColor: '#000000'
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#eaeaea',
-    borderBottomWidth: 1,
-    borderColor: '#000000',
-    fontWeight: 'bold',
-    paddingVertical: 3,
-    textAlign: 'center'
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#dddddd',
-    paddingVertical: 3,
-    textAlign: 'center'
-  },
-  tableTotalRow: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#000000',
-    paddingVertical: 3,
-    backgroundColor: '#fafafa',
-    textAlign: 'center'
-  },
-  colSl: { width: '8%', borderRightWidth: 0.5, borderColor: '#eee' },
-  colDesc: { width: '40%', textAlign: 'left', paddingLeft: 4, borderRightWidth: 0.5, borderColor: '#eee' },
-  colHsn: { width: '12%', borderRightWidth: 0.5, borderColor: '#eee' },
-  colQty: { width: '10%', borderRightWidth: 0.5, borderColor: '#eee' },
-  colRate: { width: '10%', textAlign: 'right', paddingRight: 4, borderRightWidth: 0.5, borderColor: '#eee' },
-  colPer: { width: '8%', borderRightWidth: 0.5, borderColor: '#eee' },
-  colAmount: { width: '12%', textAlign: 'right', paddingRight: 4 },
-  hsnTableContainer: {
-    width: '100%',
-    borderTopWidth: 1,
-    borderColor: '#000000',
-    fontSize: 7.5
-  },
-  hsnTableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#eaeaea',
-    borderBottomWidth: 1,
-    borderColor: '#000000',
-    fontWeight: 'bold',
-    textAlign: 'center'
-  },
-  hsnTableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderColor: '#cccccc',
-    textAlign: 'center'
-  }
-});
-
-/* ================= COMPACT GOVERNMENT INVOICE STYLING SHEET ================= */
-const pdfStyles = StyleSheet.create({
-  page: {
-    padding: 24,
-    backgroundColor: '#ffffff',
-    fontSize: 9,
-    fontFamily: 'Helvetica',
-    color: '#222222',
-  },
-  container: {
-    flexDirection: 'column',
-  },
-  header: {
-    borderBottomWidth: 1.5,
-    borderBottomColor: '#111111',
-    paddingBottom: 4,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  invoiceTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
-  sectionBlock: {
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    backgroundColor: '#f2f2f2',
-    padding: '3 6',
-    borderWidth: 0.5,
-    borderColor: '#cccccc',
-    color: '#111111',
-  },
-  contentRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    borderWidth: 0.5,
-    borderColor: '#cccccc',
-    padding: 6,
-  },
-  leftColumn: {
-    width: '78%',
-  },
-  rightColumn: {
-    width: '20%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  irnText: {
-    fontSize: 7.5,
-    fontFamily: 'Courier',
-  },
-  textRow: {
-    marginBottom: 2,
-    lineHeight: 1.2,
-  },
-  boldLabel: {
-    fontWeight: 'bold',
-    color: '#000000',
-  },
-  inlineFieldsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: '4 6',
-    borderWidth: 0.5,
-    borderColor: '#cccccc',
-    borderTopWidth: 0,
-  },
-  invoiceDetailsContainer: {
-    flexDirection: 'row',
-    borderWidth: 0.5,
-    borderColor: '#cccccc',
-    borderTopWidth: 0,
-  },
-  leftBox: {
-    width: '50%',
-    padding: 6,
-    borderRightWidth: 0.5,
-    borderRightColor: '#cccccc',
-  },
-  rightBox: {
-    width: '50%',
-    padding: 6,
-  },
-  boxTitle: {
-    fontWeight: 'bold',
-    textDecoration: 'underline',
-    marginBottom: 4,
-    fontSize: 9,
-  },
-  companyName: {
-    fontWeight: 'bold',
-    fontSize: 9,
-    marginVertical: 1,
-  },
-  qrCode: {
-    width: 75,
-    height: 75,
-  },
-  table: {
-    width: '100%',
-    borderWidth: 0.5,
-    borderColor: '#cccccc',
-    borderTopWidth: 0,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#fafafa',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#cccccc',
-    fontWeight: 'bold',
-    paddingVertical: 4,
-    textAlign: 'center',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#eeeeee',
-    paddingVertical: 4,
-    textAlign: 'center',
-  },
-  colSl: { width: '6%' },
-  colDesc: { width: '28%', textAlign: 'left', paddingLeft: 4 },
-  colHsn: { width: '10%' },
-  colQty: { width: '8%' },
-  colUnit: { width: '8%' },
-  colRate: { width: '12%', textAlign: 'right', paddingRight: 4 },
-  colTaxable: { width: '12%', textAlign: 'right', paddingRight: 4 },
-  colGstRate: { width: '6%' },
-  colTotal: { width: '10%', textAlign: 'right', paddingRight: 4, fontWeight: 'bold' },
-
-  matrixTable: {
-    width: '100%',
-    borderWidth: 0.5,
-    borderColor: '#cccccc',
-    borderTopWidth: 0,
-    textAlign: 'center',
-  },
-  matrixHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#fafafa',
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#cccccc',
-    fontWeight: 'bold',
-    paddingVertical: 4,
-  },
-  matrixRow: {
-    flexDirection: 'row',
-    paddingVertical: 4,
-  },
-  mCol: {
-    width: '20%',
-    fontSize: 8.5,
-  },
-  mColBold: {
-    width: '20%',
-    fontWeight: 'bold',
-    fontSize: 9,
-    color: '#000000',
-  },
-  footerBlock: {
-    marginTop: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 0.5,
-    borderTopColor: '#cccccc',
-    paddingTop: 8,
-  },
-  declaration: {
-    width: '60%',
-    fontSize: 7.5,
-    fontStyle: 'italic',
-    color: '#555555',
-    lineHeight: 1.3,
-  },
-  signatureSection: {
-    width: '35%',
-    alignItems: 'center',
-    textAlign: 'center',
-  },
-  signatureCompany: {
-    fontWeight: 'bold',
-    fontSize: 8,
-  },
-});
-
-
-
 export const GenerateAndPrintEinvoice = () => {
 const { token, companyId } = useAuth();
 const { setLastInvoice } = useAuth();
@@ -1482,40 +1479,33 @@ const getAuthData = () => {
       data?.response?.invoiceId;
 
     if (generatedId) setLastGeneratedId(generatedId);
+if (data?.status === "SUCCESS" && data?.response?.irn) {
 
-    if (data?.status === "SUCCESS" && data?.response?.irn) {
-      saveResponseForAutoPopulate(data);
-      storeEinv(data.response);
-      sessionStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
+  saveResponseForAutoPopulate(data);
+  storeEinv(data.response);
+  sessionStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
 
-      alert(`✅ IRN Generated Successfully!\nIRN: ${data.response.irn}`);
-    } else if (data?.response?.id || data?.response?.irn) {
-      alert(
-        `⚠️ Warning: ${
-          data?.errors?.[0]?.msg || "Operation completed with warning"
-        }`
-      );
-    } else {
-      alert(
-        data?.status === "FAILURE"
-          ? `❌ Failed: ${data?.errors?.[0]?.msg || "Unknown error"}`
-          : "Unexpected response"
-      );
-    }
-  } catch (err) {
-    alert("Network error: " + err.message);
-  } finally {
+  // Automatically save generated IRN details to DB
+  const saved = await handleSaveToDB(data);
+
+  if (saved) {
+    console.log("Invoice synced to DB successfully.");
+  }
+}
+
+  }  finally {
     setLoading(false);
   }
 };
-const handleSaveToDB = async () => {
-  if (!response) {
+
+
+const handleSaveToDB = async (generatedResponse = response) => {
+  if (!generatedResponse) {
     alert("No data available to save.");
-    return;
+    return false;
   }
 
-  // Extract data from your generation response
-  const apiData = response.response || response;
+  const apiData = generatedResponse.response || generatedResponse;
 
   // 🌟 Define your dynamic ID lookup
   const dynamicId = receivedData?.id || location.state?.pid;
@@ -1545,21 +1535,27 @@ const handleSaveToDB = async () => {
       },
       body: JSON.stringify(putPayload),
     });
+   if (res.ok) {
+  const data = await res.json();
+  console.log("Database updated successfully:", data);
 
-    if (res.ok) {
-      const data = await res.json();
-      console.log("Database updated successfully:", data);
-      alert("🎉 Invoice updated in DB successfully!");
-    } else {
-      const errText = await res.text();
-      throw new Error(errText || "The server rejected the payload.");
-    }
+  alert(
+    `✅ IRN Generated Successfully!\n\n` +
+    `🎉 Invoice updated in DB successfully!`
+  );
+
+  return true;
+}
+    
   } catch (error) {
-    console.error("Database Save Error:", error);
-    alert(`Failed to save to database: ${error.message}`);
-  } finally {
-    setLoading(false);
-  }
+  console.error("Database Save Error:", error);
+
+  alert(
+    `⚠ IRN generated successfully, but DB update failed.\n\n${error.message}`
+  );
+
+  return false;
+}
 };
 
  
@@ -1797,26 +1793,6 @@ return (
         >
           {loading ? "Registering Invoice Core..." : "🚀 Generate IRN / E-Invoice"}
         </button>
-
-        {/* Button 2: Update Database */}
-        {response && (
-          <button 
-            style={{ 
-              padding: "8px 16px", 
-              fontSize: "13px", 
-              backgroundColor: "#1890ff", 
-              color: "#fff", 
-              border: "none", 
-              borderRadius: "4px", 
-              cursor: loading ? "not-allowed" : "pointer",
-              fontWeight: "500"
-            }} 
-            onClick={handleSaveToDB}
-            disabled={loading}
-          >
-            {loading ? "Syncing Record..." : "💾 Update Invoice in DB"}
-          </button>
-        )}
 
         {/* Button 3: Instant PDF Generation and Download */}
      {/* Button 3: Instant PDF Generation and Download */}
