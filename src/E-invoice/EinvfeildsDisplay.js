@@ -7,7 +7,18 @@ const EinvfeildsDisplay = () => {
   const navigate = useNavigate();
 
   // Only get token and companyId from AuthContext
-  const { token, companyId } = useAuth();
+//const { token, companyId, userGstin } = useAuth();
+const loginData = JSON.parse(
+  localStorage.getItem("einvoiceLoginData") || "{}"
+);
+console.log("logindata",loginData )
+const token = loginData.token || "";
+const companyId = loginData.companyId || "";
+const userGstin = loginData.userGstin || "";
+
+console.log("Token:", token);
+console.log("Company ID:", companyId);
+console.log("User GSTIN:", userGstin);
 
   const [loading, setLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState([]);
@@ -180,6 +191,140 @@ const EinvfeildsDisplay = () => {
     }
   };
 
+const handleDeleteIRN = async (invoice) => {
+  // Check whether IRN exists
+  if (
+    !invoice.irnnumber||
+   invoice.irnnumber === "" ||
+    invoice.irnnumber === null
+  ) {
+    alert("IRN is not generated for this invoice.");
+    return;
+  }
+ 
+  const confirmDelete = window.confirm(
+    `Are you sure you want to cancel IRN for Invoice ${invoice.pid}?`
+  );
+
+  if (!confirmDelete) return;
+  try {
+    setLoading(true);
+
+    const payload = {
+      irn: invoice.irnnumber,
+      cnlRsn: "1", // Wrong Entry
+      cnlRem: "Wrong entry",
+      userGstin: userGstin,
+    };
+
+    console.log("Cancel IRN Payload:", payload);
+
+    const response = await axios.put(
+      "https://einvoice.fcssoftwares.com/api/gst/einvoice/cancel-irn",
+      payload,
+      {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          companyId: companyId,
+          "X-Auth-Token": token,
+          product: "ONYX",
+        },
+      }
+    );
+
+    console.log("Cancel IRN Response:", response.data);
+
+    if (response.data?.status === "SUCCESS") {
+      alert("IRN Cancelled Successfully");
+      getInvoiceData();
+    } else {
+      alert(
+        response.data?.message ||
+          "Failed to cancel IRN"
+      );
+    }
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to cancel IRN"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleDeleteEwayBill = async (invoice) => {
+  // Check whether EWB exists
+  if (
+    !invoice.eWayBillNumber ||
+    invoice.eWayBillNumber === "" ||
+    invoice.eWayBillNumber === null
+  ) {
+    alert(
+      "E-Way Bill is not generated for this invoice."
+    );
+    return;
+  }
+
+  const confirmDelete = window.confirm(
+    `Are you sure you want to cancel E-Way Bill ${invoice.eWayBillNumber}?`
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    setLoading(true);
+  console.log("usergstin1",userGstin)
+    const payload = {
+      ewbNo: invoice.eWayBillNumber,
+      cnlRsn: "3", // Order Cancelled
+      cnlRem: "Order cancelled by buyer",
+      userGstin: userGstin,
+    };
+
+    console.log("Cancel EWB Payload:", payload);
+
+    const response = await axios.put(
+      "https://einvoice.fcssoftwares.com/api/gst/einvoice/cancel-ewb",
+      payload,
+      {
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          companyid: companyId,
+          "x-auth-token": token,
+          product: "ONYX",
+        },
+      }
+    );
+
+    console.log("Cancel EWB Response:", response.data);
+
+    if (response.data?.status === "SUCCESS") {
+      alert("E-Way Bill Cancelled Successfully");
+      getInvoiceData();
+    } else {
+      alert(
+        response.data?.message ||
+          "Failed to cancel E-Way Bill"
+      );
+    }
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to cancel E-Way Bill"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div style={styles.container}>
       {loading && (
@@ -273,18 +418,60 @@ const EinvfeildsDisplay = () => {
                     )}
                   </td>
 
-                  <td style={styles.actionTd}>
-                    <button
-                      style={styles.einvoiceBtn}
-                      onClick={() =>
-                        handleGenerateEinvoice(
-                          invoice
-                        )
-                      }
-                    >
-                      Generate E-Invoice
-                    </button>
-                  </td>
+                <td style={styles.actionTd}>
+  <button
+    style={styles.einvoiceBtn}
+    onClick={() =>
+      handleGenerateEinvoice(invoice)
+    }
+  >
+    Generate E-Invoice
+  </button>
+
+  <button
+    style={{
+      ...styles.deleteIrnBtn,
+      opacity: invoice.irnnumber ? 1 : 0.5,
+      cursor: invoice.irnnumber
+        ? "pointer"
+        : "not-allowed",
+    }}
+    disabled={!invoice.irnnumber}
+    onClick={() =>
+      handleDeleteIRN(invoice)
+    }
+    title={
+     invoice.irnnumber
+        ? "Cancel IRN"
+        : "IRN not generated"
+    }
+  >
+    Delete IRN
+  </button>
+
+  <button
+    style={{
+      ...styles.deleteEwbBtn,
+      opacity: invoice.eWayBillNumber
+        ? 1
+        : 0.5,
+      cursor: invoice.eWayBillNumber
+        ? "pointer"
+        : "not-allowed",
+    }}
+    disabled={!invoice.eWayBillNumber}
+    onClick={() =>
+      handleDeleteEwayBill(invoice)
+    }
+    title={
+      invoice.eWayBillNumber
+        ? "Cancel E-Way Bill"
+        : "E-Way Bill not generated"
+    }
+  >
+    Delete E-Way Bill
+  </button>
+</td>
                 </tr>
               ))
             ) : (
@@ -402,6 +589,34 @@ const styles = {
     textAlign: "center",
     fontWeight: "bold",
   },
+  deleteIrnBtn: {
+  backgroundColor: "#ff9800",
+  color: "#fff",
+  border: "none",
+  padding: "6px 10px",
+  borderRadius: "4px",
+  cursor: "pointer",
+  marginLeft: "5px",
+  marginTop: "5px",
+},
+
+deleteEwbBtn: {
+  backgroundColor: "#f44336",
+  color: "#fff",
+  border: "none",
+  padding: "6px 10px",
+  borderRadius: "4px",
+  cursor: "pointer",
+  marginLeft: "5px",
+  marginTop: "5px",
+},
+
+actionTd: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "5px",
+  alignItems: "center",
+},
 };
 
 export default EinvfeildsDisplay;

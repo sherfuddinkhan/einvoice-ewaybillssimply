@@ -6,12 +6,17 @@ const EInvoiceLoginPage = () => {
   const [email, setEmail] = useState("ateeq@calibrecue.com");
   const [password, setPassword] = useState("Ateeq@123");
   const [invoiceMode, setInvoiceMode] = useState("NORMAL");
+  const [connectionType, setConnectionType] = useState(
+      localStorage.getItem("connectionType") || "DEFAULT"
+    );
   
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
 
   // ==========================================
   // LOGIN
@@ -27,6 +32,7 @@ const EInvoiceLoginPage = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+             ConnectionType: currentConnectionType,
           },
           body: JSON.stringify({
             email,
@@ -38,6 +44,7 @@ const EInvoiceLoginPage = () => {
       const data = await res.json();
       console.log("login APi response", data);
       setResponse(data);
+  
 
       if (data?.status === "SUCCESS" && data?.response?.token) {
         const selectedMode = invoiceMode;
@@ -50,6 +57,7 @@ const EInvoiceLoginPage = () => {
           invoiceMode: selectedMode,
           fullResponse: data,
         };
+  localStorage.setItem("einvoiceLoginData",JSON.stringify(loginData));
         console.log("loginresponse", loginData);
 
         // store in AuthContext
