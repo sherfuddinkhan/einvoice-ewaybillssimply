@@ -14,11 +14,11 @@ const loginData = JSON.parse(
 console.log("logindata",loginData )
 const token = loginData.token || "";
 const companyId = loginData.companyId || "";
-const userGstin = loginData.userGstin || "";
+//const gstin = invoiceData.gstin || "";
 
 console.log("Token:", token);
 console.log("Company ID:", companyId);
-console.log("User GSTIN:", userGstin);
+//console.log("User GSTIN:", gstin);
 
   const [loading, setLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState([]);
@@ -75,11 +75,9 @@ console.log("User GSTIN:", userGstin);
         { headers }
       );
 
-      console.log(
-        "Invoice API Response:",
-        response.data
-      );
-
+      console.log("Invoice API Response:",response.data);
+      console.log("Invoice API Response:",response.data[0]?.gstin);
+      const UserGstin = response.data[0]?.gstin
       setInvoiceData(response.data || []);
     } catch (error) {
       console.error(
@@ -214,7 +212,7 @@ const handleDeleteIRN = async (invoice) => {
       irn: invoice.irnnumber,
       cnlRsn: "1", // Wrong Entry
       cnlRem: "Wrong entry",
-      userGstin: userGstin,
+      userGstin: invoiceData[0]?.gstin,
     };
 
     console.log("Cancel IRN Payload:", payload);
@@ -278,12 +276,12 @@ const handleDeleteEwayBill = async (invoice) => {
 
   try {
     setLoading(true);
-  console.log("usergstin1",userGstin)
+  //console.log("usergstin1",gstin)
     const payload = {
       ewbNo: invoice.eWayBillNumber,
       cnlRsn: "3", // Order Cancelled
       cnlRem: "Order cancelled by buyer",
-      userGstin: userGstin,
+      userGstin:invoice.gstin,
     };
 
     console.log("Cancel EWB Payload:", payload);

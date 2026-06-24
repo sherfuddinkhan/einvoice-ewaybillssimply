@@ -67,10 +67,14 @@ const EInvoiceLoginPage = () => {
 
         // redirect
         console.log("➡️ Redirecting using window.location");
-        window.location.href =
-          selectedMode === "PROFORMA"
-            ? "/einvoice/einvoice-pdisplay"
-            : "/einvoice/einvoice-display";
+      console.log("➡️ Redirecting in 3 seconds...");
+
+setTimeout(() => {
+  window.location.href =
+    selectedMode === "PROFORMA"
+      ? "/einvoice/einvoice-pdisplay"
+      : "/einvoice/einvoice-display";
+}, 300000); // 3000 ms = 3 seconds
       }
     } catch (error) {
       setResponse({

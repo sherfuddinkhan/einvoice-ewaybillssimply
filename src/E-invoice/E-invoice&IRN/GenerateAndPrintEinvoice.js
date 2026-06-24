@@ -621,7 +621,7 @@ console.log("📦 Product List:", productList);
     slglNm: inv?.company_Name  || null,
     sbnm: inv?.company_Name  || null,
     sflno: null,
-    sloc: inv?.companyBranches?.poBox || null,
+    sloc: inv?.companyBranches?.officeAddress || null,
     sdst: inv?.company_State|| null,
     sstcd: sellerStateCode,
     spin: inv?.companyBranches?.pinCode || inv?.companyBranches?.poBoxCode || null,
