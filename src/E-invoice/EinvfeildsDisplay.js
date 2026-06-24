@@ -207,14 +207,14 @@ const handleDeleteIRN = async (invoice) => {
   if (!confirmDelete) return;
   try {
     setLoading(true);
-
+    const userGstin= invoiceData[0]?.gstin
     const payload = {
       irn: invoice.irnnumber,
       cnlRsn: "1", // Wrong Entry
       cnlRem: "Wrong entry",
       userGstin: invoiceData[0]?.gstin,
     };
-
+    console.log("userGstin01",userGstin)
     console.log("Cancel IRN Payload:", payload);
 
     const response = await axios.put(

@@ -1131,7 +1131,7 @@ const { setLastInvoice } = useAuth();
   const receivedData = location.state || {};
   const invoiceData = location.state?.invoiceData || {};
   const dynamicId = receivedData.id || location.state?.pid;
-    const [connectionType, setConnectionType] = useState(
+  const [connectionType, setConnectionType] = useState(
       localStorage.getItem("connectionType") || "DEFAULT"
     );
   console.log("invoiceData",invoiceData);
@@ -1463,6 +1463,7 @@ const getAuthData = () => {
           "Content-Type": "application/json",
           "X-Auth-Token": token,
           companyId: companyId,
+          "ConnectionType": connectionType,
           product: "ONYX",
         },
         body: JSON.stringify(finalPayload),
@@ -1523,6 +1524,7 @@ const handleSaveToDB = async (generatedResponse = response) => {
     einvoiceqrcode: apiData.einvoiceqrcode || apiData.qrCode || ""
   };
 
+
   try {
     setLoading(true);
 
@@ -1580,6 +1582,7 @@ const finalInvoiceId =
         "X-Auth-Token": token,
         companyId: companyId,
         product: "ONYX",
+      "ConnectionType": connectionType || "Online"
       },
       responseType: "blob",
     });
