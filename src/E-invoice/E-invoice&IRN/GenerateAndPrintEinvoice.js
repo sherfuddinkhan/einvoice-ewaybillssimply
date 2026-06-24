@@ -617,59 +617,59 @@ console.log("📦 Product List:", productList);
 
     // ================= SELLER =================
     sgstin: sellerGstin,
-    strdNm: inv?.company_Name || "TEST Company",
-    slglNm: inv?.company_Name  || "TEST PROD",
-    sbnm: inv?.company_Name  || "Testing",
-    sflno: "ABC",
-    sloc: inv?.companyBranches?.poBox || "BANGALOR32",
-    sdst: inv?.company_State|| "BENGALURU",
+    strdNm: inv?.company_Name || null,
+    slglNm: inv?.company_Name  || null,
+    sbnm: inv?.company_Name  || null,
+    sflno: null,
+    sloc: inv?.companyBranches?.poBox || null,
+    sdst: inv?.company_State|| null,
     sstcd: sellerStateCode,
-    spin: inv?.companyBranches?.pinCode || inv?.companyBranches?.poBoxCode || "500016",
-    sph: inv?.companyBranches?.mobile || "123456111111",
-    sem: inv?.companyBranches?.email || "abc123@gmail.com",
+    spin: inv?.companyBranches?.pinCode || inv?.companyBranches?.poBoxCode || null,
+    sph: inv?.companyBranches?.mobile || null,
+    sem: inv?.companyBranches?.email|| null,
 
     // ================= BUYER =================
     bgstin: buyerGstin,
-    btrdNm: inv?.buyerClients?.companyName || "TEST ENTERPRISES",
-    blglNm: inv?.buyerClients?.companyName || "TEST PRODUCT01",
-    bbnm: inv?.buyerClients?.companyName || "ABCD12345",
-    bflno: "abc",
-    bloc: inv?.buyerClients?.officeAddress || "Jijamat",
-    bdst: inv?.buyerClients?.masterStateNames?.stateName || "BANGALORE",
+    btrdNm: inv?.buyerClients?.companyName || null,
+    blglNm: inv?.buyerClients?.companyName || null,
+    bbnm: inv?.buyerClients?.companyName || null,
+    bflno: null,
+    bloc: inv?.buyerClients?.officeAddress || null,
+    bdst: inv?.buyerClients?.masterStateNames?.stateName || null,
     bstcd: buyerStateCode,
-    bpin: inv?.buyerClients?.poBox || "174071",
-    bph: inv?.buyerClients?.mobile || "989898111111",
-    bem: inv?.buyerClients?.email || "abc123@gmail.com",
+    bpin: inv?.buyerClients?.poBox || null,
+    bph: inv?.buyerClients?.phone || null,
+    bem: inv?.buyerClients?.email || null,
 
     // ================= SHIP TO =================
     togstin: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.gstin || buyerGstin) : null,
-    totrdNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || "TEST SHIP") : null,
-    tolglNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || "TEST SHIP") : null,
-    tobnm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? "TEST SHIP" : null,
-    toloc: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.officeAddress || "MUMBAI") : null,
+    totrdNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || null) : null,
+    tolglNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || null) : null,
+    tobnm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? null : null,
+    toloc: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.officeAddress || null) : null,
     tostcd: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? buyerStateCode : null,
-    topin: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.poBox || "174001") : null,
+    topin: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.poBox || null) : null,
 
     // ================= DISPATCH =================
     dgstin: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? sellerGstin : null,
-    dtrdNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.companyTallyName || "TEST DISP") : null,
-    dlglNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.nameEng || "TEST DISP") : null,
-    dbnm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? "TEST DISP" : null,
+    dtrdNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.companyTallyName || null) : null,
+    dlglNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.nameEng || null) : null,
+    dbnm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? null : null,
     dflno: null,
-    dloc: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.poBox || "BANGALOR32") : null,
+    dloc: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.poBox || null) : null,
     ddst: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? "BENGALURU" : null,
     dstcd: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? sellerStateCode : null,
-    dpin: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.pinCode || "192233") : null,
+    dpin: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.pinCode || null) : null,
 
     // ================= TRANSPORT =================
     subSplyTyp: "Supply",
-    transId: "01AAACI9260R002",
-    transMode: "1",
-    transDist: 0,
-    transName: "TEST TRANSPORT",
+    transId: null,
+    transMode: null,
+    transDist: null,
+    transName: null,
     transDocNo: dynamicId,
     transDocDate: formatDate(inv?.dateofIssue || new Date()),
-    vehNo: inv?.vehicleNo || "KA01AB1234",
+    vehNo: inv?.vehicleNo || null,
     vehTyp: "R",
 
     // ================= TOTALS =================
@@ -1545,8 +1545,7 @@ const handleSaveToDB = async (generatedResponse = response) => {
   );
 
   return true;
-}
-    
+}   
   } catch (error) {
   console.error("Database Save Error:", error);
 
