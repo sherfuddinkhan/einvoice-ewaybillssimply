@@ -437,34 +437,50 @@ const handleSaveToDB = async (generatedResponse = apiResponse) => {
       setPdfMessage("Failed to download PDF.");
     }
   };
+const formatLabel = (text) => {
+  return text
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (str) => str.toUpperCase());
+};
 
 return (
-  <div style={{ maxWidth: "1200px", margin: "20px auto", padding: "20px", fontFamily: "sans-serif" }}>
-    <h1 style={{ textAlign: "center", marginBottom: "30px" }}>Generate E-Way Bill</h1>
-
+  <>
     <form onSubmit={handleSubmit}>
-      {/* Main Fields Layout - CSS Grid for Side-by-Side Alignment */}
-      <div 
-        style={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", 
+      {/* Main Fields Layout */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
           gap: "16px",
-          marginBottom: "30px"
+          marginBottom: "30px",
         }}
       >
+        {/* Auto Generated Fields */}
         {Object.keys(formData)
-          .filter(key => key !== "itemList")
-          .map(key => (
-            <div key={key} style={{ display: "flex", flexDirection: "column" }}>
+          .filter(
+            (key) =>
+              ![
+                "itemList",
+                "invType",
+                "transMode",
+                "vehicleType",
+              ].includes(key)
+          )
+          .map((key) => (
+            <div
+              key={key}
+              style={{ display: "flex", flexDirection: "column" }}
+            >
               <label
                 style={{
                   fontWeight: "bold",
                   marginBottom: "6px",
                   fontSize: "14px",
-                  color: "#333"
+                  color: "#333",
+                  textTransform: "capitalize",
                 }}
               >
-                {key}
+                {formatLabel(key)}
               </label>
 
               <input
@@ -477,16 +493,121 @@ return (
                   padding: "8px 12px",
                   border: "1px solid #ccc",
                   borderRadius: "4px",
-                  boxSizing: "border-box"
+                  boxSizing: "border-box",
                 }}
               />
             </div>
           ))}
+
+        {/* Invoice Type */}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <label
+            style={{
+              fontWeight: "bold",
+              marginBottom: "6px",
+              fontSize: "14px",
+              color: "#333",
+            }}
+          >
+            Invoice Type
+          </label>
+
+          <select
+            name="invType"
+            value={formData.invType || ""}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              boxSizing: "border-box",
+            }}
+          >
+            <option value="">Select Invoice Type</option>
+            <option value="B2B">B2B</option>
+            <option value="B2C">B2C</option>
+            <option value="SEZWP">SEZWP</option>
+            <option value="SEZWOP">SEZWOP</option>
+            <option value="EXPWP">EXPWP</option>
+            <option value="EXPWOP">EXPWOP</option>
+          </select>
+        </div>
+
+        {/* Transport Mode */}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <label
+            style={{
+              fontWeight: "bold",
+              marginBottom: "6px",
+              fontSize: "14px",
+              color: "#333",
+            }}
+          >
+            Transport Mode
+          </label>
+
+          <select
+            name="transMode"
+            value={formData.transMode || ""}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              boxSizing: "border-box",
+            }}
+          >
+            <option value="">Select Transport Mode</option>
+            <option value="1">Road</option>
+            <option value="2">Rail</option>
+            <option value="3">Air</option>
+            <option value="4">Ship</option>
+          </select>
+        </div>
+
+        {/* Vehicle Type */}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <label
+            style={{
+              fontWeight: "bold",
+              marginBottom: "6px",
+              fontSize: "14px",
+              color: "#333",
+            }}
+          >
+            Vehicle Type
+          </label>
+
+          <select
+            name="vehicleType"
+            value={formData.vehicleType || ""}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              boxSizing: "border-box",
+            }}
+          >
+            <option value="">Select Vehicle Type</option>
+            <option value="R">Regular</option>
+            <option value="O">ODC</option>
+          </select>
+        </div>
       </div>
 
-      <hr style={{ border: "0", borderTop: "1px solid #eee", margin: "30px 0" }} />
+      <hr
+        style={{
+          border: "0",
+          borderTop: "1px solid #eee",
+          margin: "30px 0",
+        }}
+      />
 
-      {/* Item List Header */}
+      {/* Item List */}
       <h3 style={{ marginBottom: "15px" }}>Items</h3>
 
       {formData.itemList?.map((item, index) => (
@@ -497,31 +618,35 @@ return (
             padding: "20px",
             marginBottom: "20px",
             borderRadius: "6px",
-            background: "#fdfdfd"
+            background: "#fdfdfd",
           }}
         >
-          <h4 style={{ marginTop: 0, marginBottom: "15px" }}>Item {index + 1}</h4>
+          <h4 style={{ marginTop: 0, marginBottom: "15px" }}>
+            Item {index + 1}
+          </h4>
 
-          {/* Item Fields Layout - Side-by-Side Sub Grid */}
-          <div 
-            style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", 
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(220px, 1fr))",
               gap: "12px",
-              marginBottom: "15px"
             }}
           >
-            {Object.keys(item).map(field => (
-              <div key={field} style={{ display: "flex", flexDirection: "column" }}>
+            {Object.keys(item).map((field) => (
+              <div
+                key={field}
+                style={{ display: "flex", flexDirection: "column" }}
+              >
                 <label
                   style={{
                     fontWeight: "bold",
                     marginBottom: "5px",
                     fontSize: "13px",
-                    color: "#555"
+                    color: "#555",
                   }}
                 >
-                  {field}
+                  {formatLabel(field)}
                 </label>
 
                 <input
@@ -534,7 +659,7 @@ return (
                     padding: "8px",
                     border: "1px solid #ccc",
                     borderRadius: "4px",
-                    boxSizing: "border-box"
+                    boxSizing: "border-box",
                   }}
                 />
               </div>
@@ -543,7 +668,7 @@ return (
         </div>
       ))}
 
-      {/* Form Action Buttons */}
+      {/* Submit Button */}
       <div style={{ marginTop: "20px" }}>
         <button
           type="submit"
@@ -554,134 +679,14 @@ return (
             color: "#fff",
             border: "none",
             borderRadius: "4px",
-            cursor: loading ? "not-allowed" : "pointer"
+            cursor: loading ? "not-allowed" : "pointer",
           }}
         >
           {loading ? "Generating..." : "Generate E-Way Bill"}
         </button>
       </div>
     </form>
-
-    {/* API Success Response Layout */}
-{apiResponse && (
-  <>
-    {apiResponse.status === "SUCCESS" ? (
-      <>
-        <p>
-          <strong>EWB No:</strong>{" "}
-          {apiResponse?.response?.ewbNo}
-        </p>
-
-        <p style={{ marginBottom: 15 }}>
-          <strong>Valid Upto:</strong>{" "}
-          {apiResponse?.response?.validUpto}
-        </p>
-
-        <button
-          onClick={downloadPDF}
-          style={{
-            padding: "8px 15px",
-            backgroundColor: "#52c41a",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer"
-          }}
-        >
-          Download PDF
-        </button>
-
-        {pdfMessage && (
-          <p style={{ marginTop: 10, color: "#555" }}>
-            {pdfMessage}
-          </p>
-        )}
-      </>
-    ) : (
-      <>
-        <h4 style={{ color: "#cf1322" }}>
-          E-Way Bill Generation Failed
-        </h4>
-
-        <pre
-          style={{
-            background: "#fff1f0",
-            border: "1px solid #ffa39e",
-            padding: "15px",
-            borderRadius: "4px",
-            overflowX: "auto",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
-            color: "#cf1322"
-          }}
-        >
-          {JSON.stringify(apiResponse, null, 2)}
-        </pre>
-      </>
-    )}
   </>
-)}
-    {/* API Error Layout */}
-    {error && (
-      <div style={{ color: "#ff4d4f", marginTop: 20, fontWeight: "bold" }}>
-        {error}
-      </div>
-    )}
-     {apiResponse ? (
-  <>
-    {/* ================= UPDATED E-WAY BILL METRICS MATRIX ================= */}
-    {(apiResponse.eWayBillNumber ||
-      apiResponse?.response?.ewbNo ||
-      apiResponse.ewayBillNo) && (
-      <>
-        <p style={{ margin: 0 }}>
-          <strong>Eway Bill No:</strong>{" "}
-          {apiResponse.eWayBillNumber ||
-            apiResponse?.response?.ewbNo ||
-            apiResponse.ewayBillNo ||
-            "-"}
-        </p>
-
-        <p style={{ margin: 0 }}>
-          <strong>Eway Bill Date:</strong>{" "}
-          {apiResponse.ewayBillDate ||
-          apiResponse?.response?.ewbDt
-            ? new Date(
-                apiResponse.ewayBillDate ||
-                  apiResponse?.response?.ewbDt
-              ).toLocaleDateString()
-            : "-"}
-        </p>
-      </>
-    )}
-  </>
-) : (
-  <>
-    <h3
-      style={{
-        color: "#cf1322",
-        margin: "0 0 6px 0",
-        fontSize: "14px",
-      }}
-    >
-      Execution Exception Block
-    </h3>
-
-    <pre
-      style={{
-        background: "#fff1f0",
-        padding: "8px",
-        borderRadius: "4px",
-        fontSize: "11px",
-        color: "#cf1322",
-        margin: 0,
-      }}
-    >
-      {JSON.stringify(apiResponse, null, 2)}
-    </pre>
-  </>
-)}
-  </div>
 );
 };
 
