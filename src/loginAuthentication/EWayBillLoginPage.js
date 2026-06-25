@@ -8,10 +8,15 @@ const EWayBillLoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [ewayMode, setEwayMode] = useState("NORMAL");
+  const [connectionType, setConnectionType] = useState(
+        localStorage.getItem("connectionType") || "DEFAULT"
+      );
   
   // ✅ No alias needed! We pull it out directly.
-  const { login, connectionType } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
 
 
  
@@ -28,6 +33,7 @@ const EWayBillLoginPage = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ConnectionType: currentConnectionType,
           },
           body: JSON.stringify({ email, password }),
         }

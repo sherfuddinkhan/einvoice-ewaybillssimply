@@ -7,6 +7,7 @@ const EWAY_KEY = "iris_eway_session";
 const LOGIN_RESPONSE_KEY = 'iris_login_data';
 const LATEST_EWB_KEY = 'latestEwbData';
 const EWB_HISTORY_KEY = 'ewbHistory';
+const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 
 const EwbGenerateAndPrint = () => {
     const { token, companyId } = useAuth();
@@ -19,6 +20,9 @@ const EwbGenerateAndPrint = () => {
  console.log("invoicedata",invoiceData)
   // 1. Initial State Hooks
   const [authCredentials, setAuthCredentials] = useState({ token: "YOUR_AUTH_TOKEN", companyId: "YOUR_COMPANY_ID" });
+  const [connectionType, setConnectionType] = useState(
+       localStorage.getItem("connectionType") || "DEFAULT"
+     );
   const [formData, setFormData] = useState({
     supplyType: "O",
     subSupplyType: "1",
@@ -34,17 +38,17 @@ const EwbGenerateAndPrint = () => {
     fromAddr1: "",
     fromAddr2: "",
     fromPlace: "",
-    fromPincode: 192233,
-    fromStateCode: 36,
-    //actFromStateCode: "36",
+    fromPincode: null,
+    fromStateCode: null,
+    actFromStateCode: null,
     toGstin: "",
     toTrdName: "",
     toAddr1: "",
     toAddr2: "",
     toPlace: "",
-    toPincode: 500025,
-    toStateCode: 36,
-    //actToStateCode: "36",
+    toPincode: null,
+    toStateCode: null,
+    actToStateCode: null,
     totInvValue: 0,
     totalValue: 0,
     cgstValue: 0,
@@ -53,9 +57,9 @@ const EwbGenerateAndPrint = () => {
     cessValue: 0,
     cessNonAdvolValue: 0,
     otherValue: 0,
-    transMode: 1,
+    transMode: null,
     transDistance: "",
-    transDocDate: "15/11/2025",
+    transDocDate: null,
     transDocNo: "",
     transporterId: "",
     transporterName: "",
@@ -70,6 +74,7 @@ const EwbGenerateAndPrint = () => {
   const [pdfMessage, setPdfMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPdf, setShowPdf] = useState(false);
   const [apiResponse, setApiResponse] = useState(null);
 
 
@@ -93,9 +98,9 @@ const EwbGenerateAndPrint = () => {
   useEffect(() => {
     const sessionData = safeParse(sessionStorage.getItem(EWAY_KEY));
     
-    const parsedToken = sessionData?.token || sessionData?.fullResponse?.response?.token || "YOUR_AUTH_TOKEN";
-    const parsedCompanyId = sessionData?.fullResponse?.response?.companyid || "4";
-    const parsedGstin = invoiceData.gstin || sessionData?.userGstin || "01AAACI9260R002";
+    const parsedToken = sessionData?.token || sessionData?.fullResponse?.response?.token || null;
+    const parsedCompanyId = sessionData?.fullResponse?.response?.companyid || null;
+    const parsedGstin = invoiceData.gstin || sessionData?.userGstin || null;
 
     setAuthCredentials({
       token: parsedToken,
@@ -112,8 +117,8 @@ const EwbGenerateAndPrint = () => {
       const halfTaxAmount = computedTotalTax / 2;
 
       return {
-        productName: item.description ? item.description.substring(0, 50) : "Machine Parts",
-        productDesc:invoiceData.invoiceProductDetails.description || "Machinery Item",
+        productName: item.description ? item.description.substring(0, 50) : null,
+        productDesc:invoiceData.invoiceProductDetails.description || null,
         hsnCode: item.hsncode || "730411",
         quantity: parseFloat(item.quantity) || 1,
         qtyUnit: item.uom || "NOS",
@@ -144,29 +149,29 @@ const EwbGenerateAndPrint = () => {
     setFormData((prev) => ({
       ...prev,
      docNo: dynamicId,
-     docDate: invoiceData.deliveryNoteDate || "17/06/2026", 
+     docDate: invoiceData.deliveryNoteDate || null, 
       
       // --- SELLER (SWASTIK MACHINERY CORPORATION) ---
       fromGstin: parsedGstin,
-      fromTrdName: invoiceData.company_Name || "SWASTIK MACHINERY CORPORATION",
+      fromTrdName: invoiceData.company_Name || null,
       dispatchFromGstin: parsedGstin,
-      dispatchFromTradeName: invoiceData.company_Name || "SWASTIK MACHINERY CORPORATION",
-      fromAddr1: invoiceData.company_Address || "#11-171/5, Fathenagar,",
-      fromAddr2: invoiceData.company_City || "Hyderabad",
-      fromPlace: invoiceData.company_City || "Hyderabad",
-      fromPincode: parseInt(invoiceData.company_PINCode) || 192233,
-      fromStateCode: parseInt(invoiceData.clients?.masterStateNames?.stateCode) || 36,
-      actFromStateCode:invoiceData.clients?.masterStateNames?.stateCode || "36",
+      dispatchFromTradeName: invoiceData.company_Name || null,
+      fromAddr1: invoiceData.company_Address || null,
+      fromAddr2: invoiceData.company_City || null,
+      fromPlace: invoiceData.company_City || null,
+      fromPincode: parseInt(invoiceData.company_PINCode) || null,
+      fromStateCode: parseInt(invoiceData.clients?.masterStateNames?.stateCode) || null,
+      actFromStateCode:invoiceData.clients?.masterStateNames?.stateCode || null,
    
       // --- BUYER (buyerClients Structure mapping) ---
       toGstin: formattedBuyerGstin,
-      toTrdName: invoiceData.buyerClients?.companyName || "Buyer Company",
-      toAddr1: invoiceData.buyerClients?.officeAddress || "Phase -2., Cherlapally",
-      toAddr2: invoiceData.buyerClients?.poBox || "Hyderabad",
-      toPlace: invoiceData.buyerClients?.stateName || "Hyderabad",
-      toPincode: parseInt(invoiceData.buyerClients?.poBox) || 500025,
-      toStateCode: parseInt(invoiceData.buyerClients?.masterStateNames?.stateCode) || 36,
-      actToStateCode: invoiceData.buyerClients?.masterStateNames?.stateCode || "36",
+      toTrdName: invoiceData.buyerClients?.companyName || null,
+      toAddr1: invoiceData.buyerClients?.officeAddress || null,
+      toAddr2: invoiceData.buyerClients?.poBox || null,
+      toPlace: invoiceData.buyerClients?.stateName || null,
+      toPincode: parseInt(invoiceData.buyerClients?.poBox) || null,
+      toStateCode: parseInt(invoiceData.buyerClients?.masterStateNames?.stateCode) || null,
+      actToStateCode: invoiceData.buyerClients?.masterStateNames?.stateCode || null,
 
    
       // --- MATHEMATICAL VALUATIONS ---
@@ -177,10 +182,10 @@ const EwbGenerateAndPrint = () => {
       totInvValue: aggregatedInvoiceTotal,
 
       // --- TRANSPORTATION ---
-      transDocDate: invoiceData.deliveryNoteDate || "17/06/2026",
-      transDocNo: invoiceData.despatchedDocumentNumber || "1212",
+      transDocDate: invoiceData.deliveryNoteDate || null,
+      transDocNo: invoiceData.despatchedDocumentNumber || null,
       transporterId: parsedGstin,
-      transporterName: invoiceData.company_Name || "SWASTIK MACHINERY CORPORATION",
+      transporterName: invoiceData.company_Name || null,
       vehicleNo: formattedVehicleNo,
 
       // --- BALANCED ITEM LINE ENTRIES ---
@@ -294,6 +299,8 @@ const removeItem = (index) => {
     if (res.data.status === "SUCCESS" && res.data.response) {
       setApiResponse(res.data);
       saveToLocalStorage(res.data);
+      // Automatically save generated IRN details to DB
+  const saved = await handleSaveToDB(res.data);
     } else {
       setApiResponse(res.data); // Store failure response also
       setError(res.data.message || "E-Way Bill generation failed");
@@ -309,6 +316,66 @@ const removeItem = (index) => {
     setLoading(false);
   }
 };
+
+const handleSaveToDB = async (generatedResponse = apiResponse) => {
+  if (!generatedResponse) {
+    alert("No data available to save.");
+    return false;
+  }
+
+  const apiData = generatedResponse.response || generatedResponse;
+
+  // 🌟 Define your dynamic ID lookup
+  const dynamicId = receivedData?.id || location.state?.pid;
+
+  const putPayload = {
+    // 🌟 Assign dynamicId here, falling back to apiData or payload id if needed, normalized as a Number
+    id: Number(dynamicId || apiData.id ) || 0,
+    
+    eWayBillNumber: String(apiData.eWayBillNumber || apiData.EwbNo || ""),
+    irnnumber: apiData.irnnumber || apiData.irn || "",
+    ackno: String(apiData.ackNo || apiData.ackno || ""),
+    ackdate: apiData.ackdate || apiData.ackDt 
+      ? new Date(apiData.ackdate || apiData.ackDt).toISOString() 
+      : new Date().toISOString(),
+    einvoiceqrcode: apiData.einvoiceqrcode || apiData.qrCode || ""
+  };
+
+
+  try {
+    setLoading(true);
+
+    const res = await fetch("https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "ConnectionType": connectionType || "Online", 
+        ...(token && { "Authorization": `Bearer ${token}` })
+      },
+      body: JSON.stringify(putPayload),
+    });
+   if (res.ok) {
+  const data = await res.json();
+  console.log("Database updated successfully:", data);
+
+  alert(
+    `✅ IRN Generated Successfully!\n\n` +
+    `🎉 Invoice updated in DB successfully!`
+  );
+
+  return true;
+}   
+  } catch (error) {
+  console.error("Database Save Error:", error);
+
+  alert(
+    `⚠ IRN generated successfully, but DB update failed.\n\n${error.message}`
+  );
+
+  return false;
+}
+};
+
 
   // ----------------- DOWNLOAD PDF -----------------
   const downloadPDF = async () => {
@@ -538,6 +605,60 @@ return (
         {error}
       </div>
     )}
+     {apiResponse ? (
+  <>
+    {/* ================= UPDATED E-WAY BILL METRICS MATRIX ================= */}
+    {(apiResponse.eWayBillNumber ||
+      apiResponse?.response?.ewbNo ||
+      apiResponse.ewayBillNo) && (
+      <>
+        <p style={{ margin: 0 }}>
+          <strong>Eway Bill No:</strong>{" "}
+          {apiResponse.eWayBillNumber ||
+            apiResponse?.response?.ewbNo ||
+            apiResponse.ewayBillNo ||
+            "-"}
+        </p>
+
+        <p style={{ margin: 0 }}>
+          <strong>Eway Bill Date:</strong>{" "}
+          {apiResponse.ewayBillDate ||
+          apiResponse?.response?.ewbDt
+            ? new Date(
+                apiResponse.ewayBillDate ||
+                  apiResponse?.response?.ewbDt
+              ).toLocaleDateString()
+            : "-"}
+        </p>
+      </>
+    )}
+  </>
+) : (
+  <>
+    <h3
+      style={{
+        color: "#cf1322",
+        margin: "0 0 6px 0",
+        fontSize: "14px",
+      }}
+    >
+      Execution Exception Block
+    </h3>
+
+    <pre
+      style={{
+        background: "#fff1f0",
+        padding: "8px",
+        borderRadius: "4px",
+        fontSize: "11px",
+        color: "#cf1322",
+        margin: 0,
+      }}
+    >
+      {JSON.stringify(apiResponse, null, 2)}
+    </pre>
+  </>
+)}
   </div>
 );
 };

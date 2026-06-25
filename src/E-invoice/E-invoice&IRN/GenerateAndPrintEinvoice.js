@@ -1871,9 +1871,6 @@ return (
 )}
       </div>
     </div>
-      
-    
-
       {/* Conditional Template Export UI Controls Wrapper */}
       {(lastGeneratedId || response?.status === "SUCCESS" || response?.irnnumber || response?.response?.irn) && (
         <div style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center", borderTop: "1px dashed #ccc", paddingTop: "12px" }}>
