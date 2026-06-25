@@ -196,6 +196,45 @@ const EwbGenerateAndPrint = () => {
       userGstin: parsedGstin,
     }));
   }, []);
+/// for  Naming convention of items//
+const formatItemLabel = (field) => {
+  switch (field) {
+    case "productName":
+      return "Product Name";
+    case "productDesc":
+      return "Product Description";
+    case "hsnCode":
+      return "HSN Code";
+    case "quantity":
+      return "Quantity";
+    case "qtyUnit":
+      return "Quantity Unit";
+    case "taxableAmount":
+      return "Taxable Amount";
+    case "sgstRate":
+      return "SGST Rate (%)";
+    case "cgstRate":
+      return "CGST Rate (%)";
+    case "igstRate":
+      return "IGST Rate (%)";
+    case "cessRate":
+      return "CESS Rate (%)";
+    case "cessNonAdvol":
+      return "CESS Non Advol";
+    case "iamt":
+      return "IGST Amount";
+    case "camt":
+      return "CGST Amount";
+    case "samt":
+      return "SGST Amount";
+    case "csamt":
+      return "CESS Amount";
+    case "txp":
+      return "Tax Type";
+    default:
+      return field;
+  }
+};
 
   // ----------------- LOCAL STORAGE SAVE -----------------
   const saveToLocalStorage = (fullResponse) => {
@@ -611,63 +650,63 @@ return (
       {/* Item List */}
       <h3 style={{ marginBottom: "15px" }}>Items</h3>
 
-      {formData.itemList?.map((item, index) => (
-        <div
-          key={index}
-          style={{
-            border: "1px solid #ddd",
-            padding: "20px",
-            marginBottom: "20px",
-            borderRadius: "6px",
-            background: "#fdfdfd",
-          }}
-        >
-          <h4 style={{ marginTop: 0, marginBottom: "15px" }}>
-            Item {index + 1}
-          </h4>
+    {formData.itemList?.map((item, index) => (
+  <div
+    key={index}
+    style={{
+      border: "1px solid #ddd",
+      padding: "20px",
+      marginBottom: "20px",
+      borderRadius: "6px",
+      background: "#fdfdfd",
+    }}
+  >
+    <h4 style={{ marginTop: 0, marginBottom: "15px" }}>
+      Item {index + 1}
+    </h4>
 
-          <div
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          "repeat(auto-fill, minmax(220px, 1fr))",
+        gap: "12px",
+      }}
+    >
+      {Object.keys(item).map((field) => (
+        <div
+          key={field}
+          style={{ display: "flex", flexDirection: "column" }}
+        >
+          <label
             style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: "12px",
+              fontWeight: "bold",
+              marginBottom: "5px",
+              fontSize: "13px",
+              color: "#555",
             }}
           >
-            {Object.keys(item).map((field) => (
-              <div
-                key={field}
-                style={{ display: "flex", flexDirection: "column" }}
-              >
-                <label
-                  style={{
-                    fontWeight: "bold",
-                    marginBottom: "5px",
-                    fontSize: "13px",
-                    color: "#555",
-                  }}
-                >
-                  {formatLabel(field)}
-                </label>
+            {formatItemLabel(field)}
+          </label>
 
-                <input
-                  type="text"
-                  name={field}
-                  value={item[field] ?? ""}
-                  onChange={(e) => handleItemChange(index, e)}
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            ))}
-          </div>
+          <input
+            type="text"
+            name={field}
+            value={item[field] ?? ""}
+            onChange={(e) => handleItemChange(index, e)}
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              boxSizing: "border-box",
+            }}
+          />
         </div>
       ))}
+    </div>
+  </div>
+))}
 
       {/* Submit Button */}
       <div style={{ marginTop: "20px" }}>
