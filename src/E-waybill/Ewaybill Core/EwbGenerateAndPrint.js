@@ -437,6 +437,7 @@ const handleSaveToDB = async (generatedResponse = apiResponse) => {
       setPdfMessage("Failed to download PDF.");
     }
   };
+  
 const formatLabel = (text) => {
   return text
     .replace(/([A-Z])/g, " $1")
