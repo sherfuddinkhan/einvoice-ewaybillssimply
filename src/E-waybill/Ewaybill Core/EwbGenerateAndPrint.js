@@ -323,57 +323,79 @@ const handleSaveToDB = async (generatedResponse = apiResponse) => {
     return false;
   }
 
+  // Handle nested response object
   const apiData = generatedResponse.response || generatedResponse;
 
-  // 🌟 Define your dynamic ID lookup
+  // Dynamic ID lookup
   const dynamicId = receivedData?.id || location.state?.pid;
 
   const putPayload = {
-    // 🌟 Assign dynamicId here, falling back to apiData or payload id if needed, normalized as a Number
-    id: Number(dynamicId || apiData.id ) || 0,
-    
-    eWayBillNumber: String(apiData.eWayBillNumber || apiData.EwbNo || ""),
-    irnnumber: apiData.irnnumber || apiData.irn || "",
-    ackno: String(apiData.ackNo || apiData.ackno || ""),
-    ackdate: apiData.ackdate || apiData.ackDt 
-      ? new Date(apiData.ackdate || apiData.ackDt).toISOString() 
-      : new Date().toISOString(),
-    einvoiceqrcode: apiData.einvoiceqrcode || apiData.qrCode || ""
-  };
+    // Primary key
+    id: Number(dynamicId || apiData.id) || 0,
 
+    // E-Way Bill Details
+    eWayBillNumber: String(
+      apiData.ewbNo ||
+      apiData.eWayBillNumber ||
+      apiData.EwbNo ||
+      ""
+    ),
+
+    docNo: String(apiData.docNo || ""),
+
+    docDate: apiData.docDate || "",
+
+    ewbDate: apiData.ewbDate || "",
+
+    vehicleNo: apiData.vehicleNo || "",
+
+    ewayQrCode: apiData.qrCode || "",
+
+    barcode: apiData.barcode || ""
+  };
 
   try {
     setLoading(true);
 
-    const res = await fetch("https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "ConnectionType": connectionType || "Online", 
-        ...(token && { "Authorization": `Bearer ${token}` })
-      },
-      body: JSON.stringify(putPayload),
-    });
-   if (res.ok) {
-  const data = await res.json();
-  console.log("Database updated successfully:", data);
+    const res = await fetch(
+      "https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "ConnectionType": connectionType || "Online",
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        body: JSON.stringify(putPayload)
+      }
+    );
 
-  alert(
-    `✅ IRN Generated Successfully!\n\n` +
-    `🎉 Invoice updated in DB successfully!`
-  );
+    if (res.ok) {
+      const data = await res.json();
 
-  return true;
-}   
+      console.log("Database updated successfully:", data);
+
+      alert(
+        `✅ E-Way Bill Generated Successfully!\n\n` +
+        `🎉 Invoice updated in DB successfully!`
+      );
+
+      return true;
+    } else {
+      const errorText = await res.text();
+      throw new Error(errorText || "Failed to update DB");
+    }
   } catch (error) {
-  console.error("Database Save Error:", error);
+    console.error("Database Save Error:", error);
 
-  alert(
-    `⚠ IRN generated successfully, but DB update failed.\n\n${error.message}`
-  );
+    alert(
+      `⚠ E-Way Bill generated successfully, but DB update failed.\n\n${error.message}`
+    );
 
-  return false;
-}
+    return false;
+  } finally {
+    setLoading(false);
+  }
 };
 
 
