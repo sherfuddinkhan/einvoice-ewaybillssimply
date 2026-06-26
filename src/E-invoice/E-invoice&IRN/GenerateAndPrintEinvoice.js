@@ -638,7 +638,7 @@ console.log("📦 Product List:", productList);
     bdst: inv?.buyerClients?.masterStateNames?.stateName || null,
     bstcd: buyerStateCode,
     bpin: inv?.buyerClients?.poBox || null,
-    bph: inv?.buyerClients?.phone || null,
+    bph: inv?.buyerClients?.mobile || null, //ateeq changed from phone to Mobile for buyer
     bem: inv?.buyerClients?.email || null,
 
     // ================= SHIP TO =================
