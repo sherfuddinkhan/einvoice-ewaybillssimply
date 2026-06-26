@@ -540,12 +540,14 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
   </label>
 );
 
-const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") => {
+const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B",invoiceCreatedOn) => {
  const inv = invoiceData;
- const pid = dynamicId
+ const pid = dynamicId;
+ const invoicedate=invoiceCreatedOn;
 
 console.log("📦 FULL INVOICE:", inv);
 console.log("📦 invoicenumber", inv.invoiceNumber);
+console.log("📦 invoicedate", invoicedate);
 
 const selectedTrnTyp = inv?.transactionType || "REG";
 console.log("🚚 Transaction Type:", selectedTrnTyp);
@@ -589,16 +591,37 @@ console.log("📦 Product List:", productList);
   const totSgst = Number(productList.reduce((sum, item) => sum + Number(item.sgstAmount || 0), 0).toFixed(2));
   const totalInvVal = totTxVal + totIgst + totCgst + totSgst;
 
-  const formatDate = (dateInput) => {
-    if (!dateInput) return null;
-    const date = new Date(dateInput);
-    if (isNaN(date.getTime())) return null;
-    const dd = String(date.getDate()).padStart(2, "0");
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const yyyy = date.getFullYear();
+const formatDate = (dateInput) => {
+  if (!dateInput) return "";
+
+  // 1. Direct handle for native Date objects
+  if (dateInput instanceof Date) {
+    if (isNaN(dateInput.getTime())) return "";
+    const dd = String(dateInput.getDate()).padStart(2, "0");
+    const mm = String(dateInput.getMonth() + 1).padStart(2, "0");
+    const yyyy = dateInput.getFullYear();
     return `${dd}-${mm}-${yyyy}`;
-  };
-  
+  }
+
+  // 2. Normalize and check string formats
+  const cleanInput = String(dateInput).trim();
+
+  // Matches DD/MM/YYYY or DD-MM-YYYY
+  if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(cleanInput)) {
+    const [dd, mm, yyyy] = cleanInput.split(/[\/\-]/);
+    return `${dd.padStart(2, "0")}-${mm.padStart(2, "0")}-${yyyy}`;
+  }
+
+  // 3. Fallback for ISO strings (e.g., "2025-09-10T00:00:00.000Z")
+  const date = new Date(cleanInput);
+  if (isNaN(date.getTime())) return "";
+
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+
+  return `${dd}-${mm}-${yyyy}`;
+};
 
   return {
     id: String(inv?.invoiceNumber),
@@ -611,7 +634,7 @@ console.log("📦 Product List:", productList);
     dst: "O",
     trnTyp: selectedTrnTyp,
     no: inv?.invoiceNumber,
-    dt: formatDate(inv?.dateofIssue || new Date()),
+    dt: formatDate(invoiceCreatedOn),
     pos: buyerStateCode,
     rchrg: "N",
     taxSch: "GST",
@@ -1133,13 +1156,22 @@ const { setLastInvoice } = useAuth();
   const receivedData = location.state || {};
   console.log("received data",receivedData)
   const invoiceData = location.state?.invoiceData || {};
+  const invoicenumber = location.state?.invoiceNumber;
   const dynamicId = receivedData.id || location.state?.pid;
   const [connectionType, setConnectionType] = useState(
       localStorage.getItem("connectionType") || "DEFAULT"
     );
   console.log("invoiceData",invoiceData);
 
+const storedInvoiceCreatedOn =
+  localStorage.getItem("invoicecreatedOn");
 
+const invoiceCreatedOn =
+  location.state?.invoicecreatedOn ||
+  (storedInvoiceCreatedOn &&
+   storedInvoiceCreatedOn !== "undefined"
+    ? JSON.parse(storedInvoiceCreatedOn)
+    : "");
   const [payload, setPayload] = useState({ itemList: [] });
   const initializedRef = useRef(false);
 const apiPrintData = response?.response || response || {};
@@ -1257,7 +1289,7 @@ const apiPrintData = response?.response || response || {};
   const handleCategorySelectionChange = (category) => {
     setSelectedCategory(category);
     if (!invoiceData) return;
-    const basePayload = createBasePayload(invoiceData, dynamicId, category);
+    const basePayload = createBasePayload(invoiceData, dynamicId, category,invoiceCreatedOn);
     setPayload(recalculateTotals(basePayload));
   };
 
@@ -1265,7 +1297,7 @@ const apiPrintData = response?.response || response || {};
     if (!invoiceData) return;
     
     if (!initializedRef.current) {
-      const basePayload = createBasePayload(invoiceData, dynamicId, selectedCategory);
+      const basePayload = createBasePayload(invoiceData, dynamicId, selectedCategory,invoiceCreatedOn);
       setPayload(recalculateTotals(basePayload));
       initializedRef.current = true;
     }
@@ -1502,7 +1534,8 @@ if (data?.status === "SUCCESS" && data?.response?.irn) {
   }
 };
 
-console.log("invoicenumber",receivedData?.invoiceNumber)
+console.log("invoicenumber",invoiceData?.invoiceNumber)
+console.log("invoicecreatedon", invoiceCreatedOn)
 
 const handleSaveToDB = async (generatedResponse = response) => {
   if (!generatedResponse) {

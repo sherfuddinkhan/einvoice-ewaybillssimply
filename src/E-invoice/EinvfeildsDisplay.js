@@ -121,14 +121,15 @@ console.log("Company ID:", companyId);
       setLoading(true);
 
       const pid = invoice?.pid;
+      const invoiceCreatedOn = invoice?.invoiceCreatedOn;
 
       if (!pid) {
-        alert("PID not found");
+        alert("invoicenumber not found");
         return;
       }
 
       console.log("Selected Invoice:", invoice);
-      console.log("Selected PID:", pid);
+      console.log("invoicecreadtedon",invoiceCreatedOn);
 
       const currentConnectionType =
         localStorage.getItem("connectionType") ||
@@ -145,27 +146,24 @@ console.log("Company ID:", companyId);
         }
       );
 
-      console.log(
-        "Invoice Details Response:",
-        data
-      );
+      console.log("Invoice Details Response:",data);
 
-      localStorage.setItem(
-        "selectedInvoice",
-        JSON.stringify(data)
-      );
+localStorage.setItem(
+  "selectedInvoice",
+  JSON.stringify(data)
+);
 
-      localStorage.setItem(
-        "Selected PID",
-        JSON.stringify(data.pid)
-      );
-
+localStorage.setItem(
+  "invoicecreatedOn",
+  JSON.stringify(invoiceCreatedOn || "")
+);
+  
       navigate("/einvoice/generate-print", {
-        state: {
-          invoiceData: data,
-          pid: pid,
-        },
-      });
+  state: {
+    invoiceData: data,
+    invoicecreatedOn: invoiceCreatedOn,
+  },
+});
     } catch (err) {
       console.error(
         "Invoice Details API Error:",
