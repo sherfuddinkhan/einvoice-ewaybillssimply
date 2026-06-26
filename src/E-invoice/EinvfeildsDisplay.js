@@ -213,6 +213,7 @@ const handleDeleteIRN = async (invoice) => {
       cnlRsn: "1", // Wrong Entry
       cnlRem: "Wrong entry",
       userGstin: invoiceData[0]?.gstin,
+      
     };
     console.log("userGstin01",userGstin)
     console.log("Cancel IRN Payload:", payload);
@@ -226,6 +227,8 @@ const handleDeleteIRN = async (invoice) => {
           "Content-Type": "application/json",
           companyId: companyId,
           "X-Auth-Token": token,
+           ConnectionType:
+              currentConnectionType,
           product: "ONYX",
         },
       }
@@ -295,6 +298,8 @@ const handleDeleteEwayBill = async (invoice) => {
           "content-type": "application/json",
           companyid: companyId,
           "x-auth-token": token,
+           ConnectionType:
+              currentConnectionType,
           product: "ONYX",
         },
       }
