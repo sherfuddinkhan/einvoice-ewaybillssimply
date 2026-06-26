@@ -607,10 +607,10 @@ return (
             }}
           >
             <option value="">Select Transport Mode</option>
-            <option value="1">Road</option>
-            <option value="2">Rail</option>
-            <option value="3">Air</option>
-            <option value="4">Ship</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
           </select>
         </div>
 
