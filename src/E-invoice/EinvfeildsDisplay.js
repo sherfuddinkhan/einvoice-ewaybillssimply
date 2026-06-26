@@ -357,6 +357,7 @@ const handleDeleteEwayBill = async (invoice) => {
               <th style={styles.th}>PO Number</th>
               <th style={styles.th}>PO Date</th>
               <th style={styles.th}>Invoice No</th>
+              <th style={styles.th}>Primary Key(Update)</th>
               <th style={styles.th}>Created On</th>
               <th style={styles.th}>PID</th>
               <th style={styles.th}>Vehicle No</th>
@@ -388,6 +389,9 @@ const handleDeleteEwayBill = async (invoice) => {
                       "-"}
                   </td>
                   <td style={styles.td}>
+                    {invoice.refID}
+                  </td>
+                   <td style={styles.td}>
                     {invoice.pid || "-"}
                   </td>
                   <td style={styles.td}>
