@@ -162,14 +162,14 @@ localStorage.setItem(
 
 localStorage.setItem(
   "refid",
-  JSON.stringify(refid || "")
+  JSON.stringify(refid  || "")
 );
   
       navigate("/einvoice/generate-print", {
   state: {
     invoiceData: data,
     invoicecreatedOn: invoiceCreatedOn,
-    invoicecreatedOn: refid,
+    invoicecreatedOn: refid ,
   },
 });
     } catch (err) {

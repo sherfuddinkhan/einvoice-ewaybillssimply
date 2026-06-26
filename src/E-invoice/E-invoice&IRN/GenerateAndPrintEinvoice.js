@@ -540,7 +540,7 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
   </label>
 );
 
-const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B",invoiceCreatedOn) => {
+const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B",invoiceCreatedOn,refid01) => {
  const inv = invoiceData;
  const pid = dynamicId;
  const invoicedate=invoiceCreatedOn;
@@ -624,7 +624,7 @@ const formatDate = (dateInput) => {
 };
 
   return {
-    id: String(inv?.invoiceNumber),
+    id: refid01,
     userGstin: sellerGstin,
     pobCode: null,
     supplyType: "O",
@@ -1165,8 +1165,16 @@ const { setLastInvoice } = useAuth();
 
 const storedInvoiceCreatedOn =
   localStorage.getItem("invoicecreatedOn");
+  const refid =
+  localStorage.getItem("refid");
 
-const invoiceCreatedOn =
+const refid01 = location.state?.refID ||
+  (refid &&
+   refid!== "undefined"
+    ? JSON.parse(refid)
+    : "");
+
+    const invoiceCreatedOn =
   location.state?.invoicecreatedOn ||
   (storedInvoiceCreatedOn &&
    storedInvoiceCreatedOn !== "undefined"
@@ -1289,7 +1297,7 @@ const apiPrintData = response?.response || response || {};
   const handleCategorySelectionChange = (category) => {
     setSelectedCategory(category);
     if (!invoiceData) return;
-    const basePayload = createBasePayload(invoiceData, dynamicId, category,invoiceCreatedOn);
+    const basePayload = createBasePayload(invoiceData, dynamicId, category,invoiceCreatedOn,refid01);
     setPayload(recalculateTotals(basePayload));
   };
 
@@ -1297,7 +1305,7 @@ const apiPrintData = response?.response || response || {};
     if (!invoiceData) return;
     
     if (!initializedRef.current) {
-      const basePayload = createBasePayload(invoiceData, dynamicId, selectedCategory,invoiceCreatedOn);
+      const basePayload = createBasePayload(invoiceData, dynamicId, selectedCategory,invoiceCreatedOn,refid01);
       setPayload(recalculateTotals(basePayload));
       initializedRef.current = true;
     }
