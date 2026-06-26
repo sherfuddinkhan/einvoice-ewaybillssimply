@@ -545,6 +545,7 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") =>
  const pid = dynamicId
 
 console.log("📦 FULL INVOICE:", inv);
+console.log("📦 invoicenumber", inv.invoiceNumber);
 
 const selectedTrnTyp = inv?.transactionType || "REG";
 console.log("🚚 Transaction Type:", selectedTrnTyp);
@@ -597,9 +598,10 @@ console.log("📦 Product List:", productList);
     const yyyy = date.getFullYear();
     return `${dd}-${mm}-${yyyy}`;
   };
+  
 
   return {
-    id: String(inv?.refID || dynamicId || "1001"),
+    id: String(inv?.invoiceNumber),
     userGstin: sellerGstin,
     pobCode: null,
     supplyType: "O",
@@ -608,7 +610,7 @@ console.log("📦 Product List:", productList);
     catg: selectedCatg || "B2B",
     dst: "O",
     trnTyp: selectedTrnTyp,
-    no: dynamicId ,
+    no: inv?.invoiceNumber,
     dt: formatDate(inv?.dateofIssue || new Date()),
     pos: buyerStateCode,
     rchrg: "N",
@@ -667,7 +669,7 @@ console.log("📦 Product List:", productList);
     transMode: null,
     transDist: null,
     transName: null,
-    transDocNo: dynamicId,
+    transDocNo: null,
     transDocDate: formatDate(inv?.dateofIssue || new Date()),
     vehNo: inv?.vehicleNo || null,
     vehTyp: "R",
@@ -1129,13 +1131,14 @@ const { setLastInvoice } = useAuth();
   const location = useLocation();
   const [manualInvoiceId, setManualInvoiceId] = useState("");
   const receivedData = location.state || {};
+  console.log("received data",receivedData)
   const invoiceData = location.state?.invoiceData || {};
   const dynamicId = receivedData.id || location.state?.pid;
   const [connectionType, setConnectionType] = useState(
       localStorage.getItem("connectionType") || "DEFAULT"
     );
   console.log("invoiceData",invoiceData);
-  console.log("dynamicId ",dynamicId);
+
 
   const [payload, setPayload] = useState({ itemList: [] });
   const initializedRef = useRef(false);
@@ -1499,6 +1502,7 @@ if (data?.status === "SUCCESS" && data?.response?.irn) {
   }
 };
 
+console.log("invoicenumber",receivedData?.invoiceNumber)
 
 const handleSaveToDB = async (generatedResponse = response) => {
   if (!generatedResponse) {

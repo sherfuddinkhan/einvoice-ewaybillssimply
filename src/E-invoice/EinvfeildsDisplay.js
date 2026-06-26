@@ -389,7 +389,7 @@ const handleDeleteEwayBill = async (invoice) => {
                       "-"}
                   </td>
                   <td style={styles.td}>
-                    {invoice.refID}
+                    {invoice.invoiceNumber}
                   </td>
                    <td style={styles.td}>
                     {invoice.pid || "-"}
