@@ -122,6 +122,7 @@ console.log("Company ID:", companyId);
 
       const pid = invoice?.pid;
       const invoiceCreatedOn = invoice?.invoiceCreatedOn;
+       const refid = invoice?.refID;
 
       if (!pid) {
         alert("invoicenumber not found");
@@ -157,11 +158,18 @@ localStorage.setItem(
   "invoicecreatedOn",
   JSON.stringify(invoiceCreatedOn || "")
 );
+
+
+localStorage.setItem(
+  "refid",
+  JSON.stringify(refid || "")
+);
   
       navigate("/einvoice/generate-print", {
   state: {
     invoiceData: data,
     invoicecreatedOn: invoiceCreatedOn,
+    invoicecreatedOn: refid,
   },
 });
     } catch (err) {
