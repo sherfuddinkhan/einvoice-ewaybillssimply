@@ -9,10 +9,15 @@ const LATEST_EWB_KEY = 'latestEwbData';
 const EWB_HISTORY_KEY = 'ewbHistory';
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 
+
 const EwbGenerateAndPrint = () => {
     const { token, companyId } = useAuth();
     console.log("token",token)
     console.log("companyId",companyId )
+    // Get values directly from localStorage
+    const [selectedEnv, setSelectedEnv] = useState(
+      localStorage.getItem("connectionType") || "DEFAULT"
+    );
   const location = useLocation();
      const invoiceData = location.state?.invoiceData || {};
     const receivedData = location.state || {};
@@ -20,9 +25,7 @@ const EwbGenerateAndPrint = () => {
  console.log("invoicedata",invoiceData)
   // 1. Initial State Hooks
   const [authCredentials, setAuthCredentials] = useState({ token: "YOUR_AUTH_TOKEN", companyId: "YOUR_COMPANY_ID" });
-  const [connectionType, setConnectionType] = useState(
-       localStorage.getItem("connectionType") || "DEFAULT"
-     );
+
   const [formData, setFormData] = useState({
     supplyType: "O",
     subSupplyType: "1",
@@ -78,6 +81,9 @@ const EwbGenerateAndPrint = () => {
   const [apiResponse, setApiResponse] = useState(null);
 
 
+    // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
   const safeParse = (v, fallback = {}) => {
     try {
       return JSON.parse(v ?? "null") ?? fallback;
@@ -91,7 +97,8 @@ const EwbGenerateAndPrint = () => {
     "X-Auth-Token": authCredentials?.token || "",
     "companyId": authCredentials?.companyId || "",
     "product": productName,
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+      ConnectionType: currentConnectionType,
   });
 
   // 3. Dynamic Structural Data Binding
@@ -402,7 +409,7 @@ const handleSaveToDB = async (generatedResponse = apiResponse) => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "ConnectionType": connectionType || "Online",
+          "ConnectionType": currentConnectionType || "Online",
           ...(token && { Authorization: `Bearer ${token}` })
         },
         body: JSON.stringify(putPayload)
