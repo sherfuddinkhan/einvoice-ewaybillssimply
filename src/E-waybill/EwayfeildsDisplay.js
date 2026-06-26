@@ -176,6 +176,7 @@ const handleDeleteIRN = async (invoice) => {
           Accept: "application/json",
           "Content-Type": "application/json",
           companyId: companyId,
+          ConnectionType: currentConnectionType,
           "X-Auth-Token": token,
           product: "ONYX",
         },
