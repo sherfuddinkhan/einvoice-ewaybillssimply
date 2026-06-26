@@ -58,6 +58,7 @@ useEffect(() => {
     "X-Auth-Token": token || "",
     companyId: companyid || "24",
     product: "ONYX",
+      "ConnectionType": connectionType,
   });
 }, [token, companyid]);
 
