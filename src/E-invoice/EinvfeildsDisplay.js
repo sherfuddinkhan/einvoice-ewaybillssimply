@@ -169,7 +169,7 @@ localStorage.setItem(
   state: {
     invoiceData: data,
     invoicecreatedOn: invoiceCreatedOn,
-    invoicecreatedOn: refid ,
+    refid : refid ,
   },
 });
     } catch (err) {
