@@ -17,6 +17,7 @@ const LATEST_EWB_KEY = "latestEwbData";
 const LATEST_CEWB_KEY = "latestCewbData";
 const BULK_STATUS_KEY = "bulkStatusLatest";
 
+
 /* ---------------------------------
    Safe LS Reader
 ---------------------------------- */
@@ -29,6 +30,10 @@ const readLS = (key, fallback = {}) => {
 };
 
 const GetEwbDocNumStatus = () => {
+  // Get values directly from localStorage
+  const [selectedEnv, setSelectedEnv] = useState(
+    localStorage.getItem("connectionType") || "DEFAULT"
+  );
   /* ---------------------------------
      Load Stored Context
   ---------------------------------- */
@@ -54,7 +59,9 @@ const GetEwbDocNumStatus = () => {
     "";
 
  const gstinDefault = latestEwb?.fromGstin || shared?.fullResponse?.response?.userGstin || "";
-
+  // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
   /* ---------------------------------
      State
   ---------------------------------- */
@@ -62,6 +69,7 @@ const GetEwbDocNumStatus = () => {
     companyId: headerCompanyId,
     token,
     product: "TOPAZ",
+    ConnectionType: currentConnectionType,
   });
 
   const [query, setQuery] = useState({

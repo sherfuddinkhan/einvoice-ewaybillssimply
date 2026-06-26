@@ -20,6 +20,11 @@ const readLS = (key, fallback = {}) => {
 };
 
 const GetEwbByDocNum = () => {
+
+  // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
+
   /* ---------------------------------
      Load Shared Auth & Cached Data
   ---------------------------------- */
@@ -42,6 +47,7 @@ const GetEwbByDocNum = () => {
     product: "TOPAZ",
     companyId: companyIdDefault,
     "X-Auth-Token": token,
+    sConnectionType: currentConnectionType,
   });
 
   /* ---------------------------------

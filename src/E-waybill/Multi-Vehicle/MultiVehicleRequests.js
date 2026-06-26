@@ -45,6 +45,9 @@ const MultiVehicleRequests = () => {
     latestCewb?.response?.companyId ||
     "";
 
+      // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
   /* ---------------------------------
      Headers
   ---------------------------------- */
@@ -52,6 +55,7 @@ const MultiVehicleRequests = () => {
     "X-Auth-Token": token,
     companyId,
     product: "TOPAZ",
+    ConnectionType: currentConnectionType,
   });
 
   /* ---------------------------------

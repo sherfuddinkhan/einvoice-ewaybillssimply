@@ -45,6 +45,9 @@ const MultiVehicleInitiate = () => {
     latestCewb?.response?.companyId ||
     "";
 
+      // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
   /* ---------------------------------
      Headers
   ---------------------------------- */
@@ -53,6 +56,7 @@ const MultiVehicleInitiate = () => {
     companyId,
     product: "TOPAZ",
     "Content-Type": "application/json",
+      ConnectionType: currentConnectionType,
   });
 
   /* ---------------------------------

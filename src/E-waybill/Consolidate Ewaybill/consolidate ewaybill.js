@@ -8,6 +8,7 @@ const STORAGE_KEY00 = "iris_ewaybill_shared_config";
 const LATEST_EWB_KEY = "latestEwbData";
 const LATEST_CEWB_KEY = "latestCewbData";
 
+
 /* ---------------------------
    Safe LocalStorage Reader
 --------------------------- */
@@ -20,6 +21,9 @@ const readStorage = (key, fallback = {}) => {
 };
 
 const ByDocNumType = () => {
+  const [selectedEnv, setSelectedEnv] = useState(
+    localStorage.getItem("connectionType") || "DEFAULT"
+  );
   /* ---------------------------
      State
   --------------------------- */
@@ -56,7 +60,8 @@ const ByDocNumType = () => {
       lastEwb?.fullApiResponse?.response?.fromGstin ||
       login.userGstin ||
       "";
-
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
     // Extract CEWB No from previous flows
     const cEwbNo =
       lastEwb?.cewbResponse?.cEwbNo||
@@ -68,6 +73,7 @@ const ByDocNumType = () => {
       ...prev,
       companyId,
       "X-Auth-Token": token,
+      ConnectionType: currentConnectionType,
     }));
 
     const initialPayload = {

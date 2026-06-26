@@ -6,6 +6,11 @@ const LATEST_EWB_KEY = "latestEwbData";
 const EWB_HISTORY_KEY = "ewbHistory";
 
 const GetEwbDetails = () => {
+
+  // Get values directly from localStorage
+  const [selectedEnv, setSelectedEnv] = useState(
+    localStorage.getItem("connectionType") || "DEFAULT"
+  );
   const [ewbNo, setEwbNo] = useState("");
   const { authData } = useAuth();
   const [requestHeaders, setRequestHeaders] = useState({});
@@ -60,6 +65,9 @@ const GetEwbDetails = () => {
     );
   };
 const { token, companyId } = useAuth();
+
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";  
   // ------------------------------------
   // Fetch Details
   // ------------------------------------
@@ -69,6 +77,7 @@ const { token, companyId } = useAuth();
   product: "TOPAZ",
   companyId: companyId,
   "X-Auth-Token": token,
+ ConnectionType: currentConnectionType,
 };
 
     const payload = {

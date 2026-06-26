@@ -52,12 +52,17 @@ const GetInvByIrn = ({ previousResponse }) => {
 
   /* -------------------- AUTO-FILL HEADERS (INCLUDING IRN FOR DISPLAY) -------------------- */
 const { token, companyid } = useAuth();
+  // Always get latest values from localStorage
+      const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
+
 
 useEffect(() => {
   setHeaders({
     "X-Auth-Token": token || "",
     companyId: companyid || "24",
     product: "ONYX",
+    "ConnectionType": currentConnectionType ,
   });
 }, [token, companyid]);
 

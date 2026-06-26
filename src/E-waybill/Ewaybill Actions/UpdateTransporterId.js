@@ -20,12 +20,16 @@ const UpdateTransporterId = () => {
   const [response, setResponse] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+     // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
 
   const headers = {
     "X-Auth-Token": token,
     companyId,
     product: "TOPAZ",
     "Content-Type": "application/json",
+    ConnectionType: currentConnectionType,
     accept: "application/json",
   };
 

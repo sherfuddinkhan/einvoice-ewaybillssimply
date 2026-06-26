@@ -19,6 +19,11 @@ const FetchEWBbyNumber = () => {
   const [responseData, setResponseData] = useState(null);
   const [autoFields, setAutoFields] = useState({});
 
+  // Get values directly from localStorage
+  const [selectedEnv, setSelectedEnv] = useState(
+    localStorage.getItem("connectionType") || "DEFAULT"
+  );
+
   
   // Load Auth + Last EWB Auto Populate
  useEffect(() => {
@@ -67,11 +72,16 @@ const FetchEWBbyNumber = () => {
   // Fetch EWB API
  const fetchEWB = async () => {
 
+      // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
+
  const headers = {
   accept: "application/json",
   product: "TOPAZ",
   companyId,
   "X-Auth-Token": token,
+  ConnectionType: currentConnectionType,
 };
 
   const payload = {
