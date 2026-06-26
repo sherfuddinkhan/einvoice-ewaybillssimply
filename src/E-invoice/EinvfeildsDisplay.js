@@ -215,6 +215,9 @@ const handleDeleteIRN = async (invoice) => {
       userGstin: invoiceData[0]?.gstin,
       
     };
+        // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
     console.log("userGstin01",userGstin)
     console.log("Cancel IRN Payload:", payload);
 
@@ -286,7 +289,9 @@ const handleDeleteEwayBill = async (invoice) => {
       cnlRem: "Order cancelled by buyer",
       userGstin:invoice.gstin,
     };
-
+    // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
     console.log("Cancel EWB Payload:", payload);
 
     const response = await axios.put(
