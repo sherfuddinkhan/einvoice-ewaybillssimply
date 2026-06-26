@@ -16,12 +16,15 @@ const [file, setFile] = useState(null);
 const [preview, setPreview] = useState(null);
 const [response, setResponse] = useState(null);
 const [loading, setLoading] = useState(false);
+  const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
 
 const headers = {
   companyId,
   "X-Auth-Token": token,
   product: "ONYX",
   Accept: "application/json",
+   ConnectionType: currentConnectionType,
 };
   // Auto-populate headers & companyUniqueCode from localStorage
  useEffect(() => {

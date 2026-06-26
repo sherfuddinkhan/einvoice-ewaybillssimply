@@ -7,16 +7,10 @@ const LAST_DOC_DETAILS_KEY = 'iris_last_used_doc_details'; // New key for last u
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 
-//lastGeneratedResponse
-//EwbNo
-
-//id
-
-//no
-
-
-
 const GetIrnByDocDetails= ({ previousResponse }) => {
+    const [connectionType, setConnectionType] = useState(
+        localStorage.getItem("connectionType") || "DEFAULT"
+      );
 const [config, setConfig] = useState({
   proxyBase: "https://einvoice.fcssoftwares.com",
   endpoint: "/api/gst/einvoice/irn-by-doc",
@@ -45,6 +39,8 @@ const [config, setConfig] = useState({
   // ============================
   const { token, companyId , userGstin} = useAuth();
   
+    const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
  //========================
 // LOAD LAST USED DOC DETAILS
 // ==========================
@@ -87,6 +83,7 @@ useEffect(() => {
       ...prev.headers,
       companyId: companyId || "",
       "X-Auth-Token": token || "",
+      ConnectionType: currentConnectionType,
     },
     params: {
       ...prev.params,
@@ -131,6 +128,7 @@ useEffect(() => {
       ...prev.headers,
       companyId: companyId || "",
       "X-Auth-Token": token || "",
+        ConnectionType: currentConnectionType,
     },
     params: {
       ...prev.params,

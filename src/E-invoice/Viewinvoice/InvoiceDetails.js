@@ -13,7 +13,8 @@ const LAST_EWB_DETAILS_KEY = "iris_last_ewb_details";
 
 const InvoiceDetails = () => {
   const { token, companyId } = useAuth();
-
+  const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
   const [einvId, setEinvId] = useState("");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
@@ -42,6 +43,7 @@ const InvoiceDetails = () => {
     companyId,
     "X-Auth-Token": token,
     product: "ONYX",
+  ConnectionType: currentConnectionType,
   };
 
   const isReady =

@@ -12,6 +12,9 @@ const PrintEInvoice = () => {
   const [template, setTemplate] = useState("STANDARD");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [connectionType, setConnectionType] = useState(
+        localStorage.getItem("connectionType") || "DEFAULT"
+      );
 
   // Auto-fill last generated E-Invoice ID
   useEffect(() => {
@@ -32,6 +35,8 @@ const PrintEInvoice = () => {
 
     setLoading(true);
     setMessage("");
+       const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
 
     try {
       const res = await fetch(
@@ -42,6 +47,7 @@ const PrintEInvoice = () => {
             companyId,
             "X-Auth-Token": token,
             product: "ONYX",
+             ConnectionType: currentConnectionType,
           },
         }
       );

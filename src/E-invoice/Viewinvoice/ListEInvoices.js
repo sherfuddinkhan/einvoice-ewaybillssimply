@@ -47,6 +47,8 @@ const updateLocalStorageDocMap = (docNo, ackDt) => {
 
 
 const ListEInvoices = () => {
+      const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
     const [docMap, setDocMap] = useState([]);
 
     const [headers, setHeaders] = useState({
@@ -55,6 +57,7 @@ const ListEInvoices = () => {
         "X-Auth-Token": "",
         product: "ONYX",
         "Content-Type": "application/json",
+        ConnectionType: currentConnectionType,
     });
 
     const [payload, setPayload] = useState({

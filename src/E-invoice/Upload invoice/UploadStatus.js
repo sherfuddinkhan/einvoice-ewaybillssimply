@@ -10,6 +10,8 @@ const STORAGE_KEY4 = "iris_einvoice_uploadfile"; // upload info (uploadId)
   const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
   const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
   const savedConfig3 = JSON.parse(localStorage.getItem(STORAGE_KEY4) || "{}");
+    const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
     console.log("savedConfig",savedConfig)
     console.log("savedResponse",savedResponse)
     console.log("savedConfig2",savedConfig2)
@@ -23,6 +25,7 @@ const UploadStatus = () => {
     "X-Auth-Token": "",
     product: "ONYX",
     Accept: "application/json",
+    ConnectionType: currentConnectionType,
   });
 
   const [preview, setPreview] = useState(null);
