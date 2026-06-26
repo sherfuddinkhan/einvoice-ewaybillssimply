@@ -112,11 +112,15 @@ useEffect(() => {
     setResponse(null); // 🔥 REQUIRED FIX
     setError("");
   };
+   // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
 const headers = {
   accept: "application/json",
   product: "TOPAZ",
   companyId,
   "X-Auth-Token": token,
+  ConnectionType: currentConnectionType,
 };
 
   // ---------------- PAYLOAD BUILDER ----------------
@@ -182,6 +186,9 @@ const headers = {
     setResponse(null);
 
     try {
+          // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
       const payload = buildPayload();
 
       const res = await axios.put(

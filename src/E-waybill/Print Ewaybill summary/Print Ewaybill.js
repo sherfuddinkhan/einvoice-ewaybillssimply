@@ -10,6 +10,9 @@ const QUERY_KEY       = "mv_requests_query";
 const RESP_KEY        = "mv_requests_response";
 
 const PrintEwaybill = () => {
+      // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
   // ----------------------------
   // State
   // ----------------------------
@@ -23,6 +26,7 @@ const PrintEwaybill = () => {
     product: "TOPAZ",
     "Content-Type": "application/json",
     Accept: "application/pdf",
+    ConnectionType: currentConnectionType,
   });
 
   // ----------------------------
@@ -66,6 +70,9 @@ const PrintEwaybill = () => {
       setLoading(false);
       return;
     }
+        // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
 
     try {
       const res = await axios.post(

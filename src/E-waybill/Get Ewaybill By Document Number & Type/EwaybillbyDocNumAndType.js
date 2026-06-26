@@ -117,6 +117,9 @@ const FetchByDocNumType = () => {
           docType: payload.docType,
           docNum,
         });
+             // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
 
         const res = await axios.get(
           "http://localhost:3001/proxy/topaz/ewb/getByDocNumAndType",
@@ -131,6 +134,7 @@ const FetchByDocNumType = () => {
               product: "TOPAZ",
               companyId: headers.companyId,
               "X-Auth-Token": headers.token,
+              ConnectionType: currentConnectionType,
             },
           }
         );

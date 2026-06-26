@@ -78,6 +78,10 @@ const AssignedEwbTransporter = () => {
     setError("");
     setRawResponse(null);
 
+        // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
+
     const url =
       `https://einvoice.fcssoftwares.com/api/gst/ewaybill/transporter-assigned` +
       `?date=${form.date}` +
@@ -91,6 +95,7 @@ const AssignedEwbTransporter = () => {
       product: "TOPAZ",
       companyId,
       "X-Auth-Token": token,
+     ConnectionType: currentConnectionType,
     };
 
     setRequestPreview({

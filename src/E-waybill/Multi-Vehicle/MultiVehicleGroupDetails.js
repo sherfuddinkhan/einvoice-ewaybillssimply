@@ -43,7 +43,9 @@ const MultiVehicleGroupDetails = () => {
     latestEwb?.response?.companyId ||
     latestCewb?.response?.companyId ||
     "";
-
+     // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
   /* ---------------------------------
      Headers
   ---------------------------------- */
@@ -52,6 +54,7 @@ const MultiVehicleGroupDetails = () => {
     product: "TOPAZ",
     companyId,
     "X-Auth-Token": token,
+    ConnectionType: currentConnectionType,
   });
 
   /* ---------------------------------

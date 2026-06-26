@@ -22,6 +22,9 @@ const ConsigneeEwaybill = () => {
 
   const [requestPreview, setRequestPreview] = useState(null);
   const [responsePreview, setResponsePreview] = useState(null);
+      // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
 
   const headers = {
     accept: "application/json",
@@ -29,6 +32,7 @@ const ConsigneeEwaybill = () => {
     companyId,
     "X-Auth-Token": token,
     "Content-Type": "application/json",
+    ConnectionType: currentConnectionType,
   };
 
   const resetPreviews = () => {
@@ -88,6 +92,10 @@ const ConsigneeEwaybill = () => {
       alert("Token or Company ID not available");
       return;
     }
+
+        // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
 
     const requestBody = {
       ...payload,

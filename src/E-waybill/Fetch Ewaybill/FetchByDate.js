@@ -68,6 +68,9 @@ const FetchByDate = () => {
   setError("");
   setResponse([]);
 
+      // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
   const url =
     `https://einvoice.fcssoftwares.com/api/gst/ewaybill/fetch-by-date` +
     `?date=${fixDateFormat(date)}` +
@@ -80,6 +83,7 @@ const FetchByDate = () => {
         product: "TOPAZ",
         companyId,
         "x-auth-token": token,
+        ConnectionType: currentConnectionType,
       },
       timeout: 30000,
     });

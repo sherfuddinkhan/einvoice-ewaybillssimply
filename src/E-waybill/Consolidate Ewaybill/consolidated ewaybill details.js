@@ -20,6 +20,10 @@ const readStorage = (key, fallback = {}) => {
 };
 
 const CEWBDetails = () => {
+
+   const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
+
   /* ---------------------------
      State
   --------------------------- */
@@ -29,6 +33,7 @@ const CEWBDetails = () => {
     companyId: "",
     "X-Auth-Token": "",
     "Content-Type": "application/json",
+    ConnectionType: currentConnectionType,
   });
 
   const [payload, setPayload] = useState({});
@@ -37,6 +42,9 @@ const CEWBDetails = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [response, setResponse] = useState(null);
+
+
+
 
   /* ---------------------------
      Auto-fill from LocalStorage
@@ -111,6 +119,7 @@ console.log(tripSheetEwbBills);
       ...prev,
       companyId,
       "X-Auth-Token": token,
+      ConnectionType: currentConnectionType,
     }));
 
     setPayload(initialPayload);

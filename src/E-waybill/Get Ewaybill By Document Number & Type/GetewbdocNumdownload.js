@@ -27,6 +27,11 @@ const readLS = (key, fallback = {}) => {
 };
 
 const BulkDownload = () => {
+
+  // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
+
   /* ---------------------------------
      Load Stored Context
   ---------------------------------- */
@@ -53,6 +58,7 @@ const companyId = shared ?.fullResponse?.response?.companyid || "";
     companyId,
     token,
     product: "TOPAZ",
+   ConnectionType: currentConnectionType,
   });
 
   /* ---------------------------------

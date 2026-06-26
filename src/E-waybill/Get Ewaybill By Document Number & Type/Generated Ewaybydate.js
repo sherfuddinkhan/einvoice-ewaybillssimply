@@ -20,6 +20,10 @@ const readLS = (key, fallback = {}) => {
 };
 
 const FetchEWBByDate = () => {
+
+      // Read latest values from localStorage
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
   /* --------------------------
      State Definitions
   --------------------------- */
