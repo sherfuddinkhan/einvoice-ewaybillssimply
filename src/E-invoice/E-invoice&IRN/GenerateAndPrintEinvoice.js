@@ -1356,19 +1356,22 @@ const apiPrintData = response?.response || response || {};
       return recalculateTotals({ ...prev, itemList: filtered });
     });
   };
-  const storeEinv = (apiResponse) => {
+const storeEinv = (apiResponse) => {
   if (!apiResponse?.id || !payload?.no) return;
 
   const entry = {
-    docNo: payload.no?.trim(),
+    docNo: String(payload.no).trim(),
     einvId: String(apiResponse.id),
     createdAt: new Date().toISOString(),
   };
 
-  const existing = JSON.parse(localStorage.getItem(EINV_DOC_KEY)) || [];
+  const existing =
+    JSON.parse(localStorage.getItem(EINV_DOC_KEY)) || [];
 
   const filtered = existing.filter(
-    (e) => e.docNo !== entry.docNo && e.einvId !== entry.einvId
+    (e) =>
+      e.docNo !== entry.docNo &&
+      e.einvId !== entry.einvId
   );
 
   localStorage.setItem(
