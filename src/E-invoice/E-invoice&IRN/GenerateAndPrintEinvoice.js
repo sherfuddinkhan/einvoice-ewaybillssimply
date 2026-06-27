@@ -690,8 +690,8 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
     subSplyTyp: "Supply",
     transId: null,
     transMode: null,
-    transDist: null,
-    transName: null,
+    transDist: inv?.distance || null, //ateeq added here on 27 06 2026...
+    transName: inv?.transportName || null, //ateeq added here on 27 06 2026...,
     transDocNo: null,
     transDocDate: formatDate(inv?.dateofIssue || new Date()),
     vehNo: inv?.vehicleNo || null,
