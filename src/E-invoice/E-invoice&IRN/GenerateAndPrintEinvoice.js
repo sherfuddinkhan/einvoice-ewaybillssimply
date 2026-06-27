@@ -351,86 +351,86 @@ const colors = {
 };
 
 const tableStyles = {
-  container: { 
-    padding: "20px", 
-    background: colors.background, 
-    minHeight: "100vh", 
-    fontFamily: "'Segoe UI', Roboto, sans-serif" 
+  container: {
+    padding: "20px",
+    background: colors.background,
+    minHeight: "100vh",
+    fontFamily: "'Segoe UI', Roboto, sans-serif"
   },
-  header: { 
-    textAlign: "center", 
-    color: colors.primary, 
-    fontSize: "28px", 
-    marginBottom: "30px", 
-    fontWeight: 500 
+  header: {
+    textAlign: "center",
+    color: colors.primary,
+    fontSize: "28px",
+    marginBottom: "30px",
+    fontWeight: 500
   },
-  table: { 
-    width: "100%", 
-    borderCollapse: "collapse", 
-    marginBottom: "30px", 
-    background: "#fff", 
-    boxShadow: "0 2px 8px rgba(0,0,0,0.08)", 
-    borderRadius: "8px", 
-    overflow: "hidden" 
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    marginBottom: "30px",
+    background: "#fff",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    borderRadius: "8px",
+    overflow: "hidden"
   },
-  th: { 
-    background: "#E3F2FD", 
-    color: colors.primary, 
-    textAlign: "left", 
-    padding: "16px", 
-    fontWeight: 600, 
-    fontSize: "16px" 
+  th: {
+    background: "#E3F2FD",
+    color: colors.primary,
+    textAlign: "left",
+    padding: "16px",
+    fontWeight: 600,
+    fontSize: "16px"
   },
-  td: { 
-    padding: "14px 16px", 
-    borderBottom: "1px solid #eee", 
-    verticalAlign: "top" 
+  td: {
+    padding: "14px 16px",
+    borderBottom: "1px solid #eee",
+    verticalAlign: "top"
   },
-  labelText: { 
-    fontWeight: "600", 
-    color: "#333", 
-    fontSize: "14px", 
-    display: "block", 
-    marginBottom: "8px" 
+  labelText: {
+    fontWeight: "600",
+    color: "#333",
+    fontSize: "14px",
+    display: "block",
+    marginBottom: "8px"
   },
-  input: { 
-    width: "100%", 
-    padding: "12px", 
-    borderRadius: "6px", 
-    border: "1px solid #ccc", 
-    fontSize: "14px", 
-    boxSizing: "border-box" 
+  input: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    fontSize: "14px",
+    boxSizing: "border-box"
   },
-  inputFocus: { 
-    borderColor: colors.primary, 
-    boxShadow: "0 0 0 3px rgba(26,115,232,0.2)", 
-    outline: "none" 
+  inputFocus: {
+    borderColor: colors.primary,
+    boxShadow: "0 0 0 3px rgba(26,115,232,0.2)",
+    outline: "none"
   },
-  select: { 
-    width: "100%", 
-    padding: "12px", 
-    borderRadius: "6px", 
-    border: "1px solid #ccc", 
-    fontSize: "14px" 
+  select: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    fontSize: "14px"
   },
-  btnGreen: { 
-    padding: "12px 24px", 
-    background: colors.success, 
-    color: "white", 
-    border: "none", 
-    borderRadius: "6px", 
-    cursor: "pointer", 
-    fontWeight: "bold", 
-    fontSize: "15px" 
+  btnGreen: {
+    padding: "12px 24px",
+    background: colors.success,
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "15px"
   },
-  btnRed: { 
-    padding: "8px 16px", 
-    background: colors.danger, 
-    color: "white", 
-    border: "none", 
-    borderRadius: "4px", 
-    cursor: "pointer", 
-    fontSize: "13px" 
+  btnRed: {
+    padding: "8px 16px",
+    background: colors.danger,
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "13px"
   },
   btnGenerate: (loading, token) => ({
     padding: "20px 100px",
@@ -445,32 +445,32 @@ const tableStyles = {
     display: "block",
     margin: "30px auto",
   }),
-  itemCard: { 
+  itemCard: {
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "#ced4da",
-    padding: "20px", 
-    borderRadius: "8px", 
-    marginBottom: "15px", 
-    background: "#fff" 
+    padding: "20px",
+    borderRadius: "8px",
+    marginBottom: "15px",
+    background: "#fff"
   },
-  twoColGrid: { 
-    display: "grid", 
-    gridTemplateColumns: "1fr 1fr", 
-    gap: "40px" 
+  twoColGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "40px"
   },
-  col: { 
-    display: "flex", 
-    flexDirection: "column", 
-    gap: "16px" 
+  col: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px"
   },
-  itemFooter: { 
-    marginTop: "20px", 
-    display: "flex", 
-    justifyContent: "space-between", 
-    alignItems: "center", 
-    paddingTop: "16px", 
-    borderTop: "1px dashed #bbb" 
+  itemFooter: {
+    marginTop: "20px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: "16px",
+    borderTop: "1px dashed #bbb"
   },
   responseBox: (status) => ({
     background: "#1e1e1e",
@@ -540,50 +540,50 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
   </label>
 );
 
-const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B",invoiceCreatedOn,refid01) => {
- const inv = invoiceData;
- const pid = dynamicId;
- const invoicedate=invoiceCreatedOn;
+const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", invoiceCreatedOn, refid01) => {
+  const inv = invoiceData;
+  const pid = dynamicId;
+  const invoicedate = invoiceCreatedOn;
 
-console.log("📦 FULL INVOICE:", inv);
-console.log("📦 invoicenumber", inv.invoiceNumber);
-console.log("📦 invoicedate", invoicedate);
+  console.log("📦 FULL INVOICE:", inv);
+  console.log("📦 invoicenumber", inv.invoiceNumber);
+  console.log("📦 invoicedate", invoicedate);
 
-const selectedTrnTyp = inv?.transactionType || "REG";
-console.log("🚚 Transaction Type:", selectedTrnTyp);
+  const selectedTrnTyp = inv?.transactionType || "REG";
+  console.log("🚚 Transaction Type:", selectedTrnTyp);
 
-const sellerGstin =
-  inv?.companyBranches?.gstin || "01AAACI9260R002";
-console.log("🏭 Seller GSTIN:", sellerGstin);
+  const sellerGstin =
+    inv?.companyBranches?.gstin || "01AAACI9260R002";
+  console.log("🏭 Seller GSTIN:", sellerGstin);
 
-const sellerStateCode = sellerGstin.substring(0, 2);
-console.log("🏭 Seller State Code:", sellerStateCode);
+  const sellerStateCode = sellerGstin.substring(0, 2);
+  console.log("🏭 Seller State Code:", sellerStateCode);
 
-let buyerGstin = inv?.buyerClients?.gstin || "";
-console.log("🧾 Raw Buyer GSTIN:", buyerGstin);
+  let buyerGstin = inv?.buyerClients?.gstin || "";
+  console.log("🧾 Raw Buyer GSTIN:", buyerGstin);
 
-if (selectedCatg === "B2B" && (!buyerGstin || buyerGstin === "URP")) {
-  buyerGstin = "02AAACI9260R002";
-  console.log("🔁 B2B fallback Buyer GSTIN applied:", buyerGstin);
-} else if (selectedCatg === "B2C") {
-  buyerGstin = "URP";
-  console.log("🔁 B2C Buyer GSTIN set to URP");
-}
+  if (selectedCatg === "B2B" && (!buyerGstin || buyerGstin === "URP")) {
+    buyerGstin = "02AAACI9260R002";
+    console.log("🔁 B2B fallback Buyer GSTIN applied:", buyerGstin);
+  } else if (selectedCatg === "B2C") {
+    buyerGstin = "URP";
+    console.log("🔁 B2C Buyer GSTIN set to URP");
+  }
 
-const buyerStateCode =
-  buyerGstin !== "URP" ? buyerGstin.substring(0, 2) : "02";
-console.log("🏢 Buyer State Code:", buyerStateCode);
+  const buyerStateCode =
+    buyerGstin !== "URP" ? buyerGstin.substring(0, 2) : "02";
+  console.log("🏢 Buyer State Code:", buyerStateCode);
 
-const isInterState = sellerStateCode !== buyerStateCode;
-console.log("🌐 Is InterState:", isInterState);
+  const isInterState = sellerStateCode !== buyerStateCode;
+  console.log("🌐 Is InterState:", isInterState);
 
-const productList =
-  inv?.invoiceProductDetails?.length > 0
-    ? inv.invoiceProductDetails
-    : [];
+  const productList =
+    inv?.invoiceProductDetails?.length > 0
+      ? inv.invoiceProductDetails
+      : [];
 
-console.log("📦 Product List Count:", productList.length);
-console.log("📦 Product List:", productList);
+  console.log("📦 Product List Count:", productList.length);
+  console.log("📦 Product List:", productList);
 
   const totTxVal = Number(productList.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0).toFixed(2));
   const totIgst = Number(productList.reduce((sum, item) => sum + Number(item.igstAmount || 0), 0).toFixed(2));
@@ -591,37 +591,37 @@ console.log("📦 Product List:", productList);
   const totSgst = Number(productList.reduce((sum, item) => sum + Number(item.sgstAmount || 0), 0).toFixed(2));
   const totalInvVal = totTxVal + totIgst + totCgst + totSgst;
 
-const formatDate = (dateInput) => {
-  if (!dateInput) return "";
+  const formatDate = (dateInput) => {
+    if (!dateInput) return "";
 
-  // 1. Direct handle for native Date objects
-  if (dateInput instanceof Date) {
-    if (isNaN(dateInput.getTime())) return "";
-    const dd = String(dateInput.getDate()).padStart(2, "0");
-    const mm = String(dateInput.getMonth() + 1).padStart(2, "0");
-    const yyyy = dateInput.getFullYear();
+    // 1. Direct handle for native Date objects
+    if (dateInput instanceof Date) {
+      if (isNaN(dateInput.getTime())) return "";
+      const dd = String(dateInput.getDate()).padStart(2, "0");
+      const mm = String(dateInput.getMonth() + 1).padStart(2, "0");
+      const yyyy = dateInput.getFullYear();
+      return `${dd}-${mm}-${yyyy}`;
+    }
+
+    // 2. Normalize and check string formats
+    const cleanInput = String(dateInput).trim();
+
+    // Matches DD/MM/YYYY or DD-MM-YYYY
+    if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(cleanInput)) {
+      const [dd, mm, yyyy] = cleanInput.split(/[\/\-]/);
+      return `${dd.padStart(2, "0")}-${mm.padStart(2, "0")}-${yyyy}`;
+    }
+
+    // 3. Fallback for ISO strings (e.g., "2025-09-10T00:00:00.000Z")
+    const date = new Date(cleanInput);
+    if (isNaN(date.getTime())) return "";
+
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+
     return `${dd}-${mm}-${yyyy}`;
-  }
-
-  // 2. Normalize and check string formats
-  const cleanInput = String(dateInput).trim();
-
-  // Matches DD/MM/YYYY or DD-MM-YYYY
-  if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(cleanInput)) {
-    const [dd, mm, yyyy] = cleanInput.split(/[\/\-]/);
-    return `${dd.padStart(2, "0")}-${mm.padStart(2, "0")}-${yyyy}`;
-  }
-
-  // 3. Fallback for ISO strings (e.g., "2025-09-10T00:00:00.000Z")
-  const date = new Date(cleanInput);
-  if (isNaN(date.getTime())) return "";
-
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yyyy = date.getFullYear();
-
-  return `${dd}-${mm}-${yyyy}`;
-};
+  };
 
   return {
     id: refid01,
@@ -643,15 +643,15 @@ const formatDate = (dateInput) => {
     // ================= SELLER =================
     sgstin: sellerGstin,
     strdNm: inv?.company_Name || null,
-    slglNm: inv?.company_Name  || null,
-    sbnm: inv?.company_Name  || null,
+    slglNm: inv?.company_Name || null,
+    sbnm: inv?.company_Name || null,
     sflno: null,
     sloc: inv?.companyBranches?.officeAddress || null,
-    sdst: inv?.company_State|| null,
+    sdst: inv?.company_State || null,
     sstcd: sellerStateCode,
     spin: inv?.companyBranches?.pinCode || inv?.companyBranches?.poBoxCode || null,
     sph: inv?.companyBranches?.mobile || null,
-    sem: inv?.companyBranches?.email|| null,
+    sem: inv?.companyBranches?.email || null,
 
     // ================= BUYER =================
     bgstin: buyerGstin,
@@ -740,7 +740,7 @@ const formatDate = (dateInput) => {
 
 
 export const EinvoicePDF = ({
- invoiceData,
+  invoiceData,
   irn,
   ackNo,
   ackDate,
@@ -749,7 +749,7 @@ export const EinvoicePDF = ({
   ewayBillDate
 }) => {
   // Safe base64 protocol string formatting for the QR graphic element
-  const qrUri = qrCodeBase64 
+  const qrUri = qrCodeBase64
     ? (qrCodeBase64.startsWith('data:') ? qrCodeBase64 : `data:image/png;base64,${qrCodeBase64}`)
     : null;
 
@@ -768,13 +768,13 @@ export const EinvoicePDF = ({
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.outerBorder}>
-          
+
           {/* TITLE SECTION BANNER */}
           <View style={styles.titleBanner}>
             <Text style={styles.mainTitle}>TAX INVOICE</Text>
             <Text style={styles.subtitle}>Original Invoice Of Recipient</Text>
           </View>
-             {/* ================= GOVT PROTOCOL E-INVOICE SYSTEM METRICS BAR ================= */}
+          {/* ================= GOVT PROTOCOL E-INVOICE SYSTEM METRICS BAR ================= */}
           <View style={[styles.rowFlex, styles.borderTop, styles.borderBottom, styles.pad4, { backgroundColor: '#fdfdfd' }]}>
             <View style={{ width: '82%', flexDirection: 'column', justifyContent: 'center' }}>
               <Text style={styles.textLine}><Text style={styles.bold}>IRN: </Text><Text style={{ fontFamily: 'Courier', fontSize: 7.5 }}>{irn || "-"}</Text></Text>
@@ -785,213 +785,213 @@ export const EinvoicePDF = ({
             </View>
           </View>
 
-       {/* ================= ERP PROFILE MATRIX ================= */}
-<View style={styles.rowFlex}>
+          {/* ================= ERP PROFILE MATRIX ================= */}
+          <View style={styles.rowFlex}>
 
-  {/* Supplier Details */}
-  <View style={[styles.profileLeftBlock, styles.pad6]}>
+            {/* Supplier Details */}
+            <View style={[styles.profileLeftBlock, styles.pad6]}>
 
-    <Text style={styles.companyName}>
-      {invoiceData?.strdNm ||
-        invoiceData?.slglNm ||
-        invoiceData?.sbnm ||
-        "-"}
-    </Text>
+              <Text style={styles.companyName}>
+                {invoiceData?.strdNm ||
+                  invoiceData?.slglNm ||
+                  invoiceData?.sbnm ||
+                  "-"}
+              </Text>
 
-    <Text style={styles.companySub}>
-      {[invoiceData?.sflno, invoiceData?.sloc]
-        .filter(Boolean)
-        .join(", ")}
-    </Text>
+              <Text style={styles.companySub}>
+                {[invoiceData?.sflno, invoiceData?.sloc]
+                  .filter(Boolean)
+                  .join(", ")}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>GSTIN/UIN: </Text>
-      {invoiceData?.sgstin || "-"}
-    </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>GSTIN/UIN: </Text>
+                {invoiceData?.sgstin || "-"}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>State Name: </Text>
-      {invoiceData?.sdst || "-"}
-      {invoiceData?.sstcd
-        ? `, Code: ${invoiceData?.sstcd}`
-        : ""}
-    </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>State Name: </Text>
+                {invoiceData?.sdst || "-"}
+                {invoiceData?.sstcd
+                  ? `, Code: ${invoiceData?.sstcd}`
+                  : ""}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>Email: </Text>
-      {invoiceData?.sem || "-"}
-    </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>Email: </Text>
+                {invoiceData?.sem || "-"}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>Phone: </Text>
-      {invoiceData?.sph || "-"}
-    </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>Phone: </Text>
+                {invoiceData?.sph || "-"}
+              </Text>
 
-  </View>
+            </View>
 
-  {/* Invoice Header Details */}
-  <View style={styles.profileRightGrid}>
+            {/* Invoice Header Details */}
+            <View style={styles.profileRightGrid}>
 
-    <View style={[styles.rowFlex, styles.borderBottom, { height: 32 }]}>
-      <View style={[styles.flexHalf, styles.pad4, styles.borderRight]}>
-        <Text style={styles.labelHeader}>Invoice No.</Text>
-        <Text style={styles.valText}>
-          {invoiceData?.no || "-"}
-        </Text>
-      </View>
+              <View style={[styles.rowFlex, styles.borderBottom, { height: 32 }]}>
+                <View style={[styles.flexHalf, styles.pad4, styles.borderRight]}>
+                  <Text style={styles.labelHeader}>Invoice No.</Text>
+                  <Text style={styles.valText}>
+                    {invoiceData?.no || "-"}
+                  </Text>
+                </View>
 
-      <View style={[styles.flexHalf, styles.pad4]}>
-        <Text style={styles.labelHeader}>Dated</Text>
-        <Text style={styles.valText}>
-          {invoiceData?.dt || "-"}
-        </Text>
-      </View>
-    </View>
+                <View style={[styles.flexHalf, styles.pad4]}>
+                  <Text style={styles.labelHeader}>Dated</Text>
+                  <Text style={styles.valText}>
+                    {invoiceData?.dt || "-"}
+                  </Text>
+                </View>
+              </View>
 
-    <View style={[styles.rowFlex, styles.borderBottom, { height: 32 }]}>
-      <View style={[styles.flexHalf, styles.pad4, styles.borderRight]}>
-        <Text style={styles.labelHeader}>D.C. No.</Text>
-        <Text style={styles.valText}>
-          {invoiceData?.transDocNo || "-"}
-        </Text>
-      </View>
+              <View style={[styles.rowFlex, styles.borderBottom, { height: 32 }]}>
+                <View style={[styles.flexHalf, styles.pad4, styles.borderRight]}>
+                  <Text style={styles.labelHeader}>D.C. No.</Text>
+                  <Text style={styles.valText}>
+                    {invoiceData?.transDocNo || "-"}
+                  </Text>
+                </View>
 
-      <View style={[styles.flexHalf, styles.pad4]}>
-        <Text style={styles.labelHeader}>D.C. Date</Text>
-        <Text style={styles.valText}>
-          {invoiceData?.transDocDate || "-"}
-        </Text>
-      </View>
-    </View>
+                <View style={[styles.flexHalf, styles.pad4]}>
+                  <Text style={styles.labelHeader}>D.C. Date</Text>
+                  <Text style={styles.valText}>
+                    {invoiceData?.transDocDate || "-"}
+                  </Text>
+                </View>
+              </View>
 
-    <View style={[styles.rowFlex, { minHeight: 35 }]}>
+              <View style={[styles.rowFlex, { minHeight: 35 }]}>
 
-      <View style={[styles.flexHalf, styles.pad4, styles.borderRight]}>
-        <Text style={styles.labelHeader}>
-          Purchase Order No.
-        </Text>
+                <View style={[styles.flexHalf, styles.pad4, styles.borderRight]}>
+                  <Text style={styles.labelHeader}>
+                    Purchase Order No.
+                  </Text>
 
-        <Text style={styles.valText}>
-          {invoiceData?.invRefContDtls?.[0]?.poref || "-"}
-        </Text>
-      </View>
+                  <Text style={styles.valText}>
+                    {invoiceData?.invRefContDtls?.[0]?.poref || "-"}
+                  </Text>
+                </View>
 
-      <View style={[styles.flexHalf, styles.pad4]}>
-        <Text style={styles.labelHeader}>
-          Mode/Terms of Payment
-        </Text>
+                <View style={[styles.flexHalf, styles.pad4]}>
+                  <Text style={styles.labelHeader}>
+                    Mode/Terms of Payment
+                  </Text>
 
-        <Text style={styles.valText}>
-          {invoiceData?.modeorTermsOfPayment || "-"}
-        </Text>
-      </View>
+                  <Text style={styles.valText}>
+                    {invoiceData?.modeorTermsOfPayment || "-"}
+                  </Text>
+                </View>
 
-    </View>
+              </View>
 
-  </View>
-</View>
-      
+            </View>
+          </View>
+
           {/* ================= CLIENT PARTY DETAILS ================= */}
-<View style={[styles.rowFlex, styles.borderTop]}>
+          <View style={[styles.rowFlex, styles.borderTop]}>
 
-  {/* Ship To */}
-  <View
-    style={[
-      styles.flexHalf,
-      styles.pad6,
-      styles.borderRight,
-      { minHeight: 85 }
-    ]}
-  >
-    <Text style={styles.sectionHeaderTitle}>
-      Consignee (Ship To):
-    </Text>
+            {/* Ship To */}
+            <View
+              style={[
+                styles.flexHalf,
+                styles.pad6,
+                styles.borderRight,
+                { minHeight: 85 }
+              ]}
+            >
+              <Text style={styles.sectionHeaderTitle}>
+                Consignee (Ship To):
+              </Text>
 
-    <Text style={styles.partyName}>
-      {invoiceData?.totrdNm ||
-        invoiceData?.btrdNm ||
-        "-"}
-    </Text>
+              <Text style={styles.partyName}>
+                {invoiceData?.totrdNm ||
+                  invoiceData?.btrdNm ||
+                  "-"}
+              </Text>
 
-    <Text style={styles.textLine}>
-      {invoiceData?.toloc ||
-        invoiceData?.bloc ||
-        "-"}
-    </Text>
+              <Text style={styles.textLine}>
+                {invoiceData?.toloc ||
+                  invoiceData?.bloc ||
+                  "-"}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>GSTIN/UIN: </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>GSTIN/UIN: </Text>
 
-      {invoiceData?.togstin ||
-        invoiceData?.bgstin ||
-        "-"}
-    </Text>
+                {invoiceData?.togstin ||
+                  invoiceData?.bgstin ||
+                  "-"}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>State Name: </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>State Name: </Text>
 
-      {invoiceData?.tostcd ||
-        invoiceData?.bdst ||
-        "-"}
+                {invoiceData?.tostcd ||
+                  invoiceData?.bdst ||
+                  "-"}
 
-      {invoiceData?.tostcd
-        ? `, Code: ${invoiceData?.tostcd}`
-        : ""}
-    </Text>
+                {invoiceData?.tostcd
+                  ? `, Code: ${invoiceData?.tostcd}`
+                  : ""}
+              </Text>
 
-  </View>
+            </View>
 
-  {/* Bill To */}
-  <View
-    style={[
-      styles.flexHalf,
-      styles.pad6,
-      { minHeight: 85 }
-    ]}
-  >
-    <Text style={styles.sectionHeaderTitle}>
-      Buyer (Bill To / if other than consignee):
-    </Text>
+            {/* Bill To */}
+            <View
+              style={[
+                styles.flexHalf,
+                styles.pad6,
+                { minHeight: 85 }
+              ]}
+            >
+              <Text style={styles.sectionHeaderTitle}>
+                Buyer (Bill To / if other than consignee):
+              </Text>
 
-    <Text style={styles.partyName}>
-      {invoiceData?.btrdNm ||
-        invoiceData?.blglNm ||
-        invoiceData?.bbnm ||
-        "-"}
-    </Text>
+              <Text style={styles.partyName}>
+                {invoiceData?.btrdNm ||
+                  invoiceData?.blglNm ||
+                  invoiceData?.bbnm ||
+                  "-"}
+              </Text>
 
-    <Text style={styles.textLine}>
-      {[invoiceData?.bflno, invoiceData?.bloc]
-        .filter(Boolean)
-        .join(", ")}
-    </Text>
+              <Text style={styles.textLine}>
+                {[invoiceData?.bflno, invoiceData?.bloc]
+                  .filter(Boolean)
+                  .join(", ")}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>GSTIN/UIN: </Text>
-      {invoiceData?.bgstin || "-"}
-    </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>GSTIN/UIN: </Text>
+                {invoiceData?.bgstin || "-"}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>State Name: </Text>
-      {invoiceData?.bdst || "-"}
-      {invoiceData?.bstcd
-        ? `, Code: ${invoiceData?.bstcd}`
-        : ""}
-    </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>State Name: </Text>
+                {invoiceData?.bdst || "-"}
+                {invoiceData?.bstcd
+                  ? `, Code: ${invoiceData?.bstcd}`
+                  : ""}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>Email: </Text>
-      {invoiceData?.bem || "-"}
-    </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>Email: </Text>
+                {invoiceData?.bem || "-"}
+              </Text>
 
-    <Text style={styles.textLine}>
-      <Text style={styles.bold}>Phone: </Text>
-      {invoiceData?.bph || "-"}
-    </Text>
+              <Text style={styles.textLine}>
+                <Text style={styles.bold}>Phone: </Text>
+                {invoiceData?.bph || "-"}
+              </Text>
 
-  </View>
-    </View>
-       
+            </View>
+          </View>
+
 
           {/* ================= GOODS LINE ITEMS ACCOUNTING TABLE ================= */}
           <View style={styles.tableContainer}>
@@ -1115,7 +1115,7 @@ export const EinvoicePDF = ({
             <View style={[styles.rowFlex, styles.pad4]}>
               <Text style={{ marginRight: 25 }}><Text style={styles.bold}>Eway Bill No: </Text>{ewayBillNo || "-"}</Text>
               <Text style={{ marginRight: 25 }}><Text style={styles.bold}>Eway Bill Date: </Text>{ewayBillDate || "-"}</Text>
-              <Text><Text style={styles.bold}>Vehicle No: </Text>{invoiceData?.vehicleNo ||invoiceData?.vehNo || "-"}</Text>
+              <Text><Text style={styles.bold}>Vehicle No: </Text>{invoiceData?.vehicleNo || invoiceData?.vehNo || "-"}</Text>
             </View>
           </View>
 
@@ -1128,8 +1128,8 @@ export const EinvoicePDF = ({
             </View>
             <View style={[styles.flexHalf, styles.pad6, { alignItems: 'center', justifyContent: 'space-between' }]}>
               <Text style={{ fontSize: 8, fontWeight: 'bold' }}>For {invoiceData?.strdNm ||
-     invoiceData?.slglNm ||
-     "SWASTIK MACHINERY CORPORATION"}</Text>
+                invoiceData?.slglNm ||
+                "SWASTIK MACHINERY CORPORATION"}</Text>
               <Text style={{ fontSize: 8, color: '#444' }}>Authorised Signatory</Text>
             </View>
           </View>
@@ -1141,8 +1141,8 @@ export const EinvoicePDF = ({
 };
 
 export const GenerateAndPrintEinvoice = () => {
-const { token, companyId } = useAuth();
-const { setLastInvoice } = useAuth();
+  const { token, companyId } = useAuth();
+  const { setLastInvoice } = useAuth();
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [template, setTemplate] = useState("STANDARD");
@@ -1154,46 +1154,46 @@ const { setLastInvoice } = useAuth();
   const location = useLocation();
   const [manualInvoiceId, setManualInvoiceId] = useState("");
   const receivedData = location.state || {};
-  console.log("received data",receivedData)
+  console.log("received data", receivedData)
   const invoiceData = location.state?.invoiceData || {};
   const invoicenumber = location.state?.invoiceNumber;
   const dynamicId = receivedData.id || location.state?.pid;
   const [connectionType, setConnectionType] = useState(
-      localStorage.getItem("connectionType") || "DEFAULT"
-    );
-  console.log("invoiceData",invoiceData);
+    localStorage.getItem("connectionType") || "DEFAULT"
+  );
+  console.log("invoiceData", invoiceData);
 
-const storedInvoiceCreatedOn =
-  localStorage.getItem("invoicecreatedOn");
+  const storedInvoiceCreatedOn =
+    localStorage.getItem("invoicecreatedOn");
   const refid =
-  localStorage.getItem("refid");
+    localStorage.getItem("refid");
 
-const refid01 = location.state?.refID ||
-  (refid &&
-   refid!== "undefined"
-    ? JSON.parse(refid)
-    : "");
+  const refid01 = location.state?.refID ||
+    (refid &&
+      refid !== "undefined"
+      ? JSON.parse(refid)
+      : "");
 
-    const invoiceCreatedOn =
-  location.state?.invoicecreatedOn ||
-  (storedInvoiceCreatedOn &&
-   storedInvoiceCreatedOn !== "undefined"
-    ? JSON.parse(storedInvoiceCreatedOn)
-    : "");
+  const invoiceCreatedOn =
+    location.state?.invoicecreatedOn ||
+    (storedInvoiceCreatedOn &&
+      storedInvoiceCreatedOn !== "undefined"
+      ? JSON.parse(storedInvoiceCreatedOn)
+      : "");
   const [payload, setPayload] = useState({ itemList: [] });
   const initializedRef = useRef(false);
-const apiPrintData = response?.response || response || {};
+  const apiPrintData = response?.response || response || {};
   const irnValue = apiPrintData.irn || apiPrintData.irnnumber || "";
   const ackNoValue = apiPrintData.ackNo || apiPrintData.ackno || "";
   const rawDate = apiPrintData.ackDt || apiPrintData.ackdate;
-  
-  const formattedPrintDate = rawDate 
+
+  const formattedPrintDate = rawDate
     ? new Date(String(rawDate).replace(" ", "T")).toLocaleString('en-GB', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-      }).replace(',', '')
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }).replace(',', '')
     : "";
-    
+
   const qrCodeBase64 = apiPrintData.qrCode || apiPrintData.einvoiceqrcode || apiPrintData.qrcodeBase64 || apiPrintData.SignedQRCode || "";
 
 
@@ -1297,15 +1297,15 @@ const apiPrintData = response?.response || response || {};
   const handleCategorySelectionChange = (category) => {
     setSelectedCategory(category);
     if (!invoiceData) return;
-    const basePayload = createBasePayload(invoiceData, dynamicId, category,invoiceCreatedOn,refid01);
+    const basePayload = createBasePayload(invoiceData, dynamicId, category, invoiceCreatedOn, refid01);
     setPayload(recalculateTotals(basePayload));
   };
 
   useEffect(() => {
     if (!invoiceData) return;
-    
+
     if (!initializedRef.current) {
-      const basePayload = createBasePayload(invoiceData, dynamicId, selectedCategory,invoiceCreatedOn,refid01);
+      const basePayload = createBasePayload(invoiceData, dynamicId, selectedCategory, invoiceCreatedOn, refid01);
       setPayload(recalculateTotals(basePayload));
       initializedRef.current = true;
     }
@@ -1356,569 +1356,575 @@ const apiPrintData = response?.response || response || {};
       return recalculateTotals({ ...prev, itemList: filtered });
     });
   };
-const storeEinv = (apiResponse) => {
-  if (!apiResponse?.id || !payload?.no) return;
+  const storeEinv = (apiResponse) => {
+    if (!apiResponse?.id || !payload?.no) return;
 
-  const entry = {
-    docNo: String(payload.no).trim(),
-    einvId: String(apiResponse.id),
-    createdAt: new Date().toISOString(),
-  };
-
-  const existing =
-    JSON.parse(localStorage.getItem(EINV_DOC_KEY)) || [];
-
-  const filtered = existing.filter(
-    (e) =>
-      e.docNo !== entry.docNo &&
-      e.einvId !== entry.einvId
-  );
-
-  localStorage.setItem(
-    EINV_DOC_KEY,
-    JSON.stringify([...filtered, entry])
-  );
-};
-
-const saveResponseForAutoPopulate = (data) => {
-  if (!data?.response) return;
-
-  const responseData = data.response;
-
-  try {
-    // ID
-    if (responseData.id) {
-      localStorage.setItem(
-        LAST_GENERATED_ID_KEY,
-        String(responseData.id)
-      );
-    }
-
-    // IRN
-    localStorage.setItem(
-      LAST_IRN_KEY,
-      JSON.stringify({
-        irn: responseData.irn,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    // QR
-    if (responseData.signedQrCode) {
-      localStorage.setItem(
-        LAST_SIGNED_QR_JWT_KEY,
-        responseData.signedQrCode
-      );
-    }
-
-    // EWB
-    localStorage.setItem(
-      LAST_EWB_DETAILS_KEY,
-      JSON.stringify({
-        ewbNo: responseData.ewbNo || "",
-        ewbDate: responseData.ewbDate || "",
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    // DOC
-    localStorage.setItem(
-      LAST_DOC_DETAILS_KEY,
-      JSON.stringify({
-        docNum: payload.no?.trim(),
-        docDate: payload.dt?.trim(),
-        docType: payload.docType,
-        timestamp: new Date().toISOString(),
-      })
-    );
-
-    // FULL RESPONSE (single source of truth)
-    localStorage.setItem(
-      STORAGE_KEY2,
-      JSON.stringify({
-        ...responseData,
-        userGstin: payload.userGstin,
-        timestamp: new Date().toISOString(),
-      })
-    );
-  } catch (e) {
-    console.error("Failed to save response:", e);
-  }
-
-  // AUTH sync (sessionStorage only)
-  try {
-    const { token, companyId } = getAuthData();
-
-    sessionStorage.setItem(
-      "iris_einvoice_session",
-      JSON.stringify({ token, companyId })
-    );
-  } catch (e) {
-    console.error("Auth sync failed:", e);
-  }
-
-  if (typeof setLastInvoice === "function") {
-    setLastInvoice(
-      responseData.irn,
-      payload.userGstin,
-      payload.no,
-      payload.dt,
-      payload.docType
-    );
-  }
-};
-
-const getAuthData = () => {
-  try {
-    const auth = JSON.parse(
-      sessionStorage.getItem("iris_einvoice_session") || "{}"
-    );
-    return {
-      token: auth.token || "",
-      companyId: auth.companyId || "24",
+    const entry = {
+      docNo: String(payload.no).trim(),
+      einvId: String(apiResponse.id),
+      createdAt: new Date().toISOString(),
     };
-  } catch (e) {
-    return { token: "", companyId: "24" };
-  }
-};
 
- const handleGenerate = async () => {
-  setShowPdf(false);
-   //const { token, companyid } = useAuth(); // ✅ SESSION STORAGE
-  console.log("tokenvalue",token)
-  console.log("companyIdvalue",companyId)
-  if (!token) {
-    alert("Login required!");
-    return;
-  }
-  setLoading(true);
-  setResponse(null);
+    const existing =
+      JSON.parse(localStorage.getItem(EINV_DOC_KEY)) || [];
 
-  try {
-   const finalPayload = recalculateTotals({
-  ...payload,
-  genewb: genEwb,
-});
-
-    const res = await fetch(
-      "https://einvoice.fcssoftwares.com/api/gst/einvoice/generate-irn",
-      // Api for local node.js is  http://localhost:3001/proxy/irn/addInvoice
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Auth-Token": token,
-          companyId: companyId,
-          "ConnectionType": connectionType,
-          product: "ONYX",
-        },
-        body: JSON.stringify(finalPayload),
-      }
+    const filtered = existing.filter(
+      (e) =>
+        e.docNo !== entry.docNo &&
+        e.einvId !== entry.einvId
     );
 
-    const data = await res.json();
-    setResponse(data);
-
-    const generatedId =
-      data?.response?.id ||
-      data?.response?.Id ||
-      data?.response?.irn ||
-      data?.response?.invoiceId;
-
-    if (generatedId) setLastGeneratedId(generatedId);
-if (data?.status === "SUCCESS" && data?.response?.irn) {
-
-  saveResponseForAutoPopulate(data);
-  storeEinv(data.response);
-  sessionStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
-
-  // Automatically save generated IRN details to DB
-  const saved = await handleSaveToDB(data);
-
-  if (saved) {
-    console.log("Invoice synced to DB successfully.");
-  }
-}
-
-  }  finally {
-    setLoading(false);
-  }
-};
-
-console.log("invoicenumber",invoiceData?.invoiceNumber)
-console.log("invoicecreatedon", invoiceCreatedOn)
-
-const handleSaveToDB = async (generatedResponse = response) => {
-  if (!generatedResponse) {
-    alert("No data available to save.");
-    return false;
-  }
-
-  const apiData = generatedResponse.response || generatedResponse;
-
-  // 🌟 Define your dynamic ID lookup
-  const dynamicId = receivedData?.id || location.state?.pid;
-
-  const putPayload = {
-    // 🌟 Assign dynamicId here, falling back to apiData or payload id if needed, normalized as a Number
-    id: Number(dynamicId || apiData.id || payload.id) || 0,
-    
-    eWayBillNumber: String(apiData.eWayBillNumber || apiData.EwbNo || ""),
-    irnnumber: apiData.irnnumber || apiData.irn || "",
-    ackno: String(apiData.ackNo || apiData.ackno || ""),
-    ackdate: apiData.ackdate || apiData.ackDt 
-      ? new Date(apiData.ackdate || apiData.ackDt).toISOString() 
-      : new Date().toISOString(),
-    einvoiceqrcode: apiData.einvoiceqrcode || apiData.qrCode || ""
+    localStorage.setItem(
+      EINV_DOC_KEY,
+      JSON.stringify([...filtered, entry])
+    );
   };
 
+  const saveResponseForAutoPopulate = (data) => {
+    if (!data?.response) return;
 
-  try {
-    setLoading(true);
+    const responseData = data.response;
 
-    const res = await fetch("https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "ConnectionType": connectionType || "Online", 
-        ...(token && { "Authorization": `Bearer ${token}` })
-      },
-      body: JSON.stringify(putPayload),
-    });
-   if (res.ok) {
-  const data = await res.json();
-  console.log("Database updated successfully:", data);
-
-  alert(
-    `✅ IRN Generated Successfully!\n\n` +
-    `🎉 Invoice updated in DB successfully!`
-  );
-
-  return true;
-}   
-  } catch (error) {
-  console.error("Database Save Error:", error);
-
-  alert(
-    `⚠ IRN generated successfully, but DB update failed.\n\n${error.message}`
-  );
-
-  return false;
-}
-};
-
- 
-  /// downloading the pdf of invoice with respect to last generated id of invoice
- const downloadPDF = async () => {
-  // If no invoice was generated yet, use the local form ID payload as sandbox template baseline
-const finalInvoiceId =
-  manualInvoiceId.trim() ||
-  lastGeneratedId ||
-  response?.response?.id ||
-  response?.response?.Id ||
-  payload?.id ||
-  "1001";
-
-  try {
-    setPdfMessage("Processing PDF download...");
-
-    // API URL
-    const url = `https://einvoice.fcssoftwares.com/api/gst/einvoice/print?id=${finalInvoiceId}`;
-
-    const resp = await axios.get(url, {
-      headers: {
-        "X-Auth-Token": token,
-        companyId: companyId,
-        product: "ONYX",
-      "ConnectionType": connectionType || "Online"
-      },
-      responseType: "blob",
-    });
-
-    // Create blob URL for download
-    const blobUrl = window.URL.createObjectURL(
-      new Blob([resp.data], { type: "application/pdf" })
-    );
-
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.setAttribute("download", `EInvoice_${finalInvoiceId}.pdf`);
-
-    document.body.appendChild(link);
-    link.click();
-
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
-
-    setPdfMessage("✅ PDF downloaded successfully.");
-  } catch (error) {
-    console.error(error);
-    setPdfMessage("❌ Failed to download PDF.");
-  }
-};
-
-return (
-  <div style={tableStyles.container}>
-    <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
-    
-    <div style={{ marginBottom: "15px", display: "flex", alignItems: "center", gap: "10px" }}>
-      <label style={{ fontSize: "13px" }}><strong>Generate E-Way Bill:</strong></label>
-      <select
-        value={genEwb}
-        onChange={(e) => setGenEwb(e.target.value)}
-        style={{ ...tableStyles.select, width: "100px", padding: "4px 8px", height: "28px" }}
-      >
-        <option value="Y">Yes</option>
-        <option value="N">No</option>
-      </select>
-    </div>
-
-    {/* ==================== META CONFIGURATION ==================== */}
-    <table style={{ ...tableStyles.table, marginBottom: "15px" }}>
-      <thead>
-        <tr><th colSpan={4} style={{ ...tableStyles.th, padding: "6px" }}>Document Meta Configuration</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style={tableStyles.td}>
-            <LabeledSelect label="Invoice Scenario Category" value={selectedCategory} options={["B2B", "B2C", "EXP"]} onChange={handleCategorySelectionChange} />
-          </td>
-          <td style={tableStyles.td}>
-            <LabeledSelect label="Transaction Type" value={payload.trnTyp || "REG"} options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]} onChange={(v) => setField("trnTyp", v)} />
-          </td>
-          <td style={tableStyles.td}><LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} /></td>
-        </tr>
-        <tr>
-          <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} onChange={(v) => setField("no", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
-          <td style={tableStyles.td}>
-            <LabeledSelect label="Supply Type" value={payload.supplyType || "O"} options={["O", "E"]} onChange={(v) => setField("supplyType", v)} />
-          </td>
-          <td style={tableStyles.td}>
-            <LabeledSelect label="Nature" value={payload.ntr || "Inter"} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} />
-          </td>
-        </tr>
-        <tr>
-          <td style={tableStyles.td}><LabeledInput label="Place of Supply (POS)" value={payload.pos} onChange={(v) => setField("pos", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Financial Year" value={payload.fy} onChange={(v) => setField("fy", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="Reverse Charge" value={payload.rchrg} onChange={(v) => setField("rchrg", v)} /></td>
-          <td style={tableStyles.td}><LabeledInput label="ID / Ref ID" value={payload.id} onChange={(v) => setField("id", v)} /></td>
-        </tr>
-      </tbody>
-    </table>
-
-    {/* ==================== SELLER & BUYER INFORMATION ==================== */}
-    <div style={{ ...tableStyles.twoColGrid, gap: "15px" }}>
-      <div style={tableStyles.compactSectionCard}>
-        <h3 style={tableStyles.sectionHeader}>Seller Information</h3>
-        <div style={tableStyles.inlineGridFields}>
-          <LabeledInput label="GSTIN" value={payload.sgstin} onChange={(v) => setField("sgstin", v)} />
-          <LabeledInput label="Trade Name" value={payload.strdNm} onChange={(v) => setField("strdNm", v)} />
-          <LabeledInput label="Legal Name" value={payload.slglNm} onChange={(v) => setField("slglNm", v)} />
-          <LabeledInput label="Building Name" value={payload.sbnm} onChange={(v) => setField("sbnm", v)} />
-          <LabeledInput label="Floor No" value={payload.sflno} onChange={(v) => setField("sflno", v)} />
-          <LabeledInput label="Location" value={payload.sloc} onChange={(v) => setField("sloc", v)} />
-          <LabeledInput label="State" value={payload.sdst} onChange={(v) => setField("sdst", v)} />
-          <LabeledInput label="State Code" value={payload.sstcd} onChange={(v) => setField("sstcd", v)} />
-          <LabeledInput label="Pincode" value={payload.spin} onChange={(v) => setField("spin", v)} />
-          <LabeledInput label="Phone" value={payload.sph} onChange={(v) => setField("sph", v)} />
-          <LabeledInput label="Email" value={payload.sem} onChange={(v) => setField("sem", v)} />
-        </div>
-      </div>
-      
-      <div style={tableStyles.compactSectionCard}>
-        <h3 style={tableStyles.sectionHeader}>Buyer Information</h3>
-        <div style={tableStyles.inlineGridFields}>
-          <LabeledInput label="GSTIN" value={payload.bgstin} onChange={(v) => setField("bgstin", v)} />
-          <LabeledInput label="Trade Name" value={payload.btrdNm} onChange={(v) => setField("btrdNm", v)} />
-          <LabeledInput label="Legal Name" value={payload.blglNm} onChange={(v) => setField("blglNm", v)} />
-          <LabeledInput label="Building Name" value={payload.bbnm} onChange={(v) => setField("bbnm", v)} />
-          <LabeledInput label="Floor No" value={payload.bflno} onChange={(v) => setField("bflno", v)} />
-          <LabeledInput label="Location" value={payload.bloc} onChange={(v) => setField("bloc", v)} />
-          <LabeledInput label="State" value={payload.bdst} onChange={(v) => setField("bdst", v)} />
-          <LabeledInput label="State Code" value={payload.bstcd} onChange={(v) => setField("bstcd", v)} />
-          <LabeledInput label="Pincode" value={payload.bpin} onChange={(v) => setField("bpin", v)} />
-          <LabeledInput label="Phone" value={payload.bph} onChange={(v) => setField("bph", v)} />
-          <LabeledInput label="Email" value={payload.bem} onChange={(v) => setField("bem", v)} />
-        </div>
-      </div>
-    </div>
-
-    {/* ==================== DISPATCH & SHIP TO ==================== */}
-    <div style={{ ...tableStyles.twoColGrid, marginTop: "15px", gap: "15px" }}>
-      <div style={tableStyles.compactSectionCard}>
-        <h3 style={tableStyles.sectionHeader}>Dispatch From</h3>
-        <div style={tableStyles.inlineGridFields}>
-          <LabeledInput label="GSTIN" value={payload.dgstin} onChange={(v) => setField("dgstin", v)} />
-          <LabeledInput label="Trade Name" value={payload.dtrdNm} onChange={(v) => setField("dtrdNm", v)} />
-          <LabeledInput label="Legal Name" value={payload.dlglNm} onChange={(v) => setField("dlglNm", v)} />
-          <LabeledInput label="Building Name" value={payload.dbnm} onChange={(v) => setField("dbnm", v)} />
-          <LabeledInput label="Location" value={payload.dloc} onChange={(v) => setField("dloc", v)} />
-          <LabeledInput label="State Code" value={payload.dstcd} onChange={(v) => setField("dstcd", v)} />
-          <LabeledInput label="Pincode" value={payload.dpin} onChange={(v) => setField("dpin", v)} />
-        </div>
-      </div>
-      <div style={tableStyles.compactSectionCard}>
-        <h3 style={tableStyles.sectionHeader}>Ship To</h3>
-        <div style={tableStyles.inlineGridFields}>
-          <LabeledInput label="GSTIN" value={payload.togstin} onChange={(v) => setField("togstin", v)} />
-          <LabeledInput label="Trade Name" value={payload.totrdNm} onChange={(v) => setField("totrdNm", v)} />
-          <LabeledInput label="Legal Name" value={payload.tolglNm} onChange={(v) => setField("tolglNm", v)} />
-          <LabeledInput label="Building Name" value={payload.tobnm} onChange={(v) => setField("tobnm", v)} />
-          <LabeledInput label="Location" value={payload.toloc} onChange={(v) => setField("toloc", v)} />
-          <LabeledInput label="State Code" value={payload.tostcd} onChange={(v) => setField("tostcd", v)} />
-          <LabeledInput label="Pincode" value={payload.topin} onChange={(v) => setField("topin", v)} />
-        </div>
-      </div>
-    </div>
-
-    {/* ==================== TRANSPORT DETAILS ==================== */}
-    {genEwb === "Y" && (
-      <div style={{ ...tableStyles.twoColGrid, marginTop: "15px", gap: "15px" }}>
-        <div style={tableStyles.compactSectionCard}>
-          <h3 style={tableStyles.sectionHeader}>Transport Details</h3>
-          <div style={tableStyles.inlineGridFields}>
-            <LabeledInput label="Supply Type" value={payload.subSplyTyp} onChange={(v) => setField("subSplyTyp", v)} />
-            <LabeledInput label="Transporter ID" value={payload.transId} onChange={(v) => setField("transId", v)} />
-            <LabeledInput label="Transport Mode" value={payload.transMode} onChange={(v) => setField("transMode", v)} />
-            <LabeledInput label="Transport Distance" value={payload.transDist} onChange={(v) => setField("transDist", v)} />
-            <LabeledInput label="Transporter Name" value={payload.transName} onChange={(v) => setField("transName", v)} />
-          </div>
-        </div>
-
-        <div style={tableStyles.compactSectionCard}>
-          <h3 style={tableStyles.sectionHeader}>Document & Vehicle Details</h3>
-          <div style={tableStyles.inlineGridFields}>
-            <LabeledInput label="Trans Doc No" value={payload.transDocNo} onChange={(v) => setField("transDocNo", v)} />
-            <LabeledInput label="Trans Doc Date" value={payload.transDocDate} onChange={(v) => setField("transDocDate", v)} />
-            <LabeledInput label="Vehicle No" value={payload.vehNo} onChange={(v) => setField("vehNo", v)} />
-            <LabeledInput label="Vehicle Type" value={payload.vehTyp} onChange={(v) => setField("vehTyp", v)} />
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* ==================== ITEM MANAGEMENT ==================== */}
-    <div style={{ marginTop: "20px" }}>
-      {payload.itemList?.map((item, idx) => (
-        <div key={idx} style={{ ...tableStyles.itemCard, padding: "12px", marginBottom: "10px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginBottom: "8px" }}>
-            <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
-            <LabeledInput label="Product Description" value={item.prdDesc} onChange={(v) => updateItem(idx, "prdDesc", v)} />
-            <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
-            <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
-            <LabeledInput label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
-          </div>
-
-          <div style={{ fontSize: "11px", color: "#666", background: "#f1f3f4", padding: "4px 8px", borderRadius: "4px" }}>
-            Calculated Breakdown: CGST: ₹{item.camt || 0} | SGST: ₹{item.samt || 0} | IGST: ₹{item.iamt || 0}
-          </div>
-        </div>
-      ))}
-    </div>
-
-    {/* ==================== TOTALS BREAKDOWN ==================== */}
-    <div style={{ margin: "15px 0", background: "#fff", padding: "12px", borderRadius: "6px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #eee" }}>
-      <h3 style={{ ...tableStyles.sectionHeader, marginBottom: "8px" }}>Consolidated Invoice Aggregations</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px", fontSize: "12px" }}>
-        <div><strong>Taxable:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.tottxval || 0}</p></div>
-        <div><strong>CGST:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.totcamt || 0}</p></div>
-        <div><strong>SGST:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.totsamt || 0}</p></div>
-        <div><strong>IGST:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.totiamt || 0}</p></div>
-        <div><strong>Net Gross Value:</strong> <p style={{ color: colors?.primary || "#000", fontWeight: "bold", margin: "2px 0 0" }}>₹{payload.totinvval || 0}</p></div>
-      </div>
-    </div>
-    
-
-   {/* ==================== ACTION CONSOLE ==================== */}
-    <div style={{ marginTop: "20px", padding: "15px", background: "#fff", borderRadius: "6px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-      <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "12px", flexWrap: "wrap" }}>
-        
-        {/* Button 1: Generate Invoice */}
-        <button 
-          style={{ ...tableStyles.btnGenerate(loading, token), padding: "8px 16px", fontSize: "13px" }} 
-          onClick={handleGenerate}
-          disabled={loading || !token}
-        >
-          {loading ? "Registering Invoice Core..." : "🚀 Generate IRN / E-Invoice"}
-        </button>
-
-        {/* Button 3: Instant PDF Generation and Download */}
-     {/* Button 3: Instant PDF Generation and Download */}
-    {/* Button 3: Instant PDF Generation and Download */}
-{response && (irnValue || response.status === "SUCCESS") && (
-  <PDFDownloadLink
-    document={
-      <EinvoicePDF
-        // 🌟 Bind directly to the active live frontend state
-        invoiceData={payload} 
-        irn={irnValue}
-        ackNo={ackNoValue}
-        ackDate={formattedPrintDate}
-        qrCodeBase64={qrCodeBase64}
-        
-        // 🌟 Pass E-Way Bill metrics down as explicit props
-        ewayBillNo={response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo || "-"}
-        ewayBillDate={
-          response.ewayBillDate || response?.response?.ewbDt 
-            ? new Date(response.ewayBillDate || response?.response?.ewbDt).toLocaleDateString() 
-            : "-"
-        }
-      />
-    }
-    fileName={`E-Invoice_${ackNoValue || 'Document'}.pdf`}
-    style={{ textDecoration: 'none' }}
-  >
-    {({ blob, url, loading: pdfLoading, error }) => {
-      if (error) {
-        console.error("PDF Compilation Error:", error);
-        return (
-          <button
-            style={{
-              padding: "8px 16px",
-              fontSize: "13px",
-              backgroundColor: "#ff4d4f",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "not-allowed",
-              fontWeight: "500"
-            }}
-            disabled
-          >
-            ❌ PDF Generation Failed
-          </button>
+    try {
+      // ID
+      if (responseData.id) {
+        localStorage.setItem(
+          LAST_GENERATED_ID_KEY,
+          String(responseData.id)
         );
       }
 
-      return (
-        <button
-          style={{
-            padding: "8px 16px",
-            fontSize: "13px",
-            backgroundColor: pdfLoading ? "#d9d9d9" : "#722ed1",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: pdfLoading ? "not-allowed" : "pointer",
-            fontWeight: "500",
-            transition: "all 0.3s ease"
-          }}
-          disabled={pdfLoading}
-        >
-          {pdfLoading ? (
-            <span>⏳ Compiling Data ({payload.itemList?.length || 0} Items)...</span>
-          ) : (
-            <span>📥 Download E-Invoice PDF</span>
-          )}
-        </button>
+      // IRN
+      localStorage.setItem(
+        LAST_IRN_KEY,
+        JSON.stringify({
+          irn: responseData.irn,
+          timestamp: new Date().toISOString(),
+        })
       );
-    }}
-  </PDFDownloadLink>
-)}
+
+      // QR
+      if (responseData.signedQrCode) {
+        localStorage.setItem(
+          LAST_SIGNED_QR_JWT_KEY,
+          responseData.signedQrCode
+        );
+      }
+
+      // EWB
+      localStorage.setItem(
+        LAST_EWB_DETAILS_KEY,
+        JSON.stringify({
+          ewbNo: responseData.ewbNo || "",
+          ewbDate: responseData.ewbDate || "",
+          timestamp: new Date().toISOString(),
+        })
+      );
+
+      // DOC
+      localStorage.setItem(
+        LAST_DOC_DETAILS_KEY,
+        JSON.stringify({
+          docNum: payload.no?.trim(),
+          docDate: payload.dt?.trim(),
+          docType: payload.docType,
+          timestamp: new Date().toISOString(),
+        })
+      );
+
+      // FULL RESPONSE (single source of truth)
+      localStorage.setItem(
+        STORAGE_KEY2,
+        JSON.stringify({
+          ...responseData,
+          userGstin: payload.userGstin,
+          timestamp: new Date().toISOString(),
+        })
+      );
+    } catch (e) {
+      console.error("Failed to save response:", e);
+    }
+
+    // AUTH sync (sessionStorage only)
+    try {
+      const { token, companyId } = getAuthData();
+
+      sessionStorage.setItem(
+        "iris_einvoice_session",
+        JSON.stringify({ token, companyId })
+      );
+    } catch (e) {
+      console.error("Auth sync failed:", e);
+    }
+
+    if (typeof setLastInvoice === "function") {
+      setLastInvoice(
+        responseData.irn,
+        payload.userGstin,
+        payload.no,
+        payload.dt,
+        payload.docType
+      );
+    }
+  };
+
+  const getAuthData = () => {
+    try {
+      const auth = JSON.parse(
+        sessionStorage.getItem("iris_einvoice_session") || "{}"
+      );
+      return {
+        token: auth.token || "",
+        companyId: auth.companyId || "24",
+      };
+    } catch (e) {
+      return { token: "", companyId: "24" };
+    }
+  };
+
+  const handleGenerate = async () => {
+    setShowPdf(false);
+    //const { token, companyid } = useAuth(); // ✅ SESSION STORAGE
+    console.log("tokenvalue", token)
+    console.log("companyIdvalue", companyId)
+    if (!token) {
+      alert("Login required!");
+      return;
+    }
+    setLoading(true);
+    setResponse(null);
+
+    try {
+      const finalPayload = recalculateTotals({
+        ...payload,
+        genewb: genEwb,
+      });
+
+      const res = await fetch(
+        "https://einvoice.fcssoftwares.com/api/gst/einvoice/generate-irn",
+        // Api for local node.js is  http://localhost:3001/proxy/irn/addInvoice
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Auth-Token": token,
+            companyId: companyId,
+            "ConnectionType": connectionType,
+            product: "ONYX",
+          },
+          body: JSON.stringify(finalPayload),
+        }
+      );
+
+      const data = await res.json();
+      setResponse(data);
+
+      const generatedId =
+        data?.response?.id ||
+        data?.response?.Id ||
+        data?.response?.irn ||
+        data?.response?.invoiceId;
+
+      if (generatedId) setLastGeneratedId(generatedId);
+      if (data?.status === "SUCCESS" && data?.response?.irn) {
+
+        saveResponseForAutoPopulate(data);
+        storeEinv(data.response);
+        sessionStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
+
+        // Automatically save generated IRN details to DB
+        const saved = await handleSaveToDB(data);
+
+        if (saved) {
+          console.log("Invoice synced to DB successfully.");
+        }
+      }
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  console.log("invoicenumber", invoiceData?.invoiceNumber)
+  console.log("invoicecreatedon", invoiceCreatedOn)
+
+  const handleSaveToDB = async (generatedResponse = response) => {
+    if (!generatedResponse) {
+      alert("No data available to save.");
+      return false;
+    }
+
+    const apiData = generatedResponse.response || generatedResponse;
+
+    // 🌟 Define your dynamic ID lookup
+    const dynamicId = receivedData?.id || location.state?.pid;
+
+    const invoiceData = JSON.parse(localStorage.getItem("selectedInvoice"));
+    const inv = invoiceData;
+    console.log("KeyID:", inv?.keyID);
+    const putPayload = {
+      // 🌟 Assign dynamicId here, falling back to apiData or payload id if needed, normalized as a Number
+      // id: Number(dynamicId || apiData.id || payload.id) || 0,
+      //this is changed from local storage...
+
+
+      id: inv?.keyID,//Number(dynamicId || apiData.id || payload.id) || 0,
+      eWayBillNumber: String(apiData.eWayBillNumber || apiData.EwbNo || ""),
+      irnnumber: apiData.irnnumber || apiData.irn || "",
+      ackno: String(apiData.ackNo || apiData.ackno || ""),
+      ackdate: apiData.ackdate || apiData.ackDt
+        ? new Date(apiData.ackdate || apiData.ackDt).toISOString()
+        : new Date().toISOString(),
+      einvoiceqrcode: apiData.einvoiceqrcode || apiData.qrCode || ""
+    };
+
+
+    try {
+      setLoading(true);
+
+      const res = await fetch("https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "ConnectionType": connectionType || "Online",
+          ...(token && { "Authorization": `Bearer ${token}` })
+        },
+        body: JSON.stringify(putPayload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Database updated successfully:", data);
+
+        alert(
+          `✅ IRN Generated Successfully!\n\n` +
+          `🎉 Invoice updated in DB successfully!`
+        );
+
+        return true;
+      }
+    } catch (error) {
+      console.error("Database Save Error:", error);
+
+      alert(
+        `⚠ IRN generated successfully, but DB update failed.\n\n${error.message}`
+      );
+
+      return false;
+    }
+  };
+
+
+  /// downloading the pdf of invoice with respect to last generated id of invoice
+  const downloadPDF = async () => {
+    // If no invoice was generated yet, use the local form ID payload as sandbox template baseline
+    const finalInvoiceId =
+      manualInvoiceId.trim() ||
+      lastGeneratedId ||
+      response?.response?.id ||
+      response?.response?.Id ||
+      payload?.id ||
+      "1001";
+
+    try {
+      setPdfMessage("Processing PDF download...");
+
+      // API URL
+      const url = `https://einvoice.fcssoftwares.com/api/gst/einvoice/print?id=${finalInvoiceId}`;
+
+      const resp = await axios.get(url, {
+        headers: {
+          "X-Auth-Token": token,
+          companyId: companyId,
+          product: "ONYX",
+          "ConnectionType": connectionType || "Online"
+        },
+        responseType: "blob",
+      });
+
+      // Create blob URL for download
+      const blobUrl = window.URL.createObjectURL(
+        new Blob([resp.data], { type: "application/pdf" })
+      );
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.setAttribute("download", `EInvoice_${finalInvoiceId}.pdf`);
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+
+      setPdfMessage("✅ PDF downloaded successfully.");
+    } catch (error) {
+      console.error(error);
+      setPdfMessage("❌ Failed to download PDF.");
+    }
+  };
+
+  return (
+    <div style={tableStyles.container}>
+      <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
+
+      <div style={{ marginBottom: "15px", display: "flex", alignItems: "center", gap: "10px" }}>
+        <label style={{ fontSize: "13px" }}><strong>Generate E-Way Bill:</strong></label>
+        <select
+          value={genEwb}
+          onChange={(e) => setGenEwb(e.target.value)}
+          style={{ ...tableStyles.select, width: "100px", padding: "4px 8px", height: "28px" }}
+        >
+          <option value="Y">Yes</option>
+          <option value="N">No</option>
+        </select>
       </div>
-    </div>
+
+      {/* ==================== META CONFIGURATION ==================== */}
+      <table style={{ ...tableStyles.table, marginBottom: "15px" }}>
+        <thead>
+          <tr><th colSpan={4} style={{ ...tableStyles.th, padding: "6px" }}>Document Meta Configuration</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={tableStyles.td}>
+              <LabeledSelect label="Invoice Scenario Category" value={selectedCategory} options={["B2B", "B2C", "EXP"]} onChange={handleCategorySelectionChange} />
+            </td>
+            <td style={tableStyles.td}>
+              <LabeledSelect label="Transaction Type" value={payload.trnTyp || "REG"} options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]} onChange={(v) => setField("trnTyp", v)} />
+            </td>
+            <td style={tableStyles.td}><LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} /></td>
+          </tr>
+          <tr>
+            <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} onChange={(v) => setField("no", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
+            <td style={tableStyles.td}>
+              <LabeledSelect label="Supply Type" value={payload.supplyType || "O"} options={["O", "E"]} onChange={(v) => setField("supplyType", v)} />
+            </td>
+            <td style={tableStyles.td}>
+              <LabeledSelect label="Nature" value={payload.ntr || "Inter"} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} />
+            </td>
+          </tr>
+          <tr>
+            <td style={tableStyles.td}><LabeledInput label="Place of Supply (POS)" value={payload.pos} onChange={(v) => setField("pos", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Financial Year" value={payload.fy} onChange={(v) => setField("fy", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Reverse Charge" value={payload.rchrg} onChange={(v) => setField("rchrg", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="ID / Ref ID" value={payload.id} onChange={(v) => setField("id", v)} /></td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* ==================== SELLER & BUYER INFORMATION ==================== */}
+      <div style={{ ...tableStyles.twoColGrid, gap: "15px" }}>
+        <div style={tableStyles.compactSectionCard}>
+          <h3 style={tableStyles.sectionHeader}>Seller Information</h3>
+          <div style={tableStyles.inlineGridFields}>
+            <LabeledInput label="GSTIN" value={payload.sgstin} onChange={(v) => setField("sgstin", v)} />
+            <LabeledInput label="Trade Name" value={payload.strdNm} onChange={(v) => setField("strdNm", v)} />
+            <LabeledInput label="Legal Name" value={payload.slglNm} onChange={(v) => setField("slglNm", v)} />
+            <LabeledInput label="Building Name" value={payload.sbnm} onChange={(v) => setField("sbnm", v)} />
+            <LabeledInput label="Floor No" value={payload.sflno} onChange={(v) => setField("sflno", v)} />
+            <LabeledInput label="Location" value={payload.sloc} onChange={(v) => setField("sloc", v)} />
+            <LabeledInput label="State" value={payload.sdst} onChange={(v) => setField("sdst", v)} />
+            <LabeledInput label="State Code" value={payload.sstcd} onChange={(v) => setField("sstcd", v)} />
+            <LabeledInput label="Pincode" value={payload.spin} onChange={(v) => setField("spin", v)} />
+            <LabeledInput label="Phone" value={payload.sph} onChange={(v) => setField("sph", v)} />
+            <LabeledInput label="Email" value={payload.sem} onChange={(v) => setField("sem", v)} />
+          </div>
+        </div>
+
+        <div style={tableStyles.compactSectionCard}>
+          <h3 style={tableStyles.sectionHeader}>Buyer Information</h3>
+          <div style={tableStyles.inlineGridFields}>
+            <LabeledInput label="GSTIN" value={payload.bgstin} onChange={(v) => setField("bgstin", v)} />
+            <LabeledInput label="Trade Name" value={payload.btrdNm} onChange={(v) => setField("btrdNm", v)} />
+            <LabeledInput label="Legal Name" value={payload.blglNm} onChange={(v) => setField("blglNm", v)} />
+            <LabeledInput label="Building Name" value={payload.bbnm} onChange={(v) => setField("bbnm", v)} />
+            <LabeledInput label="Floor No" value={payload.bflno} onChange={(v) => setField("bflno", v)} />
+            <LabeledInput label="Location" value={payload.bloc} onChange={(v) => setField("bloc", v)} />
+            <LabeledInput label="State" value={payload.bdst} onChange={(v) => setField("bdst", v)} />
+            <LabeledInput label="State Code" value={payload.bstcd} onChange={(v) => setField("bstcd", v)} />
+            <LabeledInput label="Pincode" value={payload.bpin} onChange={(v) => setField("bpin", v)} />
+            <LabeledInput label="Phone" value={payload.bph} onChange={(v) => setField("bph", v)} />
+            <LabeledInput label="Email" value={payload.bem} onChange={(v) => setField("bem", v)} />
+          </div>
+        </div>
+      </div>
+
+      {/* ==================== DISPATCH & SHIP TO ==================== */}
+      <div style={{ ...tableStyles.twoColGrid, marginTop: "15px", gap: "15px" }}>
+        <div style={tableStyles.compactSectionCard}>
+          <h3 style={tableStyles.sectionHeader}>Dispatch From</h3>
+          <div style={tableStyles.inlineGridFields}>
+            <LabeledInput label="GSTIN" value={payload.dgstin} onChange={(v) => setField("dgstin", v)} />
+            <LabeledInput label="Trade Name" value={payload.dtrdNm} onChange={(v) => setField("dtrdNm", v)} />
+            <LabeledInput label="Legal Name" value={payload.dlglNm} onChange={(v) => setField("dlglNm", v)} />
+            <LabeledInput label="Building Name" value={payload.dbnm} onChange={(v) => setField("dbnm", v)} />
+            <LabeledInput label="Location" value={payload.dloc} onChange={(v) => setField("dloc", v)} />
+            <LabeledInput label="State Code" value={payload.dstcd} onChange={(v) => setField("dstcd", v)} />
+            <LabeledInput label="Pincode" value={payload.dpin} onChange={(v) => setField("dpin", v)} />
+          </div>
+        </div>
+        <div style={tableStyles.compactSectionCard}>
+          <h3 style={tableStyles.sectionHeader}>Ship To</h3>
+          <div style={tableStyles.inlineGridFields}>
+            <LabeledInput label="GSTIN" value={payload.togstin} onChange={(v) => setField("togstin", v)} />
+            <LabeledInput label="Trade Name" value={payload.totrdNm} onChange={(v) => setField("totrdNm", v)} />
+            <LabeledInput label="Legal Name" value={payload.tolglNm} onChange={(v) => setField("tolglNm", v)} />
+            <LabeledInput label="Building Name" value={payload.tobnm} onChange={(v) => setField("tobnm", v)} />
+            <LabeledInput label="Location" value={payload.toloc} onChange={(v) => setField("toloc", v)} />
+            <LabeledInput label="State Code" value={payload.tostcd} onChange={(v) => setField("tostcd", v)} />
+            <LabeledInput label="Pincode" value={payload.topin} onChange={(v) => setField("topin", v)} />
+          </div>
+        </div>
+      </div>
+
+      {/* ==================== TRANSPORT DETAILS ==================== */}
+      {genEwb === "Y" && (
+        <div style={{ ...tableStyles.twoColGrid, marginTop: "15px", gap: "15px" }}>
+          <div style={tableStyles.compactSectionCard}>
+            <h3 style={tableStyles.sectionHeader}>Transport Details</h3>
+            <div style={tableStyles.inlineGridFields}>
+              <LabeledInput label="Supply Type" value={payload.subSplyTyp} onChange={(v) => setField("subSplyTyp", v)} />
+              <LabeledInput label="Transporter ID" value={payload.transId} onChange={(v) => setField("transId", v)} />
+              <LabeledInput label="Transport Mode" value={payload.transMode} onChange={(v) => setField("transMode", v)} />
+              <LabeledInput label="Transport Distance" value={payload.transDist} onChange={(v) => setField("transDist", v)} />
+              <LabeledInput label="Transporter Name" value={payload.transName} onChange={(v) => setField("transName", v)} />
+            </div>
+          </div>
+
+          <div style={tableStyles.compactSectionCard}>
+            <h3 style={tableStyles.sectionHeader}>Document & Vehicle Details</h3>
+            <div style={tableStyles.inlineGridFields}>
+              <LabeledInput label="Trans Doc No" value={payload.transDocNo} onChange={(v) => setField("transDocNo", v)} />
+              <LabeledInput label="Trans Doc Date" value={payload.transDocDate} onChange={(v) => setField("transDocDate", v)} />
+              <LabeledInput label="Vehicle No" value={payload.vehNo} onChange={(v) => setField("vehNo", v)} />
+              <LabeledInput label="Vehicle Type" value={payload.vehTyp} onChange={(v) => setField("vehTyp", v)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ITEM MANAGEMENT ==================== */}
+      <div style={{ marginTop: "20px" }}>
+        {payload.itemList?.map((item, idx) => (
+          <div key={idx} style={{ ...tableStyles.itemCard, padding: "12px", marginBottom: "10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginBottom: "8px" }}>
+              <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
+              <LabeledInput label="Product Description" value={item.prdDesc} onChange={(v) => updateItem(idx, "prdDesc", v)} />
+              <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
+              <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
+              <LabeledInput label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />
+            </div>
+
+            <div style={{ fontSize: "11px", color: "#666", background: "#f1f3f4", padding: "4px 8px", borderRadius: "4px" }}>
+              Calculated Breakdown: CGST: ₹{item.camt || 0} | SGST: ₹{item.samt || 0} | IGST: ₹{item.iamt || 0}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ==================== TOTALS BREAKDOWN ==================== */}
+      <div style={{ margin: "15px 0", background: "#fff", padding: "12px", borderRadius: "6px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", border: "1px solid #eee" }}>
+        <h3 style={{ ...tableStyles.sectionHeader, marginBottom: "8px" }}>Consolidated Invoice Aggregations</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px", fontSize: "12px" }}>
+          <div><strong>Taxable:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.tottxval || 0}</p></div>
+          <div><strong>CGST:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.totcamt || 0}</p></div>
+          <div><strong>SGST:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.totsamt || 0}</p></div>
+          <div><strong>IGST:</strong> <p style={{ margin: "2px 0 0" }}>₹{payload.totiamt || 0}</p></div>
+          <div><strong>Net Gross Value:</strong> <p style={{ color: colors?.primary || "#000", fontWeight: "bold", margin: "2px 0 0" }}>₹{payload.totinvval || 0}</p></div>
+        </div>
+      </div>
+
+
+      {/* ==================== ACTION CONSOLE ==================== */}
+      <div style={{ marginTop: "20px", padding: "15px", background: "#fff", borderRadius: "6px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+        <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "12px", flexWrap: "wrap" }}>
+
+          {/* Button 1: Generate Invoice */}
+          <button
+            style={{ ...tableStyles.btnGenerate(loading, token), padding: "8px 16px", fontSize: "13px" }}
+            onClick={handleGenerate}
+            disabled={loading || !token}
+          >
+            {loading ? "Registering Invoice Core..." : "🚀 Generate IRN / E-Invoice"}
+          </button>
+
+          {/* Button 3: Instant PDF Generation and Download */}
+          {/* Button 3: Instant PDF Generation and Download */}
+          {/* Button 3: Instant PDF Generation and Download */}
+          {response && (irnValue || response.status === "SUCCESS") && (
+            <PDFDownloadLink
+              document={
+                <EinvoicePDF
+                  // 🌟 Bind directly to the active live frontend state
+                  invoiceData={payload}
+                  irn={irnValue}
+                  ackNo={ackNoValue}
+                  ackDate={formattedPrintDate}
+                  qrCodeBase64={qrCodeBase64}
+
+                  // 🌟 Pass E-Way Bill metrics down as explicit props
+                  ewayBillNo={response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo || "-"}
+                  ewayBillDate={
+                    response.ewayBillDate || response?.response?.ewbDt
+                      ? new Date(response.ewayBillDate || response?.response?.ewbDt).toLocaleDateString()
+                      : "-"
+                  }
+                />
+              }
+              fileName={`E-Invoice_${ackNoValue || 'Document'}.pdf`}
+              style={{ textDecoration: 'none' }}
+            >
+              {({ blob, url, loading: pdfLoading, error }) => {
+                if (error) {
+                  console.error("PDF Compilation Error:", error);
+                  return (
+                    <button
+                      style={{
+                        padding: "8px 16px",
+                        fontSize: "13px",
+                        backgroundColor: "#ff4d4f",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "not-allowed",
+                        fontWeight: "500"
+                      }}
+                      disabled
+                    >
+                      ❌ PDF Generation Failed
+                    </button>
+                  );
+                }
+
+                return (
+                  <button
+                    style={{
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      backgroundColor: pdfLoading ? "#d9d9d9" : "#722ed1",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: pdfLoading ? "not-allowed" : "pointer",
+                      fontWeight: "500",
+                      transition: "all 0.3s ease"
+                    }}
+                    disabled={pdfLoading}
+                  >
+                    {pdfLoading ? (
+                      <span>⏳ Compiling Data ({payload.itemList?.length || 0} Items)...</span>
+                    ) : (
+                      <span>📥 Download E-Invoice PDF</span>
+                    )}
+                  </button>
+                );
+              }}
+            </PDFDownloadLink>
+          )}
+        </div>
+      </div>
       {/* Conditional Template Export UI Controls Wrapper */}
       {(lastGeneratedId || response?.status === "SUCCESS" || response?.irnnumber || response?.response?.irn) && (
         <div style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center", borderTop: "1px dashed #ccc", paddingTop: "12px" }}>
@@ -1933,53 +1939,53 @@ return (
         </div>
       )}
       {pdfMessage && <p style={{ marginTop: "10px", textAlign: "center", color: "#555", fontSize: "12px" }}>{pdfMessage}</p>}
-    
 
-    {/* ==================== API RESPONSE DISPLAY ==================== */}
-   {response && (
-  <div style={{
-    marginTop: "15px", padding: "12px", borderRadius: "6px", fontSize: "13px",
-    background: (response.status === "SUCCESS" || response.irnnumber) ? "#f6ffed" : "#fff1f0",
-    border: (response.status === "SUCCESS" || response.irnnumber) ? "1px solid #b7eb8f" : "1px solid #ffa39e",
-  }}>
-    {response.irnnumber || response.status === "SUCCESS" || response?.response?.irn ? (
-      <>
-        <h3 style={{ color: "#389e0d", margin: "0 0 6px 0", fontSize: "14px" }}>E-Invoice Operation Matrix</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "6px 15px" }}>
-          <p style={{ margin: 0 }}><strong>ID:</strong> {response.id ?? response?.response?.id ?? "-"}</p>
-          <p style={{ margin: 0 }}><strong>IRN:</strong> {response.irnnumber || response?.response?.irn || "-"}</p>
-          <p style={{ margin: 0 }}><strong>Ack No:</strong> {response.ackno || response?.response?.ackNo || "-"}</p>
-          <p style={{ margin: 0 }}><strong>Ack Date:</strong> {response.ackdate || response?.response?.ackDt ? new Date(response.ackdate || response?.response?.ackDt).toLocaleString() : "-"}</p>
-          
-          {/* ================= UPDATED E-WAY BILL METRICS MATRIX ================= */}
-          {(response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo) && (
+
+      {/* ==================== API RESPONSE DISPLAY ==================== */}
+      {response && (
+        <div style={{
+          marginTop: "15px", padding: "12px", borderRadius: "6px", fontSize: "13px",
+          background: (response.status === "SUCCESS" || response.irnnumber) ? "#f6ffed" : "#fff1f0",
+          border: (response.status === "SUCCESS" || response.irnnumber) ? "1px solid #b7eb8f" : "1px solid #ffa39e",
+        }}>
+          {response.irnnumber || response.status === "SUCCESS" || response?.response?.irn ? (
             <>
-              <p style={{ margin: 0 }}>
-                <strong>Eway Bill No:</strong> {response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo || "-"}
-              </p>
-              <p style={{ margin: 0 }}>
-                <strong>Eway Bill Date:</strong> {
-                  response.ewayBillDate || response?.response?.ewbDt 
-                    ? new Date(response.ewayBillDate || response?.response?.ewbDt).toLocaleDateString() 
-                    : "-"
-                }
-              </p>
+              <h3 style={{ color: "#389e0d", margin: "0 0 6px 0", fontSize: "14px" }}>E-Invoice Operation Matrix</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "6px 15px" }}>
+                <p style={{ margin: 0 }}><strong>ID:</strong> {response.id ?? response?.response?.id ?? "-"}</p>
+                <p style={{ margin: 0 }}><strong>IRN:</strong> {response.irnnumber || response?.response?.irn || "-"}</p>
+                <p style={{ margin: 0 }}><strong>Ack No:</strong> {response.ackno || response?.response?.ackNo || "-"}</p>
+                <p style={{ margin: 0 }}><strong>Ack Date:</strong> {response.ackdate || response?.response?.ackDt ? new Date(response.ackdate || response?.response?.ackDt).toLocaleString() : "-"}</p>
+
+                {/* ================= UPDATED E-WAY BILL METRICS MATRIX ================= */}
+                {(response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo) && (
+                  <>
+                    <p style={{ margin: 0 }}>
+                      <strong>Eway Bill No:</strong> {response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo || "-"}
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      <strong>Eway Bill Date:</strong> {
+                        response.ewayBillDate || response?.response?.ewbDt
+                          ? new Date(response.ewayBillDate || response?.response?.ewbDt).toLocaleDateString()
+                          : "-"
+                      }
+                    </p>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 style={{ color: "#cf1322", margin: "0 0 6px 0", fontSize: "14px" }}>Execution Exception Block</h3>
+              <pre style={{ background: "#fff1f0", padding: "8px", borderRadius: "4px", fontSize: "11px", color: "#cf1322", margin: 0 }}>
+                {JSON.stringify(response, null, 2)}
+              </pre>
             </>
           )}
         </div>
-      </>
-    ) : (
-      <>
-        <h3 style={{ color: "#cf1322", margin: "0 0 6px 0", fontSize: "14px" }}>Execution Exception Block</h3>
-        <pre style={{ background: "#fff1f0", padding: "8px", borderRadius: "4px", fontSize: "11px", color: "#cf1322", margin: 0 }}>
-          {JSON.stringify(response, null, 2)}
-        </pre>
-      </>
-    )}
-  </div>
-)}
-  </div>
-);
-};  
+      )}
+    </div>
+  );
+};
 export default GenerateAndPrintEinvoice;
 

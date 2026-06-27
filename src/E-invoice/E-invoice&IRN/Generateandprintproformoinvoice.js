@@ -202,7 +202,10 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B") =>
   const selectedTrnTyp = inv?.transactionType || "REG";
 
   const sellerGstin = inv?.companyBranches?.gstin || "01AAACI9260R002";
-  const sellerStateCode = sellerGstin.substring(0, 2);
+  //const sellerStateCode = sellerGstin.substring(0, 2);
+  //ateeq chagned from substring to direct....
+  console.log("stateCode", inv?.stateCode);
+  const sellerStateCode = inv?.stateCode;
 
   let buyerGstin = inv?.buyerClients?.gstin || "";
   if (selectedCatg === "B2B" && (!buyerGstin || buyerGstin === "URP")) {
