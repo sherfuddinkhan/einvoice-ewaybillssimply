@@ -371,24 +371,27 @@ const handleSaveToDB = async (generatedResponse = apiResponse) => {
     return false;
   }
 
-  // Handle nested response object
   const apiData = generatedResponse.response || generatedResponse;
 
-  // Dynamic ID lookup
-  //chagned to Invoice
-  const dynamicId = receivedData?.id || location.state?.pid;
+  // Prefer DB key from invoice if available
+  const invoiceData = JSON.parse(
+    localStorage.getItem("selectedInvoice") || "{}"
+  );
+
+  const dynamicId =
+    invoiceData?.keyID ||
+    receivedData?.id ||
+    location.state?.pid;
+
+  if (!dynamicId) {
+    alert("Invoice ID not found.");
+    return false;
+  }
 
   const putPayload = {
-    // Primary key
-    id: Number(dynamicId || apiData.id) || 0,
+    id: Number(dynamicId),
 
-    // E-Way Bill Details
-    eWayBillNumber: String(
-      apiData.ewbNo ||
-      apiData.eWayBillNumber ||
-      apiData.EwbNo ||
-      ""
-    ),
+    eWayBillNumber: String(apiData.ewbNo || ""),
 
     docNo: String(apiData.docNo || ""),
 
@@ -403,38 +406,40 @@ const handleSaveToDB = async (generatedResponse = apiResponse) => {
     barcode: apiData.barcode || ""
   };
 
+  console.log("PUT Payload:", putPayload);
+
   try {
     setLoading(true);
 
     const res = await fetch(
-      //"https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice",
       "https://einvoice.fcssoftwares.com/api/OrderList/UpdateEWBetailsToInvoice",
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "ConnectionType": currentConnectionType || "Online",
-          ...(token && { Authorization: `Bearer ${token}` })
+          ...(token && {
+            Authorization: `Bearer ${token}`
+          })
         },
         body: JSON.stringify(putPayload)
       }
     );
 
-    if (res.ok) {
-      const data = await res.json();
-
-      console.log("Database updated successfully:", data);
-
-      alert(
-        `✅ E-Way Bill Generated Successfully!\n\n` +
-        `🎉 Invoice updated in DB successfully!`
-      );
-
-      return true;
-    } else {
+    if (!res.ok) {
       const errorText = await res.text();
       throw new Error(errorText || "Failed to update DB");
     }
+
+    const data = await res.json();
+
+    console.log("Database updated successfully:", data);
+
+    alert(
+      `✅ E-Way Bill Generated Successfully!\n\n🎉 Invoice updated in DB successfully!`
+    );
+
+    return true;
   } catch (error) {
     console.error("Database Save Error:", error);
 
@@ -474,7 +479,7 @@ const handleSaveToDB = async (generatedResponse = apiResponse) => {
 
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `EInvoice_${ewbNo}.pdf`;
+     link.download = `EWayBill_${ewbNo}.pdf`;;
 
       document.body.appendChild(link);
       link.click();
@@ -735,6 +740,26 @@ return (
           {loading ? "Generating..." : "Generate E-Way Bill"}
         </button>
       </div>
+      {/* Download PDF Button - Show only after successful generation */}
+{apiResponse?.status === "SUCCESS" &&
+  apiResponse?.response?.ewbNo && (
+    <div style={{ marginTop: "15px" }}>
+      <button
+        type="button"
+        onClick={downloadPDF}
+        style={{
+          padding: "10px 20px",
+          backgroundColor: "#28a745",
+          color: "#fff",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+        }}
+      >
+        Download E-Way Bill PDF
+      </button>
+    </div>
+)}
     </form>
   </>
 );
