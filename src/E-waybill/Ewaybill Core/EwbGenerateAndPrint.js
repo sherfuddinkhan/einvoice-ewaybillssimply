@@ -60,7 +60,7 @@ const EwbGenerateAndPrint = () => {
     cessValue: 0,
     cessNonAdvolValue: 0,
     otherValue: 0,
-    transMode: null,
+    transMode: 1, // by default mode 1
     transDistance: "",
     transDocDate: null,
     transDocNo: "",
@@ -407,7 +407,8 @@ const handleSaveToDB = async (generatedResponse = apiResponse) => {
     setLoading(true);
 
     const res = await fetch(
-      "https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice",
+      //"https://einvoice.fcssoftwares.com/api/OrderList/UpdateInvoice",
+      "https://einvoice.fcssoftwares.com/api/OrderList/UpdateEWBetailsToInvoice",
       {
         method: "PUT",
         headers: {
