@@ -688,11 +688,11 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
 
     // ================= TRANSPORT =================
     subSplyTyp: "Supply",
-    transId: null,
-    transMode: null,
+    transId: inv?.transporterID || null, //ateeq added here on 27 06 2026...,,
+    transMode: inv?.transportMode || null, //ateeq added here on 27 06 2026...,,
     transDist: inv?.distance || null, //ateeq added here on 27 06 2026...
-    transName: inv?.transportName || null, //ateeq added here on 27 06 2026...,
-    transDocNo: null,
+    transName: inv?.transporterName || null, //ateeq added here on 27 06 2026...,
+    transDocNo: inv?.transporterDocNo || null, //ateeq added here on 27 06 2026...,,,
     transDocDate: formatDate(inv?.dateofIssue || new Date()),
     vehNo: inv?.vehicleNo || null,
     vehTyp: "R",
