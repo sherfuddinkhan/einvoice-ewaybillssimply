@@ -16,7 +16,7 @@ const EwayfeildsDisplay = () => {
   );
 
   const [selectedYear, setSelectedYear] = useState(
-    localStorage.getItem("yearName") || "24-25"
+    localStorage.getItem("yearName")
   );
   const [loading, setLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState([]);
@@ -36,8 +36,7 @@ const EwayfeildsDisplay = () => {
       const currentConnectionType =
         localStorage.getItem("connectionType") || "DEFAULT";
 
-      const currentYear =
-        localStorage.getItem("yearName") || "24-25";
+      const currentYear =localStorage.getItem("yearName") 
 
       const payload = {
         orderType: "invoicecumchallan",

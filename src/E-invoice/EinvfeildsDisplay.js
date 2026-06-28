@@ -7,18 +7,18 @@ const EinvfeildsDisplay = () => {
   const navigate = useNavigate();
 
   // Only get token and companyId from AuthContext
-//const { token, companyId, userGstin } = useAuth();
-const loginData = JSON.parse(
-  localStorage.getItem("einvoiceLoginData") || "{}"
-);
-console.log("logindata",loginData )
-const token = loginData.token || "";
-const companyId = loginData.companyId || "";
-//const gstin = invoiceData.gstin || "";
+  //const { token, companyId, userGstin } = useAuth();
+  const loginData = JSON.parse(
+    localStorage.getItem("einvoiceLoginData") || "{}"
+  );
+  console.log("logindata", loginData)
+  const token = loginData.token || "";
+  const companyId = loginData.companyId || "";
+  //const gstin = invoiceData.gstin || "";
 
-console.log("Token:", token);
-console.log("Company ID:", companyId);
-//console.log("User GSTIN:", gstin);
+  console.log("Token:", token);
+  console.log("Company ID:", companyId);
+  //console.log("User GSTIN:", gstin);
 
   const [loading, setLoading] = useState(false);
   const [invoiceData, setInvoiceData] = useState([]);
@@ -32,7 +32,7 @@ console.log("Company ID:", companyId);
   );
 
   const [yearName, setYearName] = useState(
-    localStorage.getItem("yearName") || "24-25"
+    localStorage.getItem("yearName")
   );
 
   const getInvoiceData = async () => {
@@ -47,8 +47,7 @@ console.log("Company ID:", companyId);
       const currentConnectionType =
         localStorage.getItem("connectionType") || "DEFAULT";
 
-      const currentYear =
-        localStorage.getItem("yearName") || "24-25";
+      const currentYear = localStorage.getItem("yearName");
 
       const payload = {
         orderType: "invoicecumchallan",
@@ -75,8 +74,8 @@ console.log("Company ID:", companyId);
         { headers }
       );
 
-      console.log("Invoice API Response:",response.data);
-      console.log("Invoice API Response:",response.data[0]?.gstin);
+      console.log("Invoice API Response:", response.data);
+      console.log("Invoice API Response:", response.data[0]?.gstin);
       const UserGstin = response.data[0]?.gstin
       setInvoiceData(response.data || []);
     } catch (error) {
@@ -87,8 +86,8 @@ console.log("Company ID:", companyId);
 
       setError(
         error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch invoices"
+        error.message ||
+        "Failed to fetch invoices"
       );
     } finally {
       setLoading(false);
@@ -122,7 +121,7 @@ console.log("Company ID:", companyId);
 
       const pid = invoice?.pid;
       const invoiceCreatedOn = invoice?.invoiceCreatedOn;
-       const refid = invoice?.refID;
+      const refid = invoice?.refID;
 
       if (!pid) {
         alert("invoicenumber not found");
@@ -130,7 +129,7 @@ console.log("Company ID:", companyId);
       }
 
       console.log("Selected Invoice:", invoice);
-      console.log("invoicecreadtedon",invoiceCreatedOn);
+      console.log("invoicecreadtedon", invoiceCreatedOn);
 
       const currentConnectionType =
         localStorage.getItem("connectionType") ||
@@ -147,31 +146,31 @@ console.log("Company ID:", companyId);
         }
       );
 
-      console.log("Invoice Details Response:",data);
+      console.log("Invoice Details Response:", data);
 
-localStorage.setItem(
-  "selectedInvoice",
-  JSON.stringify(data)
-);
+      localStorage.setItem(
+        "selectedInvoice",
+        JSON.stringify(data)
+      );
 
-localStorage.setItem(
-  "invoicecreatedOn",
-  JSON.stringify(invoiceCreatedOn || "")
-);
+      localStorage.setItem(
+        "invoicecreatedOn",
+        JSON.stringify(invoiceCreatedOn || "")
+      );
 
 
-localStorage.setItem(
-  "refid",
-  JSON.stringify(refid  || "")
-);
-  
+      localStorage.setItem(
+        "refid",
+        JSON.stringify(refid || "")
+      );
+
       navigate("/einvoice/generate-print", {
-  state: {
-    invoiceData: data,
-    invoicecreatedOn: invoiceCreatedOn,
-    refid : refid ,
-  },
-});
+        state: {
+          invoiceData: data,
+          invoicecreatedOn: invoiceCreatedOn,
+          refid: refid,
+        },
+      });
     } catch (err) {
       console.error(
         "Invoice Details API Error:",
@@ -195,150 +194,150 @@ localStorage.setItem(
     }
   };
 
-const handleDeleteIRN = async (invoice) => {
-  // Check whether IRN exists
-  if (
-    !invoice.irnnumber||
-   invoice.irnnumber === "" ||
-    invoice.irnnumber === null
-  ) {
-    alert("IRN is not generated for this invoice.");
-    return;
-  }
- 
-  const confirmDelete = window.confirm(
-    `Are you sure you want to cancel IRN for Invoice ${invoice.pid}?`
-  );
+  const handleDeleteIRN = async (invoice) => {
+    // Check whether IRN exists
+    if (
+      !invoice.irnnumber ||
+      invoice.irnnumber === "" ||
+      invoice.irnnumber === null
+    ) {
+      alert("IRN is not generated for this invoice.");
+      return;
+    }
 
-  if (!confirmDelete) return;
-  try {
-    setLoading(true);
-    const userGstin= invoiceData[0]?.gstin
-    const payload = {
-      irn: invoice.irnnumber,
-      cnlRsn: "1", // Wrong Entry
-      cnlRem: "Wrong entry",
-      userGstin: invoiceData[0]?.gstin,
-      
-    };
-        // Read latest values from localStorage
-    const currentConnectionType =
-      localStorage.getItem("connectionType") || "DEFAULT";
-    console.log("userGstin01",userGstin)
-    console.log("Cancel IRN Payload:", payload);
-
-    const response = await axios.put(
-      "https://einvoice.fcssoftwares.com/api/gst/einvoice/cancel-irn",
-      payload,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          companyId: companyId,
-          "X-Auth-Token": token,
-           ConnectionType:
-              currentConnectionType,
-          product: "ONYX",
-        },
-      }
+    const confirmDelete = window.confirm(
+      `Are you sure you want to cancel IRN for Invoice ${invoice.pid}?`
     );
 
-    console.log("Cancel IRN Response:", response.data);
+    if (!confirmDelete) return;
+    try {
+      setLoading(true);
+      const userGstin = invoiceData[0]?.gstin
+      const payload = {
+        irn: invoice.irnnumber,
+        cnlRsn: "1", // Wrong Entry
+        cnlRem: "Wrong entry",
+        userGstin: invoiceData[0]?.gstin,
 
-    if (response.data?.status === "SUCCESS") {
-      alert("IRN Cancelled Successfully");
-      getInvoiceData();
-    } else {
-      alert(
-        response.data?.message ||
-          "Failed to cancel IRN"
+      };
+      // Read latest values from localStorage
+      const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
+      console.log("userGstin01", userGstin)
+      console.log("Cancel IRN Payload:", payload);
+
+      const response = await axios.put(
+        "https://einvoice.fcssoftwares.com/api/gst/einvoice/cancel-irn",
+        payload,
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            companyId: companyId,
+            "X-Auth-Token": token,
+            ConnectionType:
+              currentConnectionType,
+            product: "ONYX",
+          },
+        }
       );
-    }
-  } catch (error) {
-    console.error(error);
 
-    alert(
-      error.response?.data?.message ||
+      console.log("Cancel IRN Response:", response.data);
+
+      if (response.data?.status === "SUCCESS") {
+        alert("IRN Cancelled Successfully");
+        getInvoiceData();
+      } else {
+        alert(
+          response.data?.message ||
+          "Failed to cancel IRN"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error.response?.data?.message ||
         error.message ||
         "Failed to cancel IRN"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleDeleteEwayBill = async (invoice) => {
-  // Check whether EWB exists
-  if (
-    !invoice.eWayBillNumber ||
-    invoice.eWayBillNumber === "" ||
-    invoice.eWayBillNumber === null
-  ) {
-    alert(
-      "E-Way Bill is not generated for this invoice."
-    );
-    return;
-  }
-
-  const confirmDelete = window.confirm(
-    `Are you sure you want to cancel E-Way Bill ${invoice.eWayBillNumber}?`
-  );
-
-  if (!confirmDelete) return;
-
-  try {
-    setLoading(true);
-  //console.log("usergstin1",gstin)
-    const payload = {
-      ewbNo: invoice.eWayBillNumber,
-      cnlRsn: "3", // Order Cancelled
-      cnlRem: "Order cancelled by buyer",
-      userGstin:invoice.gstin,
-    };
-    // Read latest values from localStorage
-    const currentConnectionType =
-      localStorage.getItem("connectionType") || "DEFAULT";
-    console.log("Cancel EWB Payload:", payload);
-
-    const response = await axios.put(
-      "https://einvoice.fcssoftwares.com/api/gst/einvoice/cancel-ewb",
-      payload,
-      {
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-          companyid: companyId,
-          "x-auth-token": token,
-           ConnectionType:
-              currentConnectionType,
-          product: "ONYX",
-        },
-      }
-    );
-
-    console.log("Cancel EWB Response:", response.data);
-
-    if (response.data?.status === "SUCCESS") {
-      alert("E-Way Bill Cancelled Successfully");
-      getInvoiceData();
-    } else {
-      alert(
-        response.data?.message ||
-          "Failed to cancel E-Way Bill"
       );
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error(error);
+  };
 
-    alert(
-      error.response?.data?.message ||
+  const handleDeleteEwayBill = async (invoice) => {
+    // Check whether EWB exists
+    if (
+      !invoice.eWayBillNumber ||
+      invoice.eWayBillNumber === "" ||
+      invoice.eWayBillNumber === null
+    ) {
+      alert(
+        "E-Way Bill is not generated for this invoice."
+      );
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to cancel E-Way Bill ${invoice.eWayBillNumber}?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setLoading(true);
+      //console.log("usergstin1",gstin)
+      const payload = {
+        ewbNo: invoice.eWayBillNumber,
+        cnlRsn: "3", // Order Cancelled
+        cnlRem: "Order cancelled by buyer",
+        userGstin: invoice.gstin,
+      };
+      // Read latest values from localStorage
+      const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
+      console.log("Cancel EWB Payload:", payload);
+
+      const response = await axios.put(
+        "https://einvoice.fcssoftwares.com/api/gst/einvoice/cancel-ewb",
+        payload,
+        {
+          headers: {
+            accept: "application/json",
+            "content-type": "application/json",
+            companyid: companyId,
+            "x-auth-token": token,
+            ConnectionType:
+              currentConnectionType,
+            product: "ONYX",
+          },
+        }
+      );
+
+      console.log("Cancel EWB Response:", response.data);
+
+      if (response.data?.status === "SUCCESS") {
+        alert("E-Way Bill Cancelled Successfully");
+        getInvoiceData();
+      } else {
+        alert(
+          response.data?.message ||
+          "Failed to cancel E-Way Bill"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error.response?.data?.message ||
         error.message ||
         "Failed to cancel E-Way Bill"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div style={styles.container}>
       {loading && (
@@ -397,7 +396,7 @@ const handleDeleteEwayBill = async (invoice) => {
                   <td style={styles.td}>
                     {invoice.invoiceNumber}
                   </td>
-                   <td style={styles.td}>
+                  <td style={styles.td}>
                     {invoice.pid || "-"}
                   </td>
                   <td style={styles.td}>
@@ -436,60 +435,60 @@ const handleDeleteEwayBill = async (invoice) => {
                     )}
                   </td>
 
-                <td style={styles.actionTd}>
-  <button
-    style={styles.einvoiceBtn}
-    onClick={() =>
-      handleGenerateEinvoice(invoice)
-    }
-  >
-    Generate E-Invoice
-  </button>
+                  <td style={styles.actionTd}>
+                    <button
+                      style={styles.einvoiceBtn}
+                      onClick={() =>
+                        handleGenerateEinvoice(invoice)
+                      }
+                    >
+                      Generate E-Invoice
+                    </button>
 
-  <button
-    style={{
-      ...styles.deleteIrnBtn,
-      opacity: invoice.irnnumber ? 1 : 0.5,
-      cursor: invoice.irnnumber
-        ? "pointer"
-        : "not-allowed",
-    }}
-    disabled={!invoice.irnnumber}
-    onClick={() =>
-      handleDeleteIRN(invoice)
-    }
-    title={
-     invoice.irnnumber
-        ? "Cancel IRN"
-        : "IRN not generated"
-    }
-  >
-    Delete IRN
-  </button>
+                    <button
+                      style={{
+                        ...styles.deleteIrnBtn,
+                        opacity: invoice.irnnumber ? 1 : 0.5,
+                        cursor: invoice.irnnumber
+                          ? "pointer"
+                          : "not-allowed",
+                      }}
+                      disabled={!invoice.irnnumber}
+                      onClick={() =>
+                        handleDeleteIRN(invoice)
+                      }
+                      title={
+                        invoice.irnnumber
+                          ? "Cancel IRN"
+                          : "IRN not generated"
+                      }
+                    >
+                      Delete IRN
+                    </button>
 
-  <button
-    style={{
-      ...styles.deleteEwbBtn,
-      opacity: invoice.eWayBillNumber
-        ? 1
-        : 0.5,
-      cursor: invoice.eWayBillNumber
-        ? "pointer"
-        : "not-allowed",
-    }}
-    disabled={!invoice.eWayBillNumber}
-    onClick={() =>
-      handleDeleteEwayBill(invoice)
-    }
-    title={
-      invoice.eWayBillNumber
-        ? "Cancel E-Way Bill"
-        : "E-Way Bill not generated"
-    }
-  >
-    Delete E-Way Bill
-  </button>
-</td>
+                    <button
+                      style={{
+                        ...styles.deleteEwbBtn,
+                        opacity: invoice.eWayBillNumber
+                          ? 1
+                          : 0.5,
+                        cursor: invoice.eWayBillNumber
+                          ? "pointer"
+                          : "not-allowed",
+                      }}
+                      disabled={!invoice.eWayBillNumber}
+                      onClick={() =>
+                        handleDeleteEwayBill(invoice)
+                      }
+                      title={
+                        invoice.eWayBillNumber
+                          ? "Cancel E-Way Bill"
+                          : "E-Way Bill not generated"
+                      }
+                    >
+                      Delete E-Way Bill
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
@@ -608,33 +607,33 @@ const styles = {
     fontWeight: "bold",
   },
   deleteIrnBtn: {
-  backgroundColor: "#ff9800",
-  color: "#fff",
-  border: "none",
-  padding: "6px 10px",
-  borderRadius: "4px",
-  cursor: "pointer",
-  marginLeft: "5px",
-  marginTop: "5px",
-},
+    backgroundColor: "#ff9800",
+    color: "#fff",
+    border: "none",
+    padding: "6px 10px",
+    borderRadius: "4px",
+    cursor: "pointer",
+    marginLeft: "5px",
+    marginTop: "5px",
+  },
 
-deleteEwbBtn: {
-  backgroundColor: "#f44336",
-  color: "#fff",
-  border: "none",
-  padding: "6px 10px",
-  borderRadius: "4px",
-  cursor: "pointer",
-  marginLeft: "5px",
-  marginTop: "5px",
-},
+  deleteEwbBtn: {
+    backgroundColor: "#f44336",
+    color: "#fff",
+    border: "none",
+    padding: "6px 10px",
+    borderRadius: "4px",
+    cursor: "pointer",
+    marginLeft: "5px",
+    marginTop: "5px",
+  },
 
-actionTd: {
-  display: "flex",
-  flexDirection: "column",
-  gap: "5px",
-  alignItems: "center",
-},
+  actionTd: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "5px",
+    alignItems: "center",
+  },
 };
 
 export default EinvfeildsDisplay;

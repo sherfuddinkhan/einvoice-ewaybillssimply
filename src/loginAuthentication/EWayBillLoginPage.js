@@ -93,11 +93,11 @@ const EWayBillLoginPage = () => {
         <label>Password</label>
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: "100%", padding: "12px", marginTop: "6px", marginBottom: "16px", borderRadius: "8px", border: "1px solid #707070", boxSizing: "border-box" }} />
 
-        <label>Select Mode</label>
+        {/* <label>Select Mode</label>
         <select value={ewayMode} onChange={(e) => setEwayMode(e.target.value)} style={{ width: "100%", padding: "12px", marginTop: "6px", marginBottom: "16px", borderRadius: "8px", border: "1px solid #707070" }}>
           <option value="NORMAL">Normal E-Way Bill</option>
           <option value="PROFORMA">Proforma E-Way Bill</option>
-        </select>
+        </select> */}
 
        
 

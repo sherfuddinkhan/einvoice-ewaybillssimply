@@ -115,7 +115,7 @@ setTimeout(() => {
           />
         </div>
 
-        <div style={styles.inputGroup}>
+        {/* <div style={styles.inputGroup}>
           <label htmlFor="mode" style={styles.label}>Invoice Mode</label>
           <select
             id="mode"
@@ -129,7 +129,7 @@ setTimeout(() => {
             <option value="NORMAL">Normal E-Invoice</option>
             <option value="PROFORMA">Proforma E-Invoice</option>
           </select>
-        </div>
+        </div> */}
         <button
           onClick={handleLogin}
           disabled={loading}

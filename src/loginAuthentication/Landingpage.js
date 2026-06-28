@@ -15,7 +15,7 @@ const LandingPage = () => {
   });
 
   const [connectionType, setConnectionType] = useState("DEFAULT");
-  const [yearName, setYearName] = useState("24-25");
+  const [yearName, setYearName] = useState("26-27");
 
   const [loading, setLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState(null);
@@ -187,7 +187,6 @@ const LandingPage = () => {
               onChange={(e) => setYearName(e.target.value)}
               style={styles.input}
             >
-              <option value="24-25">24-25</option>
               <option value="26-27">26-27</option>
             </select>
           </div>
