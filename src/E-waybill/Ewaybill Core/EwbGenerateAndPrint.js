@@ -190,9 +190,10 @@ const EwbGenerateAndPrint = () => {
 
       // --- TRANSPORTATION ---
       transDocDate: invoiceData.deliveryNoteDate || null,
-      transDocNo: invoiceData.despatchedDocumentNumber || null,
-      transporterId: parsedGstin,
-      transporterName: invoiceData.company_Name || null,
+      transDocNo: invoiceData.transporterDocNo || null,
+      transporterId: invoiceData.transporterID || null,
+      transDistance: invoiceData.distance || null,
+      transporterName: invoiceData.transporterName || null,
       vehicleNo: formattedVehicleNo,
 
       // --- BALANCED ITEM LINE ENTRIES ---

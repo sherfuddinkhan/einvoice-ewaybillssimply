@@ -152,7 +152,7 @@ const selectedTrnTyp = inv?.transactionType || "REG";
     transDocDate: formatDate(inv?.dateofIssue || new Date()),
     vehNo: inv?.vehicleNo || FALLBACK_DEFAULTS.vehNo,
     transId: inv?.transId ?? FALLBACK_DEFAULTS.transId,
-    transName: inv?.transName ?? "Safe and Secure",
+    transName: inv?.transporterName || null,
     transMode: inv?.transMode ?? "Road",
 
     // SUPPLY
