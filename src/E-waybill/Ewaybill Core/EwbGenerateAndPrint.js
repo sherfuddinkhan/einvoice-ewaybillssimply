@@ -155,7 +155,8 @@ const EwbGenerateAndPrint = () => {
 
     setFormData((prev) => ({
       ...prev,
-     docNo: dynamicId,
+     //docNo: dynamicId,
+     docNo: invoiceData.invoiceNumber || null,
      docDate: invoiceData.deliveryNoteDate || null, 
       
       // --- SELLER (SWASTIK MACHINERY CORPORATION) ---
@@ -374,6 +375,7 @@ const handleSaveToDB = async (generatedResponse = apiResponse) => {
   const apiData = generatedResponse.response || generatedResponse;
 
   // Dynamic ID lookup
+  //chagned to Invoice
   const dynamicId = receivedData?.id || location.state?.pid;
 
   const putPayload = {
