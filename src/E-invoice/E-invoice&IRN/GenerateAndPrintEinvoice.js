@@ -1522,7 +1522,6 @@ export const GenerateAndPrintEinvoice = () => {
       const generatedId =
         data?.response?.id ||
         data?.response?.Id ||
-        data?.response?.irn ||
         data?.response?.invoiceId;
 
       if (generatedId) setLastGeneratedId(generatedId);
