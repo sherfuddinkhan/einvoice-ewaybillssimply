@@ -2003,21 +2003,30 @@ console.log("EWB No:", ewbNo);
   response?.response?.ewbNo ||
   response?.eWayBillNumber ||
   response?.ewayBillNo) && (
-  <button
-    onClick={printEwayBillPDF}
-    style={{
-      padding: "8px 16px",
-      fontSize: "13px",
-      backgroundColor: "#13c2c2",
-      color: "#fff",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      fontWeight: "500"
-    }}
-  >
-    🖨️ Print E-Way Bill PDF
-  </button>
+ <button
+  onClick={printEwayBillPDF}
+  style={{
+    padding: "10px 20px",
+    fontSize: "12px",
+    background: "linear-gradient(135deg, #13c2c2, #08979c)",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    fontWeight: "600",
+    boxShadow: "0 4px 10px rgba(19, 194, 194, 0.25)",
+    transition: "all 0.3s ease",
+    minWidth: "200px",      // same width as other buttons
+    height: "34px",         // fixed height
+    whiteSpace: "nowrap",   // prevents text wrapping
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px"
+  }}
+>
+  🖨️ Print E-Way Bill PDF
+</button>
 )}
 
   </div>
