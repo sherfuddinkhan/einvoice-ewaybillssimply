@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../../components/AuthContext";
 
 /* ---------------------------------
    API
@@ -26,6 +27,7 @@ const readLS = (key, fallback = {}) => {
 };
 
 const MultiVehicleAdd = () => {
+    const { token, companyId } = useAuth();
   /* ---------------------------------
      Load Stored Context
   ---------------------------------- */
@@ -33,14 +35,14 @@ const MultiVehicleAdd = () => {
   const latestEwb  = readLS(LATEST_EWB_KEY);
   const latestCewb = readLS(LATEST_CEWB_KEY);
 
-  const token =
-    shared?.fullResponse?.response?.token || "";
+  //const token =
+    //shared?.fullResponse?.response?.token || "";
 
-  const companyId =
-    shared?.fullResponse?.response?.companyid ||
-    latestEwb?.response?.companyId ||
-    latestCewb?.response?.companyId ||
-    "";
+  //const companyId =
+    //shared?.fullResponse?.response?.companyid ||
+    //latestEwb?.response?.companyId ||
+    //latestCewb?.response?.companyId ||
+    //"";
 
       // Read latest values from localStorage
     const currentConnectionType =
