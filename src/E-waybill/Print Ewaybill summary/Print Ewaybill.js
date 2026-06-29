@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from "../../components/AuthContext";
 /* ---------------------------------
    LocalStorage Keys (STANDARD)
 ---------------------------------- */
@@ -10,6 +11,7 @@ const QUERY_KEY       = "mv_requests_query";
 const RESP_KEY        = "mv_requests_response";
 
 const PrintEwaybill = () => {
+    const { token, companyId } = useAuth();
       // Read latest values from localStorage
     const currentConnectionType =
       localStorage.getItem("connectionType") || "DEFAULT";
@@ -35,12 +37,14 @@ const PrintEwaybill = () => {
   useEffect(() => {
     const login = JSON.parse(localStorage.getItem(STORAGE_KEY00) || "{}");
     const latest = JSON.parse(localStorage.getItem(LATEST_EWB_KEY) || "{}");
+    console.log("login",login?.token)
+    console.log("companyid",login?.companyId)
 
     // Headers autopopulate
     setHeaders(prev => ({
       ...prev,
-      "X-Auth-Token": login?.token || "",
-      companyId: login?.companyId || "",
+      "X-Auth-Token": token || "",
+      companyId: companyId || "",
     }));
 
     // EWB numbers autopopulate

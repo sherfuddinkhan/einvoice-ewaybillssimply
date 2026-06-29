@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from "../../components/AuthContext";
 /* ---------------------------------
    LocalStorage Keys (STANDARD)
 ---------------------------------- */
@@ -10,7 +11,7 @@ const QUERY_KEY       = "mv_requests_query";
 const RESP_KEY        = "mv_requests_response";
 
 const Ewbprintsummary = () => {
-
+        const { token, companyId } = useAuth();
     // Read latest values from localStorage
     const currentConnectionType =
       localStorage.getItem("connectionType") || "DEFAULT";
@@ -40,8 +41,8 @@ const Ewbprintsummary = () => {
     // Headers autopopulate
     setHeaders(prev => ({
       ...prev,
-      "X-Auth-Token": login?.token || "",
-      companyId: login?.companyId || "",
+      "X-Auth-Token": token || "",
+      companyId: companyId || "",
     }));
 
     // EWB numbers autopopulate
