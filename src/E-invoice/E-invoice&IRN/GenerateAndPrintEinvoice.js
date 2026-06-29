@@ -2016,9 +2016,9 @@ console.log("EWB No:", ewbNo);
     fontWeight: "600",
     boxShadow: "0 4px 10px rgba(19, 194, 194, 0.25)",
     transition: "all 0.3s ease",
-    minWidth: "200px",      // same width as other buttons
-    height: "34px",         // fixed height
-    whiteSpace: "nowrap",   // prevents text wrapping
+    minWidth: "200px",      
+    height: "34px",         
+    whiteSpace: "nowrap",   
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
