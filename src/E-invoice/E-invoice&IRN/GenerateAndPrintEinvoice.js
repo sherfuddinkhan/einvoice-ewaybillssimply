@@ -1661,7 +1661,69 @@ export const GenerateAndPrintEinvoice = () => {
       setPdfMessage("❌ Failed to download PDF.");
     }
   };
+const printEwayBillPDF = async () => {
+  try {
+    setLoading(true);
 
+    // Get EWB No from Generate IRN response
+ const ewbNo =
+  response?.response?.EwbNo ||
+  response?.response?.ewbNo ||
+  response?.eWayBillNumber ||
+  response?.ewayBillNo;
+
+console.log("EWB No:", ewbNo);
+
+    if (!ewbNo) {
+      alert("No E-Way Bill generated.");
+      return;
+    }
+
+    const payload = {
+      ewbNo: [String(ewbNo)], // <-- transported from generate response
+    };
+
+    console.log("Print Payload:", payload);
+
+    const res = await axios.post(
+      "https://einvoice.fcssoftwares.com/api/gst/ewaybill/print-details",
+      payload,
+      {
+        headers: {
+          "X-Auth-Token": token,
+          companyId: companyId,
+          product: "TOPAZ",
+          "Content-Type": "application/json",
+          Accept: "application/pdf",
+          ConnectionType: connectionType || "DEFAULT",
+        },
+        responseType: "blob",
+      }
+    );
+
+    // Download PDF
+    const blobUrl = window.URL.createObjectURL(
+      new Blob([res.data], { type: "application/pdf" })
+    );
+
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `EWayBill_${ewbNo}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+
+  } catch (error) {
+    console.error("Print EWB Error:", error);
+    alert("Failed to print E-Way Bill.");
+  } finally {
+    setLoading(false);
+  }
+};
+  
   return (
     <div style={tableStyles.container}>
       <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
@@ -1836,94 +1898,130 @@ export const GenerateAndPrintEinvoice = () => {
       </div>
 
 
-      {/* ==================== ACTION CONSOLE ==================== */}
-      <div style={{ marginTop: "20px", padding: "15px", background: "#fff", borderRadius: "6px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-        <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginBottom: "12px", flexWrap: "wrap" }}>
+   {/* ==================== ACTION CONSOLE ==================== */}
+<div
+  style={{
+    marginTop: "20px",
+    padding: "15px",
+    background: "#fff",
+    borderRadius: "6px",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.05)"
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      gap: "12px",
+      justifyContent: "center",
+      marginBottom: "12px",
+      flexWrap: "wrap"
+    }}
+  >
 
-          {/* Button 1: Generate Invoice */}
-          <button
-            style={{ ...tableStyles.btnGenerate(loading, token), padding: "8px 16px", fontSize: "13px" }}
-            onClick={handleGenerate}
-            disabled={loading || !token}
-          >
-            {loading ? "Registering Invoice Core..." : "🚀 Generate IRN / E-Invoice"}
-          </button>
+    {/* Generate E-Invoice */}
+    <button
+      style={{
+        ...tableStyles.btnGenerate(loading, token),
+        padding: "8px 16px",
+        fontSize: "13px"
+      }}
+      onClick={handleGenerate}
+      disabled={loading || !token}
+    >
+      {loading
+        ? "Registering Invoice Core..."
+        : "🚀 Generate IRN / E-Invoice"}
+    </button>
 
-          {/* Button 3: Instant PDF Generation and Download */}
-          {/* Button 3: Instant PDF Generation and Download */}
-          {/* Button 3: Instant PDF Generation and Download */}
-          {response && (irnValue || response.status === "SUCCESS") && (
-            <PDFDownloadLink
-              document={
-                <EinvoicePDF
-                  // 🌟 Bind directly to the active live frontend state
-                  invoiceData={payload}
-                  irn={irnValue}
-                  ackNo={ackNoValue}
-                  ackDate={formattedPrintDate}
-                  qrCodeBase64={qrCodeBase64}
+    {/* Download E-Invoice PDF */}
+    {response && (irnValue || response.status === "SUCCESS") && (
+      <PDFDownloadLink
+        document={
+          <EinvoicePDF
+            invoiceData={payload}
+            irn={irnValue}
+            ackNo={ackNoValue}
+            ackDate={formattedPrintDate}
+            qrCodeBase64={qrCodeBase64}
+            ewayBillNo={
+              response?.response?.ewbNo ||
+              response?.eWayBillNumber ||
+              response?.ewayBillNo ||
+              "-"
+            }
+            ewayBillDate={
+              response?.response?.ewbDt
+                ? new Date(
+                    response?.response?.ewbDt
+                  ).toLocaleDateString()
+                : "-"
+            }
+          />
+        }
+        fileName={`E-Invoice_${ackNoValue || "Document"}.pdf`}
+        style={{ textDecoration: "none" }}
+      >
+        {({ loading: pdfLoading, error }) => {
+          if (error) {
+            return (
+              <button disabled>
+                ❌ PDF Generation Failed
+              </button>
+            );
+          }
 
-                  // 🌟 Pass E-Way Bill metrics down as explicit props
-                  ewayBillNo={response.eWayBillNumber || response?.response?.ewbNo || response.ewayBillNo || "-"}
-                  ewayBillDate={
-                    response.ewayBillDate || response?.response?.ewbDt
-                      ? new Date(response.ewayBillDate || response?.response?.ewbDt).toLocaleDateString()
-                      : "-"
-                  }
-                />
-              }
-              fileName={`E-Invoice_${ackNoValue || 'Document'}.pdf`}
-              style={{ textDecoration: 'none' }}
-            >
-              {({ blob, url, loading: pdfLoading, error }) => {
-                if (error) {
-                  console.error("PDF Compilation Error:", error);
-                  return (
-                    <button
-                      style={{
-                        padding: "8px 16px",
-                        fontSize: "13px",
-                        backgroundColor: "#ff4d4f",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "not-allowed",
-                        fontWeight: "500"
-                      }}
-                      disabled
-                    >
-                      ❌ PDF Generation Failed
-                    </button>
-                  );
-                }
-
-                return (
-                  <button
-                    style={{
-                      padding: "8px 16px",
-                      fontSize: "13px",
-                      backgroundColor: pdfLoading ? "#d9d9d9" : "#722ed1",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: pdfLoading ? "not-allowed" : "pointer",
-                      fontWeight: "500",
-                      transition: "all 0.3s ease"
-                    }}
-                    disabled={pdfLoading}
-                  >
-                    {pdfLoading ? (
-                      <span>⏳ Compiling Data ({payload.itemList?.length || 0} Items)...</span>
-                    ) : (
-                      <span>📥 Download E-Invoice PDF</span>
-                    )}
-                  </button>
-                );
+          return (
+            <button
+              style={{
+                padding: "8px 16px",
+                fontSize: "13px",
+                backgroundColor: pdfLoading
+                  ? "#d9d9d9"
+                  : "#722ed1",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                cursor: pdfLoading
+                  ? "not-allowed"
+                  : "pointer",
+                fontWeight: "500"
               }}
-            </PDFDownloadLink>
-          )}
-        </div>
-      </div>
+              disabled={pdfLoading}
+            >
+              {pdfLoading
+                ? "⏳ Compiling PDF..."
+                : "📥 Download E-Invoice PDF"}
+            </button>
+          );
+        }}
+      </PDFDownloadLink>
+    )}
+
+    {/* Print E-Way Bill PDF */}
+  {/* Print E-Way Bill PDF */}
+{(response?.response?.EwbNo ||
+  response?.response?.ewbNo ||
+  response?.eWayBillNumber ||
+  response?.ewayBillNo) && (
+  <button
+    onClick={printEwayBillPDF}
+    style={{
+      padding: "8px 16px",
+      fontSize: "13px",
+      backgroundColor: "#13c2c2",
+      color: "#fff",
+      border: "none",
+      borderRadius: "4px",
+      cursor: "pointer",
+      fontWeight: "500"
+    }}
+  >
+    🖨️ Print E-Way Bill PDF
+  </button>
+)}
+
+  </div>
+</div>
       {/* Conditional Template Export UI Controls Wrapper */}
       {(lastGeneratedId || response?.status === "SUCCESS" || response?.irnnumber || response?.response?.irn) && (
         <div style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center", borderTop: "1px dashed #ccc", paddingTop: "12px" }}>
