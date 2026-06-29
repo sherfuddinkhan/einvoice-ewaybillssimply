@@ -1680,7 +1680,7 @@ console.log("EWB No:", ewbNo);
     }
 
     const payload = {
-      ewbNo: [String(ewbNo)], // <-- transported from generate response
+      ewbNo: [String(ewbNo)], 
     };
 
     console.log("Print Payload:", payload);
