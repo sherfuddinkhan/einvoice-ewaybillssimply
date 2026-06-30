@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../../components/AuthContext";
 
 /* ---------------------------------
    LocalStorage Keys (STANDARD)
@@ -20,7 +21,7 @@ const readLS = (key, fallback = {}) => {
 };
 
 const FetchEWBByDate = () => {
-
+  const { token, companyId } = useAuth();
       // Read latest values from localStorage
     const currentConnectionType =
       localStorage.getItem("connectionType") || "DEFAULT";
@@ -78,14 +79,15 @@ useEffect(() => {
      Fetch EWB by Number
   --------------------------- */
   const fetchEWB = async () => {
-    const url = "http://localhost:3001/proxy/topaz/ewb/byNumber";
+    const url = "https://einvoice.fcssoftwares.com/api/gst/ewaybill/by-number";
 
     const headers = {
       Accept: "application/json",
       product: "TOPAZ",
-      companyId: auth.companyId,
-      "X-Auth-Token": auth.token,
+      companyId: companyId,
+      "X-Auth-Token": token,
     };
+
 
     const payload = { ewbNo, userGstin, updateNeeded };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../../components/AuthContext";
 
 /* ---------------------------------
    LocalStorage Keys (STANDARD)
@@ -20,7 +21,7 @@ const readLS = (key, fallback = {}) => {
 };
 
 const GetEwbByDocNum = () => {
-
+  const { token, companyId } = useAuth();
   // Read latest values from localStorage
     const currentConnectionType =
       localStorage.getItem("connectionType") || "DEFAULT";
@@ -33,7 +34,7 @@ const GetEwbByDocNum = () => {
   const savedPayload = readLS(DOCNUM_PAYLOAD_KEY);
    console.log("shared",shared)
 
-  const token = shared?.fullResponse?.response?.token || "";
+  const token1 = shared?.fullResponse?.response?.token || "";
   const companyIdDefault = shared?.fullResponse?.response?.companyid || "";
   const gstinDefault = latestEwb?.fromGstin || shared?.fullResponse?.response?.userGstin || "";
   const companyIdhDefault = latestEwb?.fullApiResponse?.response?.companyId || companyIdDefault;
@@ -45,7 +46,7 @@ const GetEwbByDocNum = () => {
     Accept: "application/json",
     "Content-Type": "application/json",
     product: "TOPAZ",
-    companyId: companyIdDefault,
+    companyId: companyId ,
     "X-Auth-Token": token,
     sConnectionType: currentConnectionType,
   });

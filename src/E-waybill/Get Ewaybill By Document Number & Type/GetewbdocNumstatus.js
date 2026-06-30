@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../../components/AuthContext";
 
 /* ---------------------------------
    API ENDPOINTS
@@ -30,6 +31,7 @@ const readLS = (key, fallback = {}) => {
 };
 
 const GetEwbDocNumStatus = () => {
+    const { token, companyId } = useAuth();
   // Get values directly from localStorage
   const [selectedEnv, setSelectedEnv] = useState(
     localStorage.getItem("connectionType") || "DEFAULT"
@@ -44,7 +46,7 @@ const GetEwbDocNumStatus = () => {
   console.log("latestEwb ",latestEwb )
   console.log("latestCewb ",latestCewb )
 
-  const token =
+  const token1 =
     shared?.fullResponse?.response?.token || "";
 
   const headerCompanyId =
@@ -66,7 +68,7 @@ const GetEwbDocNumStatus = () => {
      State
   ---------------------------------- */
   const [headers, setHeaders] = useState({
-    companyId: headerCompanyId,
+    companyId: companyId,
     token,
     product: "TOPAZ",
     ConnectionType: currentConnectionType,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../../components/AuthContext";
 
 /* ---------------------------------
    LocalStorage Keys (STANDARD)
@@ -13,7 +14,7 @@ const BULK_STATUS_KEY = "bulkStatusLatest";
    API
 ---------------------------------- */
 const DEFAULT_PROXY =
-  "http://localhost:3001/proxy/topaz/ewb/bulkDownload";
+  "https://einvoice.fcssoftwares.com/api/gst/ewaybill/bulk-download";
 
 /* ---------------------------------
    Safe LocalStorage Reader
@@ -27,7 +28,7 @@ const readLS = (key, fallback = {}) => {
 };
 
 const BulkDownload = () => {
-
+  const { token, companyId } = useAuth();
   // Read latest values from localStorage
     const currentConnectionType =
       localStorage.getItem("connectionType") || "DEFAULT";
@@ -40,10 +41,10 @@ const BulkDownload = () => {
   const latestCewb = readLS(LATEST_CEWB_KEY);
   const lastBulk = readLS(BULK_STATUS_KEY);
 
-  const token =
+  const token1 =
     shared?.fullResponse?.response?.token || lastBulk?.token || "";
 
-const companyId = shared ?.fullResponse?.response?.companyid || "";
+const companyId1 = shared ?.fullResponse?.response?.companyid || "";
 
   const defaultId =
     latestEwb?.response?.id ||

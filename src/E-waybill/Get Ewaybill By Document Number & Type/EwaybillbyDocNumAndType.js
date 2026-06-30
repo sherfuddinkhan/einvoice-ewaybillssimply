@@ -122,7 +122,7 @@ const FetchByDocNumType = () => {
       localStorage.getItem("connectionType") || "DEFAULT";
 
         const res = await axios.get(
-          "http://localhost:3001/proxy/topaz/ewb/getByDocNumAndType",
+          "https://einvoice.fcssoftwares.com/api/gst/ewaybill/doc-details",
           {
             params: {
               userGstin: payload.userGstin,
