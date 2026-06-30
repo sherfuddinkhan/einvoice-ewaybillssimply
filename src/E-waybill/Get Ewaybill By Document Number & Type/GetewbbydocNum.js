@@ -48,7 +48,7 @@ const GetEwbByDocNum = () => {
     product: "TOPAZ",
     companyId: companyId ,
     "X-Auth-Token": token,
-    sConnectionType: currentConnectionType,
+    ConnectionType: currentConnectionType,
   });
 
   /* ---------------------------------
