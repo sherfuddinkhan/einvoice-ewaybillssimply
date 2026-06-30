@@ -7,8 +7,7 @@ import RequireAuth from "./components/RequireAuth";
 /* =======================
    LOGIN & AUTH
 ======================= */
-
-import LandingPage from "./loginAuthentication/Landingpage"
+import LandingPage from "./loginAuthentication/LandingPages";
 import EWayBillLoginPage from "./loginAuthentication/EWayBillLoginPage";
 import EInvoiceLoginPage from "./loginAuthentication/EInvoiceLoginPage";
 import EwaybillChangePassword from "./loginAuthentication/EwaybillChangePassword";
