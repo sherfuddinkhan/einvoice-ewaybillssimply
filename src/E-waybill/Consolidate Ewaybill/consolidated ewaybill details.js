@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../../components/AuthContext";
 
 /* ---------------------------
    LocalStorage Keys (STANDARD)
@@ -20,7 +21,7 @@ const readStorage = (key, fallback = {}) => {
 };
 
 const CEWBDetails = () => {
-
+ const {token, companyId} = useAuth();
    const currentConnectionType =
       localStorage.getItem("connectionType") || "DEFAULT";
 
@@ -49,82 +50,82 @@ const CEWBDetails = () => {
   /* ---------------------------
      Auto-fill from LocalStorage
   --------------------------- */
-  useEffect(() => {
-    const login = readStorage(STORAGE_KEY00);
-    const lastEwb = readStorage(LATEST_EWB_KEY);
-    console.log("lastEwb",lastEwb)
+ useEffect(() => {
+  const lastEwb = readStorage(LATEST_EWB_KEY);
 
-    const token = login.fullResponse?.response?.token || "";
-    const companyId = login.fullResponse?.response?.companyid || "";
+  console.log("lastEwb", lastEwb);
 
-    /* ---------- GSTIN ---------- */
-    const userGstin =
-      lastEwb?.response?.fromGstin ||
-      lastEwb?.fullApiResponse?.response?.fromGstin ||
-      login.userGstin ||
-      "05AAAAU1183B5ZW";
+  /* ---------- GSTIN ---------- */
+  const userGstin =
+    lastEwb?.response?.fromGstin ||
+    lastEwb?.fullApiResponse?.response?.fromGstin ||
+    "05AAAAU1183B5ZW";
 
-    /* ---------- Vehicle / EWB Details ---------- */
-    const vehicle = lastEwb?.vehicleDetails?.[0] || {};
+  /* ---------- Vehicle Details ---------- */
+  const vehicle = lastEwb?.vehicleDetails?.[0] || {};
 
-   const tripSheetEwbBills = Array.isArray(lastEwb?.tripSheetEwbBills) && lastEwb.tripSheetEwbBills.length > 0
-  ? lastEwb.tripSheetEwbBills.filter(Boolean)
-  : [lastEwb?.response?.cEwbNo || vehicle?.ewbNo].filter(Boolean);
+  /* ---------- Trip Sheet Bills ---------- */
+  const tripSheetEwbBills =
+    Array.isArray(lastEwb?.tripSheetEwbBills) &&
+    lastEwb.tripSheetEwbBills.length > 0
+      ? lastEwb.tripSheetEwbBills.filter(Boolean)
+      : [lastEwb?.response?.cEwbNo || vehicle?.ewbNo].filter(Boolean);
 
-console.log(tripSheetEwbBills);
+  console.log("tripSheetEwbBills", tripSheetEwbBills);
 
+  const initialPayload = {
+    fromPlace:
+      lastEwb?.response?.fromPlace ||
+      vehicle?.fromPlace ||
+      "Akhondiya",
 
-    const initialPayload = {
-      fromPlace:
-        lastEwb?.response?.fromPlace ||
-        vehicle?.fromPlace ||
-        "Akhondiya",
+    fromState:
+      lastEwb?.response?.fromStateCode ||
+      vehicle?.fromState ||
+      "5",
 
-      fromState:
-        lastEwb?.response?.fromStateCode ||
-        vehicle?.fromState ||
-        "5",
+    vehicleNo:
+      lastEwb?.response?.vehicleNo ||
+      vehicle?.vehicleNo ||
+      "RJ14CA9999",
 
-      vehicleNo:
-        lastEwb?.response?.vehicleNo ||
-        vehicle?.vehicleNo ||
-        "RJ14CA9999",
+    vehicleType:
+      lastEwb?.response?.vehicleType ||
+      vehicle?.vehicleType ||
+      "R",
 
-      vehicleType:
-        lastEwb?.response?.vehicleType ||
-        vehicle?.vehicleType ||
-        "R",
+    transMode:
+      lastEwb?.response?.transMode ||
+      vehicle?.transMode ||
+      "3",
 
-      transMode:
-        lastEwb?.transMode ||
-        vehicle?.transMode ||
-        "3",
+    transDocNo:
+      lastEwb?.response?.transDocNo ||
+      vehicle?.transDocNo ||
+      "1234",
 
-      transDocNo:
-        lastEwb?.response?.transDocNo ||
-        vehicle?.transDocNo ||
-        "1234",
+    transDocDate:
+      lastEwb?.response?.transDocDate ||
+      vehicle?.transDocDate ||
+      "12/11/2025",
 
-      transDocDate:
-        lastEwb?.response?.transDocDate ||
-        vehicle?.transDocDate ||
-        "12/11/2025",
+    tripSheetEwbBills,
+    companyId: String(companyId),
+    userGstin,
+  };
 
-      tripSheetEwbBills,
-      companyId,
-      userGstin,
-    };
+  setHeaders({
+    Accept: "application/json",
+    product: "ONYX",
+    companyId: String(companyId),
+    "X-Auth-Token": token,
+    "Content-Type": "application/json",
+    ConnectionType: currentConnectionType,
+  });
 
-    setHeaders((prev) => ({
-      ...prev,
-      companyId,
-      "X-Auth-Token": token,
-      ConnectionType: currentConnectionType,
-    }));
-
-    setPayload(initialPayload);
-    setPayloadText(JSON.stringify(initialPayload, null, 2));
-  }, []);
+  setPayload(initialPayload);
+  setPayloadText(JSON.stringify(initialPayload, null, 2));
+}, [companyId, token, currentConnectionType]);
 
   /* ---------------------------
      Payload JSON Editor
@@ -149,30 +150,46 @@ console.log(tripSheetEwbBills);
      Generate CEWB
   --------------------------- */
   const handleSubmit = async () => {
-    setLoading(true);
-    setError("");
-    setResponse(null);
+  setLoading(true);
+  setError("");
+  setResponse(null);
 
-    try {
-      const res = await axios.post(
-        "https://einvoice.fcssoftwares.com/api/gst/ewaybill/cewb-generate",
-        payload,
-        { headers }
-      );
+  try {
+    const res = await axios.post(
+      "https://einvoice.fcssoftwares.com/api/gst/ewaybill/cewb-generate",
+      payload,
+      {
+        headers: {
+          Accept: "application/json",
+          companyId: String(companyId),
+          "X-Auth-Token": token,
+          product: "ONYX",
+          "Content-Type": "application/json",
+          ConnectionType: currentConnectionType,
+        },
+      }
+    );
 
-      setResponse(res.data);
+    setResponse(res.data);
 
-      /* ✅ Persist latest CEWB response */
-      localStorage.setItem(LATEST_CEWB_KEY, JSON.stringify(res.data));
+    localStorage.setItem(
+      LATEST_CEWB_KEY,
+      JSON.stringify(res.data)
+    );
+  } catch (err) {
+    const msg = err.response?.data || err.message;
 
-    } catch (err) {
-      const msg = err.response?.data || err.message;
-      setError(typeof msg === "string" ? msg : JSON.stringify(msg, null, 2));
-      setResponse(err.response?.data || null);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setError(
+      typeof msg === "string"
+        ? msg
+        : JSON.stringify(msg, null, 2)
+    );
+
+    setResponse(err.response?.data || null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* ---------------------------
      UI

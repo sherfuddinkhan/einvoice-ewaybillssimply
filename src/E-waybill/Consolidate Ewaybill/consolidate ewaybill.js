@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useAuth } from "../../components/AuthContext";
 
 /* ---------------------------
    LocalStorage Keys
@@ -21,6 +22,7 @@ const readStorage = (key, fallback = {}) => {
 };
 
 const ByDocNumType = () => {
+    const { token, companyId, userGstin } = useAuth();
   const [selectedEnv, setSelectedEnv] = useState(
     localStorage.getItem("connectionType") || "DEFAULT"
   );
@@ -48,43 +50,43 @@ const ByDocNumType = () => {
   /* ---------------------------
      Auto-fill from LocalStorage
   --------------------------- */
-  useEffect(() => {
-    const login = readStorage(STORAGE_KEY00);
-    const lastEwb = readStorage(LATEST_EWB_KEY);
-    console.log("lastEwb ",lastEwb)
+useEffect(() => {
+  const lastEwb = readStorage(LATEST_EWB_KEY);
 
-    const token = login.fullResponse?.response?.token || "";
-    const companyId = login.fullResponse?.response?.companyid || "";
-    const gstin =
-      lastEwb?.response?.fromGstin ||
-      lastEwb?.fullApiResponse?.response?.fromGstin ||
-      login.userGstin ||
-      "";
-    const currentConnectionType =
-      localStorage.getItem("connectionType") || "DEFAULT";
-    // Extract CEWB No from previous flows
-    const cEwbNo =
-      lastEwb?.cewbResponse?.cEwbNo||
-      lastEwb?.cEwbNo ||
-      lastEwb?.response?.cEwbNo ||
-      "";
+  console.log("lastEwb", lastEwb);
 
-    setHeaders((prev) => ({
-      ...prev,
-      companyId,
-      "X-Auth-Token": token,
-      ConnectionType: currentConnectionType,
-    }));
+  const gstin =
+    lastEwb?.response?.fromGstin ||
+    lastEwb?.fullApiResponse?.response?.fromGstin ||
+    userGstin ||
+    "";
 
-    const initialPayload = {
-      cEwbNo,
-      companyId,
-      userGstin: gstin || "05AAAAU1183B5ZW",
-    };
+  const cEwbNo =
+    lastEwb?.cewbResponse?.cEwbNo ||
+    lastEwb?.cEwbNo ||
+    lastEwb?.response?.cEwbNo ||
+    "";
 
-    setPayload(initialPayload);
-    setPayloadText(JSON.stringify(initialPayload, null, 2));
-  }, []);
+  const currentConnectionType =
+    localStorage.getItem("connectionType") || "DEFAULT";
+
+  setHeaders((prev) => ({
+    ...prev,
+    companyId: String(companyId || ""),
+    "X-Auth-Token": token || "",
+    product: "ONYX",
+    ConnectionType: currentConnectionType,
+  }));
+
+  const initialPayload = {
+    cEwbNo,
+    companyId: String(companyId || ""),
+    userGstin: gstin || userGstin || "",
+  };
+
+  setPayload(initialPayload);
+  setPayloadText(JSON.stringify(initialPayload, null, 2));
+}, [companyId, token, userGstin]);
 
   /* ---------------------------
      Payload JSON Editor
@@ -112,41 +114,53 @@ const ByDocNumType = () => {
   /* ---------------------------
      Fetch CEWB Details
   --------------------------- */
-  const handleFetch = async () => {
-    if (!payload.userGstin || !payload.cEwbNo) {
-      setError("User GSTIN and CEWB Number are mandatory.");
-      return;
-    }
+const handleFetch = async () => {
+  if (!payload.userGstin || !payload.cEwbNo) {
+    setError("User GSTIN and CEWB Number are mandatory.");
+    return;
+  }
 
-    setLoading(true);
-    setError("");
-    setResponse(null);
+  setLoading(true);
+  setError("");
+  setResponse(null);
 
-    try {
-      const res = await axios.get(
-        "https://einvoice.fcssoftwares.com/api/gst/ewaybill/cewb-details",
-        {
-          params: payload,
-          headers: {
-            ...headers,
-            companyId: String(headers.companyId),
-          },
-          timeout: 30000,
-        }
-      );
+  try {
+    const res = await axios.get(
+      "https://einvoice.fcssoftwares.com/api/gst/ewaybill/cewb-details",
+      {
+        params: payload,
+        headers: {
+          Accept: "application/json",
+          companyId: String(companyId),
+          "X-Auth-Token": token,
+          product: "ONYX",
+          ConnectionType:
+            localStorage.getItem("connectionType") || "DEFAULT",
+        },
+        timeout: 30000,
+      }
+    );
 
-      setResponse(res.data);
+    setResponse(res.data);
 
-      // ✅ Persist latest CEWB response
-      localStorage.setItem(LATEST_CEWB_KEY, JSON.stringify(res.data));
-    } catch (err) {
-      const msg = err.response?.data || err.message;
-      setError(typeof msg === "string" ? msg : JSON.stringify(msg, null, 2));
-      setResponse(err.response?.data || null);
-    } finally {
-      setLoading(false);
-    }
-  };
+    localStorage.setItem(
+      LATEST_CEWB_KEY,
+      JSON.stringify(res.data)
+    );
+  } catch (err) {
+    const msg = err.response?.data || err.message;
+
+    setError(
+      typeof msg === "string"
+        ? msg
+        : JSON.stringify(msg, null, 2)
+    );
+
+    setResponse(err.response?.data || null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* ---------------------------
      UI
