@@ -693,7 +693,7 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
     transDist: inv?.distance || null, //ateeq added here on 27 06 2026...
     transName: inv?.transporterName || null, //ateeq added here on 27 06 2026...,
     transDocNo: inv?.transporterDocNo || null, //ateeq added here on 27 06 2026...,,,
-    transDocDate: formatDate(inv?.dateofIssue || new Date()),
+    transDocDate: inv?.deliveryNoteDate || null, //ateeq added here on 27 06 2026...,,,
     vehNo: inv?.vehicleNo || null,
     vehTyp: "R",
 
