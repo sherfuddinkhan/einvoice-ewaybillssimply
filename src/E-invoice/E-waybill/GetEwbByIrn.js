@@ -14,9 +14,17 @@ console.log("LAST_EWB_KEY",LAST_EWB_KEY)
 console.log("STORAGE_KEY2",STORAGE_KEY2)
 const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
+const LAST_IRN_KEY1 = JSON.parse(localStorage.getItem(LAST_IRN_KEY) || '{}');
+const STORAGE_KEY00 = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+console.log("savedconfig1",savedConfig1)
+console.log("savedconfig",savedConfig)
+console.log("LAST_IRN_KEY1",LAST_IRN_KEY1)
+console.log("STORAGE_KEY00",STORAGE_KEY00)
 
 const GetEwbByIrn = () => {
-    const { token, companyId, userGstin } = useAuth();
+    const { token, companyId, companyUniqueCode} = useAuth();
+    console.log("companyUniqueCode",companyUniqueCode)
+   
 /* ---------- Component State ---------- */
 const [config, setConfig] = useState({
   proxyBase: "https://einvoice.fcssoftwares.com",
@@ -48,7 +56,7 @@ useEffect(() => {
 const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
 
-    const initialGstin = savedConfig1?.companyUniqueCode
+   const initialGstin = savedConfig1?.companyUniqueCode
     || savedConfig?.companyUniqueCode
     || savedConfig?.userGstin
     || "";

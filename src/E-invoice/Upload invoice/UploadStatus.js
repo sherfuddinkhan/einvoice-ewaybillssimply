@@ -1,24 +1,33 @@
+
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../components/AuthContext";
-const STORAGE_KEY = "iris_einvoice_response";  
+
+const STORAGE_KEY = "iris_einvoice_response";
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
- // header info (companyId, maybe token)
-const STORAGE_KEY4 = "iris_einvoice_uploadfile"; // upload info (uploadId)
+const STORAGE_KEY4 = "iris_einvoice_uploadfile";
 
-  const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
-  const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
-  const savedConfig3 = JSON.parse(localStorage.getItem(STORAGE_KEY4) || "{}");
-    const currentConnectionType =
-        localStorage.getItem("connectionType") || "DEFAULT";
-    console.log("savedConfig",savedConfig)
-    console.log("savedResponse",savedResponse)
-    console.log("savedConfig2",savedConfig2)
-    console.log("savedConfig3",savedConfig3)
+const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY1) || "{}");
+const savedResponse = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+const savedConfig2 = JSON.parse(localStorage.getItem(STORAGE_KEY2) || "{}");
+const savedConfig3 = JSON.parse(localStorage.getItem(STORAGE_KEY4) || "{}");
+
+const currentConnectionType =
+  localStorage.getItem("connectionType") || "DEFAULT";
+
+console.log("savedConfig", savedConfig);
+console.log("savedResponse", savedResponse);
+console.log("savedConfig2", savedConfig2);
+console.log("savedConfig3", savedConfig3);
+
 const UploadStatus = () => {
-   const { token, companyId, userGstin } = useAuth();
+  const { token, companyId, userGstin, user } = useAuth();
+
   const [uploadId, setUploadId] = useState("");
+  const [preview, setPreview] = useState(null);
+  const [response, setResponse] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [headers, setHeaders] = useState({
     companyId: "",
@@ -28,47 +37,35 @@ const UploadStatus = () => {
     ConnectionType: currentConnectionType,
   });
 
-  const [preview, setPreview] = useState(null);
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState(false);
-
   /* ----------------------------------------
-      Load headers + last uploadId
-      *** FIX: Ensure 'X-Auth-Token' is loaded correctly. ***
+     Load Auth Headers + Upload ID
   ---------------------------------------- */
   useEffect(() => {
-    // Load header data
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setHeaders((prev) => ({
-          ...prev,
-          companyId: parsed.companyId || "24", // Use a default for companyId
-          // Assuming token is available on 'token' field in STORAGE_KEY
-          "X-Auth-Token": parsed.token || "", 
-        }));
-      }
-    } catch (e) {
-      console.error("Header storage parse error", e);
-    }
+    setHeaders((prev) => ({
+      ...prev,
+      companyId: companyId || user?.companyId || "",
+      "X-Auth-Token": token || user?.token || "",
+    }));
 
-    // Load last upload info
     try {
       const uploadSaved = localStorage.getItem(STORAGE_KEY4);
+
       if (uploadSaved) {
-        const savedConfig3 = JSON.parse(uploadSaved);
-        if (savedConfig3.lastResponse.response.uploadId) {
-          setUploadId(savedConfig3.lastResponse.response.uploadId);
+        const parsed = JSON.parse(uploadSaved);
+
+        const id = parsed?.lastResponse?.response?.uploadId;
+
+        if (id) {
+          setUploadId(id);
         }
       }
-    } catch (e) {
-      console.error("Upload storage parse error", e);
+    } catch (err) {
+      console.error("Upload storage parse error", err);
     }
-  }, []);
+  }, [token, companyId, user]);
 
   /* ----------------------------------------
-      Check upload status
+     Check Upload Status
   ---------------------------------------- */
   const checkStatus = async () => {
     if (!uploadId) {
@@ -79,8 +76,7 @@ const UploadStatus = () => {
     setLoading(true);
     setResponse(null);
 
-    // The endpoint includes the uploadId as a query parameter
-    const endpoint = `'https://einvoice.fcssoftwares.com/api/gst/upload/status?uploadId=${uploadId}`;
+    const endpoint = `https://einvoice.fcssoftwares.com/api/gst/upload/status?uploadId=${uploadId}`;
 
     setPreview({
       method: "GET",
@@ -94,12 +90,12 @@ const UploadStatus = () => {
         headers,
       });
 
-      // Handle non-200 responses that might still return JSON (e.g., 401, 404)
       const data = await res.json();
       setResponse(data);
-
     } catch (err) {
-      setResponse({ error: err.message || "Network Error" });
+      setResponse({
+        error: err.message || "Network Error",
+      });
     } finally {
       setLoading(false);
     }
@@ -118,17 +114,25 @@ const UploadStatus = () => {
           maxWidth: 700,
         }}
       >
-        {/* Headers Preview */}
-        <h4 style={{ marginTop: 0 }}>Current Headers</h4>
-        <pre style={{ overflowX: 'auto', background: '#f0f0f0', padding: 10, borderRadius: 6, fontSize: '0.8em' }}>
-            {JSON.stringify(headers, null, 2)}
+        <h4>Current Headers</h4>
+
+        <pre
+          style={{
+            overflowX: "auto",
+            background: "#f0f0f0",
+            padding: 10,
+            borderRadius: 6,
+            fontSize: "0.8em",
+          }}
+        >
+          {JSON.stringify(headers, null, 2)}
         </pre>
 
-        {/* Upload ID */}
         <div style={{ marginBottom: 20 }}>
           <label>
             <strong>Upload ID</strong>
           </label>
+
           <input
             type="text"
             value={uploadId}
@@ -144,10 +148,9 @@ const UploadStatus = () => {
           />
         </div>
 
-        {/* Button */}
         <button
           onClick={checkStatus}
-          disabled={loading || !uploadId} // Disable if no ID
+          disabled={loading || !uploadId}
           style={{
             width: "100%",
             padding: 15,
@@ -157,13 +160,13 @@ const UploadStatus = () => {
             borderRadius: 12,
             color: "#fff",
             fontWeight: "bold",
+            cursor: "pointer",
           }}
         >
           {loading ? "Checking..." : "CHECK STATUS"}
         </button>
       </div>
 
-      {/* Preview */}
       {preview && (
         <pre
           style={{
@@ -178,7 +181,6 @@ const UploadStatus = () => {
         </pre>
       )}
 
-      {/* Response */}
       {response && (
         <pre
           style={{
