@@ -153,7 +153,7 @@ const App = () => {
         />
 
         {/* ================= DASHBOARD ================= */}
-        <Route path="/dashboard" element={<RequireAuth><Layout /></RequireAuth>}>
+        <Route path="/dashboard" element={<Layout />}>
           <Route index element={<Dashboard />} />
         </Route>
 

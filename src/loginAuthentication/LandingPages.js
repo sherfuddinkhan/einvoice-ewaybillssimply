@@ -51,11 +51,11 @@ const LandingPage = () => {
       setApiResponse(res.data);
 
       // Save selections in localStorage
-      localStorage.setItem("connectionType", connectionType);
-      localStorage.setItem("yearName", yearName);
+      sessionStorage.setItem("connectionType", connectionType);
+    sessionStorage.setItem("yearName", yearName);
 
       // Save complete response
-      localStorage.setItem("authResponse", JSON.stringify(res.data));
+      sessionStorage.setItem("authResponse", JSON.stringify(res.data));
 
       if (
         res.data?.status === "SUCCESS" ||

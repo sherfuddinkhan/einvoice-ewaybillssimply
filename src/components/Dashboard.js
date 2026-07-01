@@ -5,7 +5,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   // 1. Fetch and parse the response saved during login
-  const savedAuth = localStorage.getItem("authResponse");
+  const savedAuth = sessionStorage.getItem("authResponse");
+  console.log("authresponse",savedAuth)
   let displayUser = "Calibrecue IT Solutions"; // Fallback name
 
   if (savedAuth) {
