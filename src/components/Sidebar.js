@@ -249,9 +249,31 @@ const handleLogout = () => {
 }
   ];
 
-  const visibleSections = menuSections.filter(
-    (s) => !s.product || s.product === product
+ const isDashboard = location.pathname === "/dashboard";
+const isEinvoice = location.pathname.startsWith("/einvoice");
+const isEway = location.pathname.startsWith("/ewaybill");
+
+let visibleSections = [];
+
+if (isDashboard) {
+  visibleSections = menuSections.filter(
+    (section) =>
+      section.title === "Dashboard" ||
+      section.title === "Logout"
   );
+} else if (isEinvoice) {
+  visibleSections = menuSections.filter(
+    (section) =>
+      section.product === "EINVOICE" ||
+      section.title === "Logout"
+  );
+} else if (isEway) {
+  visibleSections = menuSections.filter(
+    (section) =>
+      section.product === "EWAY" ||
+      section.title === "Logout"
+  );
+}
 
   /* --------------------------------
       UI
