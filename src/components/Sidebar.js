@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { LogoutOutlined } from "@ant-design/icons";
+import { DashboardOutlined } from "@ant-design/icons";
+
 
 const Sidebar = () => {
   const location = useLocation();
@@ -14,7 +16,9 @@ const Sidebar = () => {
  const navigate = useNavigate();
 
   // 1. Fetch and parse the response saved during login
+
   const savedAuth = localStorage.getItem("authResponse");
+  const isLoggedIn = !!savedAuth;
   let displayUser = "Calibrecue IT Solutions"; // Fallback name
 
   if (savedAuth) {
@@ -34,6 +38,8 @@ const Sidebar = () => {
   }
 
 
+
+
   const toggle = (title) => {
     setOpenSections((prev) => ({
       ...prev,
@@ -45,6 +51,22 @@ const Sidebar = () => {
     location.pathname === path ||
     (path !== "/" && location.pathname.startsWith(path + "/"));
 
+const handleLogout = () => {
+  const confirmLogout = window.confirm(
+    "Are you willing to logout?"
+  );
+
+  if (!confirmLogout) return;
+
+  localStorage.removeItem("authResponse");
+  localStorage.removeItem("token");
+  localStorage.removeItem("companyId");
+  localStorage.removeItem("connectionType");
+
+  sessionStorage.clear();
+
+  navigate("/", { replace: true });
+};
   /* --------------------------------
       AUTO OPEN SECTION ON ROUTE
   --------------------------------- */
@@ -66,29 +88,35 @@ const Sidebar = () => {
       MENU CONFIG
   --------------------------------- */
   const menuSections = [
-    {
-      title: "Home",
-      items: [{ path: "/", label: "Landing / Login" }],
-    },
+   // Show Home only when NOT logged in
+  ...(!isLoggedIn
+    ? [
+        {
+          title: "Home",
+          path: "/",
+        },
+      ]
+    : []),
 
-    {
-      title: "Dashboard",
-      items: [{ path: "/dashboard", label: "Dashboard" }],
-    },
+   {
+  title: "Dashboard",
+  path: "/dashboard",
+  icon: <DashboardOutlined />,
+},
 
-    {
-      title: "Login / Switch",
-      items: [
-        { path: "/ewaybill-login", label: "E-Way Bill Login" },
-        { path: "/einvoice-login", label: "E-Invoice Login" },
-      ],
-    },
+    //{
+     // title: "Login / Switch",
+      //items: [
+        //{ path: "/ewaybill-login", label: "E-Way Bill Login" },
+        //{ path: "/einvoice-login", label: "E-Invoice Login" },
+      //],
+    //},
     
-    {
-      title: "Change Password",
-      product: "EWAY",
-      items: [{ path: "/ewaybill/change-password", label: "Change Password" }],
-    },
+   // {
+     // title: "Change Password",
+      //product: "EWAY",
+      //items: [{ path: "/ewaybill/change-password", label: "Change Password" }],
+    //},
 
     /* ================= E-WAY BILL ================= */
     {
@@ -97,8 +125,8 @@ const Sidebar = () => {
       items: [
         { path: "/ewaybill/eway-display", label: "E-Waybill Fields" },
         { path: "/ewaybill/ewb-generate-print", label: "Generate & Print E-way bill" },
-        { path: "/ewaybill/eway-pewdisplay", label: "E-Waybill proformaFields" },
-        { path: "/ewaybill/eway-generate-print-pewdisplay", label: "E-Waybill proformaFields Generate&print" },
+        //{ path: "/ewaybill/eway-pewdisplay", label: "E-Waybill proformaFields" },
+        //{ path: "/ewaybill/eway-generate-print-pewdisplay", label: "E-Waybill proformaFields Generate&print" },
         { path: "/ewaybill/fetch-ewb", label: "Fetch by EWB No" },
         { path: "/ewaybill/ewb-details", label: "Get EWB Details" },
       ],
@@ -161,21 +189,21 @@ const Sidebar = () => {
     },
    
     /* ================= E-INVOICE ================= */
-    {
-      title: "Change Password",
-      product: "EINVOICE",
-      items: [{ path: "/einvoice/change-password", label: "Change Password" }],
-    },
+   // {
+     // title: "Change Password",
+     // product: "EINVOICE",
+      //items: [{ path: "/einvoice/change-password", label: "Change Password" }],
+    //},
     {
       title: "E-Invoice Core",
       product: "EINVOICE",
       items: [
         { path: "/einvoice/einvoice-display", label: "E-Invoice Fields" },
-        { path: "/einvoice/einvoice-pdisplay", label: "E-Invoice proformaFields" },
+        //{ path: "/einvoice/einvoice-pdisplay", label: "E-Invoice proformaFields" },
         { path: "/einvoice/generate-print", label: "Generate Invoice and print" },
-        { path: "/einvoice/generate-printproformo", label: "Generate Proforma Invoice and print" },
-        { path: "/einvoice/generateCN-print", label: "Generate CN Invoice and print" },
-        { path: "/einvoice/generateCNP-print", label: "Generate CNprofprma Invoice and print" },
+        //{ path: "/einvoice/generate-printproformo", label: "Generate Proforma Invoice and print" },
+        //{ path: "/einvoice/generateCN-print", label: "Generate CN Invoice and print" },
+        //{ path: "/einvoice/generateCNP-print", label: "Generate CNprofprma Invoice and print" },
         { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
         { path: "/einvoice/get-by-irn", label: "Get by IRN" },
         { path: "/einvoice/get-by-doc", label: "Get by Document" },
@@ -215,11 +243,10 @@ const Sidebar = () => {
       ],
     },
     {
-         title: "Account",
-        items: [
-      {  path: "/logout", label: "Logout", icon: <LogoutOutlined />},
-       ],
-     }
+  onClick: handleLogout,
+  title: "Logout",
+  icon: <LogoutOutlined />,
+}
   ];
 
   const visibleSections = menuSections.filter(
@@ -249,46 +276,94 @@ const Sidebar = () => {
         )}
       </h3>
 
-      {visibleSections.map((section) => (
-        <div key={section.title} style={{ marginBottom: 6 }}>
-          <div
-            onClick={() => toggle(section.title)}
-            style={{
-              cursor: "pointer",
-              padding: "10px 12px",
-              fontWeight: "bold",
-              borderRadius: 6,
-              background: openSections[section.title] ? "#2c84f8" : "transparent",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            {section.title}
-            <span>{openSections[section.title] ? "▾" : "▸"}</span>
-          </div>
-
-          {openSections[section.title] &&
-            section.items.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                style={{
-                  display: "block",
-                  padding: "8px 18px",
-                  marginTop: 4,
-                  borderRadius: 6,
-                  fontSize: 14,
-                  textDecoration: "none",
-                  background: isActive(item.path) ? "#fff" : "transparent",
-                  color: isActive(item.path) ? "#1A73E8" : "#fff",
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
+{visibleSections.map((section) => (
+  <div key={section.title} style={{ marginBottom: 6 }}>
+    {!section.items ? (
+      // Standalone menu item
+      section.onClick ? (
+        <div
+          onClick={section.onClick}
+          style={{
+            cursor: "pointer",
+            padding: "10px 12px",
+            borderRadius: 6,
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            background: isActive(section.path) ? "#fff" : "transparent",
+            color: isActive(section.path) ? "#1A73E8" : "#fff",
+          }}
+        >
+          {section.icon}
+          <span style={{ marginLeft: 8 }}>{section.title}</span>
         </div>
-      ))}
+      ) : (
+        <Link
+          to={section.path}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "10px 12px",
+            borderRadius: 6,
+            fontWeight: "bold",
+            textDecoration: "none",
+            background: isActive(section.path) ? "#fff" : "transparent",
+            color: isActive(section.path) ? "#1A73E8" : "#fff",
+          }}
+        >
+          {section.icon}
+          <span style={{ marginLeft: 8 }}>{section.title}</span>
+        </Link>
+      )
+    ) : (
+      <>
+        {/* Expandable section */}
+        <div
+          onClick={() => toggle(section.title)}
+          style={{
+            cursor: "pointer",
+            padding: "10px 12px",
+            fontWeight: "bold",
+            borderRadius: 6,
+            background: openSections[section.title]
+              ? "#2c84f8"
+              : "transparent",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          {section.title}
+          <span>{openSections[section.title] ? "▾" : "▸"}</span>
+        </div>
+
+        {openSections[section.title] &&
+          section.items.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              style={{
+                display: "block",
+                padding: "8px 18px",
+                marginTop: 4,
+                borderRadius: 6,
+                fontSize: 14,
+                textDecoration: "none",
+                background: isActive(item.path)
+                  ? "#fff"
+                  : "transparent",
+                color: isActive(item.path)
+                  ? "#1A73E8"
+                  : "#fff",
+              }}
+            >
+              {item.icon} {item.label}
+            </Link>
+          ))}
+      </>
+    )}
+  </div>
+))}
     </div>
   );
 };

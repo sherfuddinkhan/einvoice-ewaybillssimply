@@ -248,8 +248,7 @@ const App = () => {
           <Route path="change-password" element={<EinvoiceChangePassword />} />
         </Route>
 
-        {/* ================= Logout ================= */}
-        <Route path="logout" element={<LogoutButton />} />
+        
         {/* ================= FALLBACK ================= */}
         <Route path="*" element={<h2>404 | Page Not Found</h2>} />
 
