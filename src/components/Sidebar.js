@@ -75,7 +75,7 @@ const Sidebar = () => {
       product: "EWAY",
       items: [
         { path: "/ewaybill/eway-display", label: "E-Waybill Fields" },
-        { path: "/ewaybill/ewb-generate-print", label: "Generate & Print E-way bill" },
+        { path: "/ewaybill/ewb-generate-print", label: "Generate & Print E-way bill", navigationOnly: true, },
         { path: "/ewaybill/fetch-ewb", label: "Fetch by EWB No" },
         { path: "/ewaybill/ewb-details", label: "Get EWB Details" },
       ],
@@ -115,7 +115,7 @@ const Sidebar = () => {
       product: "EINVOICE",
       items: [
         { path: "/einvoice/einvoice-display", label: "E-Invoice Fields" },
-        { path: "/einvoice/generate-print", label: "Generate Invoice and print" },
+        { path: "/einvoice/generate-print", label: "Generate Invoice and print",navigationOnly: true, },
         { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
         { path: "/einvoice/get-by-irn", label: "Get by IRN" },
       ],
@@ -209,22 +209,31 @@ if (isDashboard) {
           {/* MENU ITEMS */}
           {openSections[section.title] &&
             section.items?.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                style={{
-                  display: "block",
-                  padding: "8px 18px",
-                  marginTop: 4,
-                  borderRadius: 6,
-                  fontSize: 14,
-                  textDecoration: "none",
-                  background: isActive(item.path) ? "#fff" : "transparent",
-                  color: isActive(item.path) ? "#1A73E8" : "#fff",
-                }}
-              >
-                {item.label}
-              </Link>
+              <div
+  key={item.path}
+  onClick={() => {
+    if (item.navigationOnly) {
+      alert(
+        "This page can only be opened through the Generate E-Way Bill  or E-invoice button."
+      );
+      return;
+    }
+
+    navigate(item.path);
+  }}
+  style={{
+    display: "block",
+    padding: "8px 18px",
+    marginTop: 4,
+    borderRadius: 6,
+    fontSize: 14,
+    cursor: "pointer",
+    background: isActive(item.path) ? "#fff" : "transparent",
+    color: isActive(item.path) ? "#1A73E8" : "#fff",
+  }}
+>
+  {item.label}
+</div>
             ))}
         </div>
       ))}

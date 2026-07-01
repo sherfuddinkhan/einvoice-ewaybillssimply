@@ -185,19 +185,6 @@ const FetchEWBbyNumber = () => {
       </button>
 
       <hr style={{ margin: "25px 0" }} />
-
-      {/* HEADERS */}
-      <div style={{ background: "#f1f2f6", padding: 15, borderRadius: 8, marginBottom: 20 }}>
-        <h3>🔐 Request Headers</h3>
-        <pre>{JSON.stringify(requestHeaders, null, 2)}</pre>
-      </div>
-
-      {/* PAYLOAD */}
-      <div style={{ background: "#f1f2f6", padding: 15, borderRadius: 8, marginBottom: 20 }}>
-        <h3>📦 Request Payload</h3>
-        <pre>{JSON.stringify(requestPayload, null, 2)}</pre>
-      </div>
-
       {/* RESPONSE */}
       <div style={{ background: "#e8ffe8", padding: 15, borderRadius: 8, marginBottom: 20 }}>
         <h3>📌 Response</h3>

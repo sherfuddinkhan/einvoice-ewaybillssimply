@@ -170,17 +170,6 @@ const { token, companyId } = useAuth();
       </button>
 
       <hr />
-
-      <h3>Request Headers</h3>
-      <pre style={{ background: "#f0f0f0", padding: 10 }}>
-        {JSON.stringify(requestHeaders, null, 2)}
-      </pre>
-
-      <h3>Request Payload</h3>
-      <pre style={{ background: "#f0f0f0", padding: 10 }}>
-        {JSON.stringify(requestPayload, null, 2)}
-      </pre>
-
       <h3>Response</h3>
       <pre style={{ background: "#e8f5ff", padding: 10 }}>
         {responseData

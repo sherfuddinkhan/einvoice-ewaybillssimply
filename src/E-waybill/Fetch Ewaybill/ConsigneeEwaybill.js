@@ -255,21 +255,6 @@ const ConsigneeEwaybill = () => {
 
       <hr />
 
-      <h3>📌 Request Preview</h3>
-      <pre
-        style={{
-          background: "#f4f4f4",
-          padding: 10,
-          overflow: "auto",
-        }}
-      >
-        {JSON.stringify(
-          requestPreview,
-          null,
-          2
-        )}
-      </pre>
-
       <h3>📌 Response Preview</h3>
       <pre
         style={{
