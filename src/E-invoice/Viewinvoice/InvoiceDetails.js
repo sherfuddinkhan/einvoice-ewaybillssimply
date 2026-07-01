@@ -1,7 +1,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../components/AuthContext";
-
+import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 // Storage Keys
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 const EINV_DOC_KEY = "iris_einv_doc_map";
@@ -11,8 +12,14 @@ const LAST_IRN_KEY = "iris_last_used_irn";
 const LAST_SIGNED_QR_JWT_KEY = "iris_last_signed_qr_jwt";
 const LAST_EWB_DETAILS_KEY = "iris_last_ewb_details";
 
+
 const InvoiceDetails = () => {
   const { token, companyId } = useAuth();
+  const navigate = useNavigate();
+    const location = useLocation();
+     const invoiceData = location.state?.invoiceData;
+
+  console.log(invoiceData);
   const currentConnectionType =
         localStorage.getItem("connectionType") || "DEFAULT";
   const [einvId, setEinvId] = useState("");

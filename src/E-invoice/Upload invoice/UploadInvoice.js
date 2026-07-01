@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../components/AuthContext";
 
+import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+
 
 const STORAGE_KEY = "iris_einvoice_response";
 const STORAGE_KEY1 = "iris_einvoice_shared_config";
@@ -12,6 +15,11 @@ const STORAGE_KEY4 = "iris_einvoice_uploadfile";
 const UploadInvoice = () => {
 const { token, companyId, userGstin } = useAuth();
 const [companyUniqueCode, setCompanyUniqueCode] = useState("");
+ const navigate = useNavigate();
+    const location = useLocation();
+     const invoiceData = location.state?.invoiceData;
+
+  console.log("invoiceData", invoiceData);
 const [file, setFile] = useState(null);
 const [preview, setPreview] = useState(null);
 const [response, setResponse] = useState(null);

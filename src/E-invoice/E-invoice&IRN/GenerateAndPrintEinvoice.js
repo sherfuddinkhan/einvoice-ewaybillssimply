@@ -1518,6 +1518,7 @@ export const GenerateAndPrintEinvoice = () => {
       );
 
       const data = await res.json();
+      
       setResponse(data);
 
       const generatedId =

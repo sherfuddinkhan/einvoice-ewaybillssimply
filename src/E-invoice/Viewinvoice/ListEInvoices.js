@@ -47,6 +47,7 @@ const updateLocalStorageDocMap = (docNo, ackDt) => {
 
 
 const ListEInvoices = () => {
+      const { token, companyId } = useAuth();
       const currentConnectionType =
         localStorage.getItem("connectionType") || "DEFAULT";
     const [docMap, setDocMap] = useState([]);
@@ -122,8 +123,7 @@ const ListEInvoices = () => {
     /* -------------------------
         Auto-load headers, payload, and Doc Map
     ------------------------- */
-  
-const { token, companyId, userGstin } = useAuth();
+
 
 
 
