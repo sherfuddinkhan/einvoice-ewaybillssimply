@@ -12,6 +12,7 @@ const LandingPage = () => {
     password: "SMC@123",
     userType: "Admin",
     loginRef: "56860",
+    yearName: "26-27"
   });
 
   const [connectionType, setConnectionType] = useState("DEFAULT");
@@ -51,9 +52,11 @@ const LandingPage = () => {
       setApiResponse(res.data);
 
       // Save selections in localStorage
-      sessionStorage.setItem("connectionType", connectionType);
-    sessionStorage.setItem("yearName", yearName);
+      localStorage.setItem("connectionType", connectionType);
+      localStorage.setItem("yearName", yearName);
+      console.log("year", yearName);
 
+      
       // Save complete response
       sessionStorage.setItem("authResponse", JSON.stringify(res.data));
 
