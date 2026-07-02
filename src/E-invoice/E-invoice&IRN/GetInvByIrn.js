@@ -101,29 +101,50 @@ useEffect(() => {
         * IRN and User GSTIN are auto-populated from Auth context or Local Storage.
       </p>
 
-      <input
-        value={irn}
-        onChange={(e) => setIrn(e.target.value)}
-        placeholder="IRN (auto-filled)"
-        style={{...inputStyle, background: irn ? '#e8f5e9' : 'white', fontWeight: irn ? 'bold' : 'normal'}}
-      />
+<div style={fieldRow}>
+  <label style={labelStyle}>IRN</label>
 
-      <input
-        value={userGstin}
-        onChange={(e) => setUserGstin(e.target.value)}
-        placeholder="User GSTIN (auto-filled)"
-        style={{...inputStyle, background: userGstin ? '#e8f5e9' : 'white', fontWeight: userGstin ? 'bold' : 'normal'}}
-      />
+  <input
+    value={irn}
+    onChange={(e) => setIrn(e.target.value)}
+    placeholder="IRN (auto-filled)"
+    style={{
+      ...inputStyle,
+      background: irn ? "#e8f5e9" : "white",
+      fontWeight: irn ? "bold" : "normal",
+    }}
+  />
+</div>
 
-      <div style={sectionStyle}>
-        <strong>URL:</strong>
-        <pre style={codeStyle}>{endpoint}</pre>
-      </div>
+<div style={fieldRow}>
+  <label style={labelStyle}>User GSTIN</label>
 
-      <div style={sectionStyle}>
-        <strong>Headers (Auto-filled):</strong>
-        <pre style={codeStyle}>{JSON.stringify(headers, null, 2)}</pre>
-      </div>
+  <input
+    value={userGstin}
+    onChange={(e) => setUserGstin(e.target.value)}
+    placeholder="User GSTIN (auto-filled)"
+    style={{
+      ...inputStyle,
+      background: userGstin ? "#e8f5e9" : "white",
+      fontWeight: userGstin ? "bold" : "normal",
+    }}
+  />
+</div>
+
+<div style={fieldRow}>
+  <label style={labelStyle}>URL</label>
+
+  <pre
+    style={{
+      ...codeStyle,
+      flex: 1,
+      margin: 0,
+    }}
+  >
+    {endpoint}
+  </pre>
+</div>
+
 
       <button
         onClick={handleFetch}
@@ -147,44 +168,82 @@ useEffect(() => {
 };
 
 /* -------------------- STYLES -------------------- */
+const fieldRow = {
+  display: "flex",
+  alignItems: "center",
+  marginBottom: "20px",
+  gap: "20px",
+};
+
+const labelStyle = {
+  width: "180px",
+  fontWeight: "600",
+  color: "#333",
+  fontSize: "16px",
+};
+
 const containerStyle = {
-  maxWidth: 900,
-  margin: "20px auto",
-  padding: 20,
+  // Increased container width to 800px so the URL input can expand horizontally
+  maxWidth: 800, 
+  margin: "40px auto",
+  padding: "0 20px",
+  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
 };
 
 const sectionStyle = {
-  marginBottom: 20,
-  padding: 12,
-  backgroundColor: "#f5f5f5",
-  borderRadius: 6,
+  marginBottom: 24,
+  padding: "4px 0",
+  backgroundColor: "transparent", 
+};
+
+// Dedicated style for the URL container to let it sit comfortably on its own wide line
+const urlContainerStyle = {
+  width: "100%",
+  marginBottom: 16,
 };
 
 const inputStyle = {
-  width: "100%",
-  padding: 8,
-  marginBottom: 10,
-  borderRadius: 4,
-  border: "1px solid #ccc",
+  // Spans the full width of the expanded 800px container
+  width: "50%",
+  boxSizing: "border-box", 
+  padding: "12px 16px", // Added slightly deeper padding for a premium, spacious look
+  borderRadius: 6,
+  border: "1px solid #dcdcdc",
+  backgroundColor: "#fff", 
+  fontSize: "15px", // Bumped font up slightly for a clean readability sweep
+  transition: "border-color 0.2s ease",
+};
+
+// Restricting other elements (like standard forms/buttons) so they don't stretch awkwardly across the new 800px width
+const compactElementStyle = {
+  maxWidth: 400, 
+  width: "100%",
 };
 
 const codeStyle = {
-  background: "#fff",
-  padding: 10,
-  borderRadius: 4,
-  fontFamily: "monospace",
-  whiteSpace: "pre-wrap",
-  border: "1px solid #ddd",
-  marginTop: 8,
+  background: "#1e1e1e", 
+  color: "#f8f8f2",
+  padding: 14,
+  borderRadius: 6,
+  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  fontSize: "13px",
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-all",
+  marginTop: 8,
 };
 
 const buttonStyle = (disabled) => ({
-  padding: "10px 20px",
-  backgroundColor: disabled ? "#ccc" : "#3498db",
-  color: "white",
-  border: "none",
-  borderRadius: 6,
-  cursor: disabled ? "not-allowed" : "pointer",
+  padding: "12px 24px",
+  backgroundColor: disabled ? "#e0e0e0" : "#2563eb", 
+  color: disabled ? "#a3a3a3" : "white",
+  border: "none",
+  borderRadius: 6,
+  fontSize: "14px",
+  fontWeight: "600",
+  cursor: disabled ? "not-allowed" : "pointer",
+  transition: "background-color 0.2s ease",
 });
+
+
 
 export default GetInvByIrn;

@@ -43,6 +43,14 @@ export const AuthProvider = ({children}) => {
     useCallback(() => {
       sessionStorage.removeItem(EWAY_KEY);
       sessionStorage.removeItem( EINVOICE_KEY);
+
+        // Local Storage
+  localStorage.removeItem("token");
+  localStorage.removeItem("companyId");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("authResponse");
+  localStorage.removeItem("connectionType");
+  localStorage.removeItem("yearName");
       setIsLoggedIn(false);
       setProduct(null);
       setToken(null);
