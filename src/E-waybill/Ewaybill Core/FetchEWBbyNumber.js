@@ -140,42 +140,69 @@ const FetchEWBbyNumber = () => {
     });
   }
 };
+const rowStyle = {
+  display: "flex",
+  alignItems: "center",
+  marginBottom: "18px",
+};
+
+const labelStyle = {
+  width: "180px",
+  fontWeight: "600",
+  fontSize: "16px",
+  color: "#333",
+};
+
+const inputStyle = {
+  width: "400px",
+  padding: "10px 12px",
+  fontSize: "16px",
+  border: "2px solid #1d3557",
+  borderRadius: "8px",
+  outline: "none",
+};
   return (
     <div style={{ padding: 20, maxWidth: 1000, margin: "auto", fontFamily: "Arial, sans-serif" }}>
       <h1 style={{ textAlign: "center" }}>🔍 Fetch E-Waybill By Number</h1>
 
       {/* INPUTS */}
-      <div style={{ margin: "15px 0" }}>
-        <label>EWB Number:</label>
-        <input
-          type="text"
-          value={ewbNo}
-          onChange={(e) => setEwbNo(e.target.value)}
-          style={{ width: "100%", padding: 8, marginTop: 5 }}
-        />
-      </div>
+   {/* EWB Number */}
+<div style={rowStyle}>
+  <label style={labelStyle}>EWB Number</label>
 
-      <div style={{ margin: "15px 0" }}>
-        <label>User GSTIN:</label>
-        <input
-          type="text"
-          value={userGstin}
-          onChange={(e) => setUserGstin(e.target.value)}
-          style={{ width: "100%", padding: 8, marginTop: 5 }}
-        />
-      </div>
+  <input
+    type="text"
+    value={ewbNo}
+    onChange={(e) => setEwbNo(e.target.value)}
+    style={inputStyle}
+  />
+</div>
 
-      <div style={{ margin: "15px 0" }}>
-        <label>Update Needed:</label>
-        <select
-          value={updateNeeded}
-          onChange={(e) => setUpdateNeeded(e.target.value === "true")}
-          style={{ width: "100%", padding: 8, marginTop: 5 }}
-        >
-          <option value="true">true</option>
-          <option value="false">false</option>
-        </select>
-      </div>
+{/* User GSTIN */}
+<div style={rowStyle}>
+  <label style={labelStyle}>User GSTIN</label>
+
+  <input
+    type="text"
+    value={userGstin}
+    onChange={(e) => setUserGstin(e.target.value)}
+    style={inputStyle}
+  />
+</div>
+
+{/* Update Needed */}
+<div style={rowStyle}>
+  <label style={labelStyle}>Update Needed</label>
+
+  <select
+    value={updateNeeded}
+    onChange={(e) => setUpdateNeeded(e.target.value === "true")}
+    style={inputStyle}
+  >
+    <option value="true">true</option>
+    <option value="false">false</option>
+  </select>
+</div>
 
       <button
         onClick={fetchEWB}

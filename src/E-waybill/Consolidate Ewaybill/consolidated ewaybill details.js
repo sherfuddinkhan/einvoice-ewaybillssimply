@@ -195,7 +195,7 @@ const CEWBDetails = () => {
      UI
   --------------------------- */
   return (
-    <div style={{ maxWidth: 900, margin: "auto", padding: 20 }}>
+    <div style={{ maxWidth: 400, margin: "auto", padding: 20 }}>
       <h2>Generate Consolidated E-Way Bill (CEWB)</h2>
 
       {/* Headers */}
@@ -203,7 +203,7 @@ const CEWBDetails = () => {
         <h3>Request Headers</h3>
         {Object.entries(headers).map(([k, v]) => (
           <div key={k} style={{ marginBottom: 8 }}>
-            <label style={{ width: 160, display: "inline-block" }}>{k}</label>
+            <label style={{ width: 50, display: "inline-block" }}>{k}</label>
             <input
               value={v}
               onChange={(e) => updateHeader(k, e.target.value)}
@@ -220,7 +220,7 @@ const CEWBDetails = () => {
           rows={14}
           value={payloadText}
           onChange={(e) => handlePayloadChange(e.target.value)}
-          style={{ width: "100%", fontFamily: "monospace" }}
+          style={{ width: "50%", fontFamily: "monospace" }}
         />
         {error && <p style={{ color: "red" }}>{error}</p>}
       </div>

@@ -149,7 +149,7 @@ const { token, companyId } = useAuth();
         onChange={(e) => setEwbNo(e.target.value)}
         placeholder="Enter EWB Number"
         style={{
-          width: "100%",
+          width: "50%",
           padding: 10,
           marginBottom: 20,
         }}

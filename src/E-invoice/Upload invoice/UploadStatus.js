@@ -100,102 +100,120 @@ const UploadStatus = () => {
       setLoading(false);
     }
   };
-
-  return (
-    <div style={{ padding: 30, background: "#f5f5f5", minHeight: "50vh" }}>
-      <h1 style={{ color: "#1d3557" }}>Check Upload Status</h1>
-
-      <div
+return (
+  <div
+    style={{
+      padding: 30,
+      background: "#f5f5f5",
+      minHeight: "100vh",
+    }}
+  >
+    <div
+      style={{
+        maxWidth: "600px",
+        margin: "0 auto",
+        background: "#fff",
+        padding: "35px",
+        borderRadius: "15px",
+        boxShadow: "0 8px 25px rgba(0,0,0,0.12)",
+      }}
+    >
+      <h1
         style={{
-          background: "#fff",
-          padding: 25,
-          borderRadius: 16,
-          boxShadow: "0 5px 25px rgba(0,0,0,0.1)",
-          maxWidth: 700,
+          color: "#1d3557",
+          marginBottom: "35px",
         }}
       >
-        <h4>Current Headers</h4>
+        Check Upload Status
+      </h1>
 
-        <pre
-          style={{
-            overflowX: "auto",
-            background: "#f0f0f0",
-            padding: 10,
-            borderRadius: 6,
-            fontSize: "0.8em",
-          }}
-        >
-          {JSON.stringify(headers, null, 2)}
-        </pre>
+      <div style={fieldRow}>
+        <label style={labelStyle}>Upload ID</label>
 
-        <div style={{ marginBottom: 20 }}>
-          <label>
-            <strong>Upload ID</strong>
-          </label>
-
-          <input
-            type="text"
-            value={uploadId}
-            onChange={(e) => setUploadId(e.target.value)}
-            placeholder="Enter Upload ID"
-            style={{
-              display: "block",
-              width: "100%",
-              padding: 12,
-              marginTop: 8,
-              fontSize: 16,
-            }}
-          />
-        </div>
-
-        <button
-          onClick={checkStatus}
-          disabled={loading || !uploadId}
-          style={{
-            width: "100%",
-            padding: 15,
-            fontSize: 18,
-            background: "#1d3557",
-            border: "none",
-            borderRadius: 12,
-            color: "#fff",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
-          {loading ? "Checking..." : "CHECK STATUS"}
-        </button>
+        <input
+          type="text"
+          value={uploadId}
+          onChange={(e) => setUploadId(e.target.value)}
+          placeholder="Enter Upload ID"
+          style={inputStyle}
+        />
       </div>
 
-      {preview && (
-        <pre
-          style={{
-            marginTop: 25,
-            background: "#222",
-            color: "#0f0",
-            padding: 20,
-            borderRadius: 10,
-          }}
-        >
-          {JSON.stringify(preview, null, 2)}
-        </pre>
-      )}
-
-      {response && (
-        <pre
-          style={{
-            marginTop: 25,
-            background: "#000",
-            color: "#4eff4e",
-            padding: 20,
-            borderRadius: 10,
-          }}
-        >
-          {JSON.stringify(response, null, 2)}
-        </pre>
-      )}
+      <button
+        onClick={checkStatus}
+        disabled={loading || !uploadId}
+        style={{
+          width: "100%",
+          padding: "15px",
+          fontSize: "18px",
+          background: "#1d3557",
+          border: "none",
+          borderRadius: "12px",
+          color: "#fff",
+          fontWeight: "bold",
+          cursor: loading || !uploadId ? "not-allowed" : "pointer",
+        }}
+      >
+        {loading ? "Checking..." : "CHECK STATUS"}
+      </button>
     </div>
-  );
+
+    {preview && (
+      <pre
+        style={{
+          maxWidth: "900px",
+          margin: "25px auto 0",
+          background: "#222",
+          color: "#0f0",
+          padding: "20px",
+          borderRadius: "10px",
+          overflowX: "auto",
+        }}
+      >
+        {JSON.stringify(preview, null, 2)}
+      </pre>
+    )}
+
+    {response && (
+      <pre
+        style={{
+          maxWidth: "900px",
+          margin: "25px auto 0",
+          background: "#000",
+          color: "#4eff4e",
+          padding: "20px",
+          borderRadius: "10px",
+          overflowX: "auto",
+        }}
+      >
+        {JSON.stringify(response, null, 2)}
+      </pre>
+    )}
+  </div>
+);
+ 
+};
+const fieldRow = {
+  display: "flex",
+  alignItems: "center",
+  gap: "20px",
+  marginBottom: "25px",
+};
+
+const labelStyle = {
+  width: "180px",
+  fontWeight: "600",
+  fontSize: "16px",
+  color: "#333",
+};
+
+const inputStyle = {
+  width: "220px", // Reduce width as needed
+  padding: "12px",
+  fontSize: "16px",
+  border: "2px solid #1d3557",
+  borderRadius: "8px",
+  outline: "none",
 };
 
 export default UploadStatus;
