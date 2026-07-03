@@ -624,7 +624,8 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
   };
 
   return {
-    id: refid01,
+    //id: refid01,
+    id: inv?.invoiceNumber, //ateeq chagned on 3 07 2026.... as refid not required.
     userGstin: sellerGstin,
     pobCode: null,
     supplyType: "O",
@@ -645,8 +646,10 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
     strdNm: inv?.company_Name || null,
     slglNm: inv?.company_Name || null,
     sbnm: inv?.company_Name || null,
-    sflno: null,
-    sloc: inv?.companyBranches?.officeAddress || null,
+    // sflno: null,
+     sflno: inv?.floorAddressForIRN || null, //ateeq changed on 02 july to from database.
+    // sloc: inv?.companyBranches?.officeAddress || null,
+    sloc: inv?.addressForIRN || null,//ateeq changed on 02 july to from database.
     sdst: inv?.company_State || null,
     sstcd: sellerStateCode,
     spin: inv?.companyBranches?.pinCode || inv?.companyBranches?.poBoxCode || null,
