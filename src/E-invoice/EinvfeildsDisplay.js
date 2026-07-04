@@ -338,109 +338,109 @@ const EinvfeildsDisplay = () => {
       setLoading(false);
     }
   };
-  return (
-    <div style={styles.container}>
-      {loading && (
-        <div style={styles.loading}>
-          Loading Invoice Data...
-        </div>
-      )}
+ return (
+  <div style={styles.container}>
+    {loading && (
+      <div style={styles.loading}>
+        Loading Invoice Data...
+      </div>
+    )}
 
-      {error && (
-        <div style={styles.error}>
-          {error}
-        </div>
-      )}
+    {error && (
+      <div style={styles.error}>
+        {error}
+      </div>
+    )}
 
-      <div style={styles.tableWrapper}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>#</th>
-              <th style={styles.th}>Customer</th>
-              <th style={styles.th}>Mobile</th>
-              <th style={styles.th}>PO Number</th>
-              <th style={styles.th}>PO Date</th>
-              <th style={styles.th}>Invoice No</th>
-              <th style={styles.th}>Primary Key(Update)</th>
-              <th style={styles.th}>Created On</th>
-              <th style={styles.th}>PID</th>
-              <th style={styles.th}>Vehicle No</th>
-              <th style={styles.th}>EWB No</th>
-              <th style={styles.th}>Status</th>
-              <th style={styles.th}>Action</th>
-            </tr>
-          </thead>
+    <div style={styles.tableWrapper}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>#</th>
+            <th style={styles.th}>Customer</th>
+            <th style={styles.th}>Mobile</th>
+            <th style={styles.th}>PO Number</th>
+            <th style={styles.th}>PO Date</th>
+            <th style={styles.th}>Invoice No</th>
+            <th style={styles.th}>Primary Key (Update)</th>
+            <th style={styles.th}>Created On</th>
+            <th style={styles.th}>PID</th>
+            <th style={styles.th}>Vehicle No</th>
+            <th style={styles.th}>EWB No</th>
+            <th style={styles.th}>IRN No</th>
+            <th style={styles.th}>Status</th>
+            <th style={styles.th}>Action</th>
+          </tr>
+        </thead>
 
-          <tbody>
-            {invoiceData.length > 0 ? (
-              invoiceData.map((invoice, index) => (
-                <tr key={invoice.refID || index}>
-                  <td style={styles.td}>
-                    {index + 1}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.clientCompanyName ||
-                      "-"}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.mobileNo || "-"}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.purchaseOrder || "-"}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.purchaseOrderDate ||
-                      "-"}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.invoiceNumber}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.pid || "-"}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.createdOn || "-"}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.pid || "-"}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.vehicleNo || "-"}
-                  </td>
-                  <td style={styles.td}>
-                    {invoice.eWayBillNumber ||
-                      "-"}
-                  </td>
+        <tbody>
+          {invoiceData.length > 0 ? (
+            invoiceData.map((invoice, index) => (
+              <tr key={invoice.refID || index}>
+                <td style={styles.td}>{index + 1}</td>
 
-                  <td style={styles.td}>
-                    {invoice.eWayBillNumber ? (
-                      <span
-                        style={{
-                          color: "green",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Generated
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          color: "red",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Pending
-                      </span>
-                    )}
-                  </td>
+                <td style={styles.td}>
+                  {invoice.clientCompanyName || "-"}
+                </td>
 
-                  <td style={styles.actionTd}>
+                <td style={styles.td}>
+                  {invoice.mobileNo || "-"}
+                </td>
+
+                <td style={styles.td}>
+                  {invoice.purchaseOrder || "-"}
+                </td>
+
+                <td style={styles.td}>
+                  {invoice.purchaseOrderDate || "-"}
+                </td>
+
+                <td style={styles.td}>
+                  {invoice.invoiceNumber || "-"}
+                </td>
+
+                <td style={styles.td}>
+                  {invoice.pid || "-"}
+                </td>
+
+                <td style={styles.td}>
+                  {invoice.createdOn || "-"}
+                </td>
+
+                <td style={styles.td}>
+                  {invoice.pid || "-"}
+                </td>
+
+                <td style={styles.td}>
+                  {invoice.vehicleNo || "-"}
+                </td>
+
+                <td style={styles.td}>
+                  {invoice.eWayBillNumber || "-"}
+                </td>
+
+               <td style={styles.td}>
+  {invoice.irnnumber
+    ? `${invoice.irnnumber.slice(0, 6)}...`
+    : "-"}
+</td>
+
+                <td style={styles.td}>
+                  <span
+                    style={{
+                      color: invoice.eWayBillNumber ? "green" : "red",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {invoice.eWayBillNumber ? "Generated" : "Pending"}
+                  </span>
+                </td>
+
+                <td style={styles.actionTd}>
+                  <div style={styles.buttonGroup}>
                     <button
                       style={styles.einvoiceBtn}
-                      onClick={() =>
-                        handleGenerateEinvoice(invoice)
-                      }
+                      onClick={() => handleGenerateEinvoice(invoice)}
                     >
                       Generate E-Invoice
                     </button>
@@ -448,15 +448,13 @@ const EinvfeildsDisplay = () => {
                     <button
                       style={{
                         ...styles.deleteIrnBtn,
-                        opacity: invoice.irnnumber ? 1 : 0.5,
-                        cursor: invoice.irnnumber
+                        opacity: invoice.irnNumber ? 1 : 0.5,
+                        cursor: invoice.irnNumber
                           ? "pointer"
                           : "not-allowed",
                       }}
-                      disabled={!invoice.irnnumber}
-                      onClick={() =>
-                        handleDeleteIRN(invoice)
-                      }
+                      disabled={!invoice.irnNumber}
+                      onClick={() => handleDeleteIRN(invoice)}
                       title={
                         invoice.irnnumber
                           ? "Cancel IRN"
@@ -469,17 +467,13 @@ const EinvfeildsDisplay = () => {
                     <button
                       style={{
                         ...styles.deleteEwbBtn,
-                        opacity: invoice.eWayBillNumber
-                          ? 1
-                          : 0.5,
+                        opacity: invoice.eWayBillNumber ? 1 : 0.5,
                         cursor: invoice.eWayBillNumber
                           ? "pointer"
                           : "not-allowed",
                       }}
                       disabled={!invoice.eWayBillNumber}
-                      onClick={() =>
-                        handleDeleteEwayBill(invoice)
-                      }
+                      onClick={() => handleDeleteEwayBill(invoice)}
                       title={
                         invoice.eWayBillNumber
                           ? "Cancel E-Way Bill"
@@ -488,26 +482,24 @@ const EinvfeildsDisplay = () => {
                     >
                       Delete E-Way Bill
                     </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              !loading && (
-                <tr>
-                  <td
-                    colSpan={12}
-                    style={styles.noData}
-                  >
-                    No Invoice Data Found
-                  </td>
-                </tr>
-              )
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : (
+            !loading && (
+              <tr>
+                <td colSpan={14} style={styles.noData}>
+                  No Invoice Data Found
+                </td>
+              </tr>
+            )
+          )}
+        </tbody>
+      </table>
     </div>
-  );
+  </div>
+);
 };
 
 const styles = {
