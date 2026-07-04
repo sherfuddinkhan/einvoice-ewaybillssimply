@@ -473,6 +473,12 @@ return (
 
         <td style={styles.actionTd}>
           <div style={styles.buttonGroup}>
+               <button
+      style={styles.einvoiceBtn}
+      onClick={() => handleGenerateEinvoice(invoice)}
+    >
+      Gene E-invoice
+    </button>
             <button
               style={styles.downloadEInvoiceBtn}
               onClick={() =>

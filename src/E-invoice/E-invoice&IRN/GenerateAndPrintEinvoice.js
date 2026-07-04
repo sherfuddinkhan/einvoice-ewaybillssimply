@@ -1730,7 +1730,44 @@ export const GenerateAndPrintEinvoice = () => {
     setLoading(false);
   }
 };
-  
+  const LabeledInput = ({
+  label,
+  value,
+  onChange,
+  readOnly = false,
+}) => (
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label
+      style={{
+        fontSize: "13px",
+        fontWeight: "600",
+        marginBottom: "4px",
+      }}
+    >
+      {label}
+    </label>
+
+    <input
+      type="text"
+      value={value || ""}
+      readOnly={readOnly}
+     onChange={(e) => onChange?.(e.target.value) 
+    }
+      style={{
+        width: "100%",
+        padding: "8px 10px",
+        border: "1px solid #ccc",
+        borderRadius: "4px",
+        fontSize: "14px",
+        boxSizing: "border-box",
+        backgroundColor: "#fff", // same look as editable inputs
+        color: "#000",
+        cursor: readOnly ? "default" : "text",
+      }}
+    />
+  </div>
+);
+
   return (
     <div style={tableStyles.container}>
       <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
@@ -1746,6 +1783,7 @@ export const GenerateAndPrintEinvoice = () => {
           <option value="N">No</option>
         </select>
       </div>
+
 
       {/* ==================== META CONFIGURATION ==================== */}
       <table style={{ ...tableStyles.table, marginBottom: "15px" }}>
@@ -1763,11 +1801,11 @@ export const GenerateAndPrintEinvoice = () => {
             <td style={tableStyles.td}><LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
             <td style={tableStyles.td}><LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} /></td>
           </tr>
+          
           <tr>
-            <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} onChange={(v) => setField("no", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no}   readOnly={true} onChange={(v) => setField("no", v)} /></td>
             <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
-            <td style={tableStyles.td}>
-              <LabeledSelect label="Supply Type" value={payload.supplyType || "O"} options={["O", "E"]} onChange={(v) => setField("supplyType", v)} />
+            <td style={tableStyles.td}><LabeledSelect label="Supply Type" value={payload.supplyType || "O"} options={["O", "E"]} onChange={(v) => setField("supplyType", v)} />
             </td>
             <td style={tableStyles.td}>
               <LabeledSelect label="Nature" value={payload.ntr || "Inter"} options={["Inter", "Intra"]} onChange={(v) => setField("ntr", v)} />
@@ -1934,22 +1972,6 @@ export const GenerateAndPrintEinvoice = () => {
     flexWrap: "wrap",
   }}
 >
-  {/* E-Way Bill No */}
-  <input
-    type="text"
-    value={ewbNo}
-    onChange={(e) => setEwbNo(e.target.value)}
-    placeholder="Enter E-Way Bill No"
-    style={{
-      width: "220px",
-      height: "34px",
-      padding: "0 10px",
-      border: "1px solid #d9d9d9",
-      borderRadius: "4px",
-      fontSize: "13px",
-    }}
-  />
-
   {/* Download E-Invoice PDF */}
   {response && (irnValue || response.status === "SUCCESS") && (
     <PDFDownloadLink
@@ -1994,26 +2016,6 @@ export const GenerateAndPrintEinvoice = () => {
     </PDFDownloadLink>
   )}
 
-  {/* Print E-Way Bill */}
-  <button
-    onClick={() => printEwayBillPDF(ewbNo)}
-    disabled={loading}
-    style={{
-      padding: "8px 16px",
-      height: "34px",
-      background: loading
-        ? "#d9d9d9"
-        : "linear-gradient(135deg,#13c2c2,#08979c)",
-      color: "#fff",
-      border: "none",
-      borderRadius: "4px",
-      cursor: loading ? "not-allowed" : "pointer",
-      fontSize: "13px",
-      fontWeight: "500",
-    }}
-  >
-    {loading ? "⏳ Printing..." : "🖨️ Print E-Way Bill"}
-  </button>
 </div>
 
     {/* Conditional Template Export UI Controls Wrapper */}
