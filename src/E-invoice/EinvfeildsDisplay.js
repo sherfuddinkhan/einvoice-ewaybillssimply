@@ -481,39 +481,46 @@ return (
                     </span>
                   </td>
 
-                  <td style={styles.actionTd}>
-                    {hasIRN && (
-                      <>
-                        <button
-                          style={styles.downloadEInvoiceBtn}
-                          onClick={() => handleDownloadEInvoice(invoice)}
-                        >
-                          Down E-Invoice
-                        </button>
+                 <td style={styles.actionTd}>
+  {!hasIRN ? (
+    <button
+      style={styles.einvoiceBtn}
+      onClick={() => handleGenerateEinvoice(invoice)}
+    >
+      Generate IRN
+    </button>
+  ) : (
+    <>
+      <button
+        style={styles.downloadEInvoiceBtn}
+        onClick={() => handleDownloadEInvoice(invoice)}
+      >
+        Down E-Invoice
+      </button>
 
-                        <button
-                          style={styles.downloadEWayBillBtn}
-                          onClick={() => handleDownloadEWayBill(invoice)}
-                        >
-                          Down E-Way
-                        </button>
+      <button
+        style={styles.downloadEWayBillBtn}
+        onClick={() => handleDownloadEWayBill(invoice)}
+      >
+        Down E-Way
+      </button>
 
-                        <button
-                          style={styles.deleteIrnBtn}
-                          onClick={() => handleDeleteIRN(invoice)}
-                        >
-                          Del IRN
-                        </button>
+      <button
+        style={styles.deleteIrnBtn}
+        onClick={() => handleDeleteIRN(invoice)}
+      >
+        Del IRN
+      </button>
 
-                        <button
-                          style={styles.deleteEwbBtn}
-                          onClick={() => handleDeleteEwayBill(invoice)}
-                        >
-                          Del EWB
-                        </button>
-                      </>
-                    )}
-                  </td>
+      <button
+        style={styles.deleteEwbBtn}
+        onClick={() => handleDeleteEwayBill(invoice)}
+      >
+        Del EWB
+      </button>
+    </>
+  )}
+</td>
                 </tr>
               );
             })
