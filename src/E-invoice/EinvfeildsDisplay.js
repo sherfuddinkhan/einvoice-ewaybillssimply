@@ -169,6 +169,7 @@ const EinvfeildsDisplay = () => {
           invoiceData: data,
           invoicecreatedOn: invoiceCreatedOn,
           refid: refid,
+          pid: data.pid,
         },
       });
     } catch (err) {

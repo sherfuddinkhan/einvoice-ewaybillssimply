@@ -4,19 +4,19 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
 
-const navigate = useNavigate();
-const location = useLocation();
-const { login } = useAuth();
+  // Determine product based on current route
+  const PRODUCT_MAP = {
+    "/einvoice": "EINVOICE",
+    "/ewaybill": "EWAY",
+  };
 
-// Determine product based on current route
-const PRODUCT_MAP = {
-  "/einvoice": "EINVOICE",
-  "/ewaybill": "EWAY",
-};
+  const productType =
+    PRODUCT_MAP[location.pathname] || "EINVOICE";
 
-const productType =
-  PRODUCT_MAP[location.pathname] || "EINVOICE";
   const [formData, setFormData] = useState({
     userName: "swastikmachineryhyd@gmail.com",
     password: "SMC@123",
@@ -27,7 +27,6 @@ const productType =
 
   const [connectionType, setConnectionType] = useState("DEFAULT");
   const [yearName, setYearName] = useState("26-27");
-  const [rememberMe, setRememberMe] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState(null);
@@ -63,14 +62,13 @@ const productType =
 
       setApiResponse(res.data);
 
-      // Save common settings
-      localStorage.setItem("connectionType", connectionType);
-      localStorage.setItem("yearName", yearName);
-
-      // Choose storage based on Remember Me
-      const storage = rememberMe ? localStorage : sessionStorage;
-
-      storage.setItem("authResponse", JSON.stringify(res.data));
+      // Save settings in session storage
+      sessionStorage.setItem("connectionType", connectionType);
+      sessionStorage.setItem("yearName", yearName);
+      sessionStorage.setItem(
+        "authResponse",
+        JSON.stringify(res.data)
+      );
 
       if (
         res.data?.status === "SUCCESS" ||
@@ -81,29 +79,37 @@ const productType =
           res.data?.data?.companyID || res.data?.companyID;
 
         if (backendCompanyId) {
-          localStorage.setItem(
+          sessionStorage.setItem(
             "userLoginRef",
             String(backendCompanyId)
           );
         }
 
-        login({
-          token: res.data?.token || res.data?.data?.token,
-          companyId: backendCompanyId,
-          userGstin:
-            res.data?.userGstin || res.data?.data?.userGstin,
-          rememberMe,
-        },
-          productType
-      );
+        
+        login(
+          {
+            token:
+              res.data?.token || res.data?.data?.token,
+            companyId: backendCompanyId,
+            userGstin:
+              res.data?.userGstin ||
+              res.data?.data?.userGstin,
+          },
+        );
 
-        navigate("/dashboard", { replace: true });
+        navigate("/dashboard", {
+          replace: true,
+        });
       }
     } catch (err) {
       const errorData = err.response?.data;
 
       setApiResponse(errorData || null);
-      setError(errorData?.message || err.message || "Login failed");
+      setError(
+        errorData?.message ||
+          err.message ||
+          "Login failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -129,7 +135,12 @@ const productType =
           boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
         }}
       >
-        <h2 style={{ textAlign: "center", marginBottom: "25px" }}>
+        <h2
+          style={{
+            textAlign: "center",
+            marginBottom: "25px",
+          }}
+        >
           E-Invoice Portal Login
         </h2>
 
@@ -190,7 +201,9 @@ const productType =
             <label>Connection Type</label>
             <select
               value={connectionType}
-              onChange={(e) => setConnectionType(e.target.value)}
+              onChange={(e) =>
+                setConnectionType(e.target.value)
+              }
               style={styles.input}
             >
               <option value="DEFAULT">DEFAULT</option>
@@ -203,31 +216,13 @@ const productType =
             <label>Financial Year</label>
             <select
               value={yearName}
-              onChange={(e) => setYearName(e.target.value)}
+              onChange={(e) =>
+                setYearName(e.target.value)
+              }
               style={styles.input}
             >
               <option value="26-27">26-27</option>
             </select>
-          </div>
-
-          <div
-            style={{
-              marginBottom: "20px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <input
-              type="checkbox"
-              id="rememberMe"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-            />
-
-            <label htmlFor="rememberMe">
-              Remember Me
-            </label>
           </div>
 
           <button
@@ -260,7 +255,11 @@ const productType =
               borderRadius: "6px",
             }}
           >
-            <pre style={{ whiteSpace: "pre-wrap" }}>
+            <pre
+              style={{
+                whiteSpace: "pre-wrap",
+              }}
+            >
               {JSON.stringify(apiResponse, null, 2)}
             </pre>
           </div>

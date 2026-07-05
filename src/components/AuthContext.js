@@ -21,19 +21,11 @@ const isTokenValid = (token) => {
     if (!token) return false;
 
     const decoded = jwtDecode(token);
-
     return decoded.exp > Date.now() / 1000;
   } catch {
     return false;
   }
 };
-
-/* ==========================
-   GET ITEM FROM LOCAL OR SESSION
-========================== */
-
-const getStoredItem = (key) =>
-  localStorage.getItem(key) || sessionStorage.getItem(key);
 
 export const AuthProvider = ({ children }) => {
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -60,23 +52,15 @@ export const AuthProvider = ({ children }) => {
   ========================== */
 
   const clearSession = useCallback(() => {
-    // Session Storage
-
     sessionStorage.removeItem(EWAY_KEY);
     sessionStorage.removeItem(EINVOICE_KEY);
+
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("companyId");
+    sessionStorage.removeItem("authToken");
     sessionStorage.removeItem("authResponse");
-
-    // Local Storage
-
-    localStorage.removeItem(EWAY_KEY);
-    localStorage.removeItem(EINVOICE_KEY);
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("companyId");
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authResponse");
-    localStorage.removeItem("connectionType");
-    localStorage.removeItem("yearName");
+    sessionStorage.removeItem("connectionType");
+    sessionStorage.removeItem("yearName");
 
     setIsLoggedIn(false);
     setProduct(null);
@@ -103,10 +87,7 @@ export const AuthProvider = ({ children }) => {
   ========================== */
 
   const login = (loginData, productType) => {
-    const storage = loginData.rememberMe
-      ? localStorage
-      : sessionStorage;
-
+      console.log("loginData:", loginData);
     const storageKey =
       productType === "EINVOICE"
         ? EINVOICE_KEY
@@ -118,9 +99,16 @@ export const AuthProvider = ({ children }) => {
       loginTime: Date.now(),
     };
 
-    storage.setItem(
+    sessionStorage.setItem(
       storageKey,
       JSON.stringify(payload)
+    );
+
+    sessionStorage.setItem("token", loginData.token);
+    sessionStorage.setItem("companyId", loginData.companyId);
+    sessionStorage.setItem(
+      "authResponse",
+      JSON.stringify(loginData)
     );
 
     setToken(loginData.token);
@@ -137,10 +125,10 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     try {
-      const eway = getStoredItem(EWAY_KEY);
+      const eway = sessionStorage.getItem(EWAY_KEY);
 
       const einvoice =
-        getStoredItem(EINVOICE_KEY);
+        sessionStorage.getItem(EINVOICE_KEY);
 
       let sessionData = null;
       let sessionProduct = null;
