@@ -342,7 +342,7 @@ const EinvfeildsDisplay = () => {
   const handleDownloadEInvoice = async (invoice) => {
   try {
     const response = await axios.get(
-      `https://einvoice.fcssoftwares.com/api/OrderList/GetIRNReport/${invoice.pid}`,
+      `https://einvoice.fcssoftwares.com/api/OrderList/GetICCIRNReport/${invoice.pid}`,
       {
         responseType: "blob",
       }
