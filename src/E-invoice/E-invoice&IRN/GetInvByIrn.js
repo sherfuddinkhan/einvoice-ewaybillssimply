@@ -107,6 +107,7 @@ useEffect(() => {
   <input
     value={irn}
     onChange={(e) => setIrn(e.target.value)}
+    
     placeholder="IRN (auto-filled)"
     style={{
       ...inputStyle,
@@ -121,6 +122,7 @@ useEffect(() => {
 
   <input
     value={userGstin}
+      readOnly
     onChange={(e) => setUserGstin(e.target.value)}
     placeholder="User GSTIN (auto-filled)"
     style={{
@@ -130,21 +132,6 @@ useEffect(() => {
     }}
   />
 </div>
-
-<div style={fieldRow}>
-  <label style={labelStyle}>URL</label>
-
-  <pre
-    style={{
-      ...codeStyle,
-      flex: 1,
-      margin: 0,
-    }}
-  >
-    {endpoint}
-  </pre>
-</div>
-
 
       <button
         onClick={handleFetch}

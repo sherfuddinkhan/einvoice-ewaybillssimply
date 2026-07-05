@@ -10,7 +10,6 @@ const CancelIRN  = ({ previousResponse }) => {
   const savedConfig1 = JSON.parse(localStorage.getItem(STORAGE_KEY1) || '{}');
   const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY2) || '{}');
 
- 
  console.log("savedConfig1",savedConfig1)
  console.log("savedConfig",savedConfig)
 
@@ -225,6 +224,7 @@ const inputStyle = {
 
         <input
           value={config.body.irn}
+          readOnly
           onChange={(e) =>
             setConfig((prev) => ({
               ...prev,
