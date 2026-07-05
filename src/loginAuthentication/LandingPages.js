@@ -1,22 +1,33 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
 const LandingPage = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
 
+const navigate = useNavigate();
+const location = useLocation();
+const { login } = useAuth();
+
+// Determine product based on current route
+const PRODUCT_MAP = {
+  "/einvoice": "EINVOICE",
+  "/ewaybill": "EWAY",
+};
+
+const productType =
+  PRODUCT_MAP[location.pathname] || "EINVOICE";
   const [formData, setFormData] = useState({
     userName: "swastikmachineryhyd@gmail.com",
     password: "SMC@123",
     userType: "Admin",
     loginRef: "56860",
-    yearName: "26-27"
+    yearName: "26-27",
   });
 
   const [connectionType, setConnectionType] = useState("DEFAULT");
   const [yearName, setYearName] = useState("26-27");
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState(null);
@@ -33,6 +44,7 @@ const LandingPage = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     setLoading(true);
     setError("");
     setApiResponse(null);
@@ -51,14 +63,14 @@ const LandingPage = () => {
 
       setApiResponse(res.data);
 
-      // Save selections in localStorage
+      // Save common settings
       localStorage.setItem("connectionType", connectionType);
       localStorage.setItem("yearName", yearName);
-      console.log("year", yearName);
 
-      
-      // Save complete response
-      sessionStorage.setItem("authResponse", JSON.stringify(res.data));
+      // Choose storage based on Remember Me
+      const storage = rememberMe ? localStorage : sessionStorage;
+
+      storage.setItem("authResponse", JSON.stringify(res.data));
 
       if (
         res.data?.status === "SUCCESS" ||
@@ -80,12 +92,16 @@ const LandingPage = () => {
           companyId: backendCompanyId,
           userGstin:
             res.data?.userGstin || res.data?.data?.userGstin,
-        });
+          rememberMe,
+        },
+          productType
+      );
 
         navigate("/dashboard", { replace: true });
       }
     } catch (err) {
       const errorData = err.response?.data;
+
       setApiResponse(errorData || null);
       setError(errorData?.message || err.message || "Login failed");
     } finally {
@@ -192,6 +208,26 @@ const LandingPage = () => {
             >
               <option value="26-27">26-27</option>
             </select>
+          </div>
+
+          <div
+            style={{
+              marginBottom: "20px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+
+            <label htmlFor="rememberMe">
+              Remember Me
+            </label>
           </div>
 
           <button

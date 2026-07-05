@@ -393,144 +393,150 @@ const EinvfeildsDisplay = () => {
   }
 };
 return (
-  <div style={styles.tableWrapper}>
-    <table style={styles.table}>
-      <thead>
-        <tr>
-          <th style={styles.th}>S.No</th>
-          <th style={styles.th}>Client Name</th>
-          <th style={styles.th}>PO Date</th>
-          <th style={styles.th}>Invoice No</th>
-          <th style={styles.th}>PID</th>
-          <th style={styles.th}>Created On</th>
-          <th style={styles.th}>E-Way Bill No</th>
-          <th style={styles.th}>IRN Number</th>
-          <th style={styles.th}>Status</th>
-          <th style={styles.th}>Actions</th>
-        </tr>
-      </thead>
+  <div style={styles.container}>
 
-      <tbody>
-        {invoiceData.length > 0 ? (
-          invoiceData.map((invoice, index) => {
-            const hasIRN = !!invoice.irnnumber;
-            const hasEWayBill = !!invoice.eWayBillNumber;
+    {/* Header */}
+    <div style={styles.headerRow}>
+      <h2 style={styles.heading}>E-Invoice List</h2>
 
-            return (
-              <tr key={invoice.refID || index}>
-                <td style={styles.td}>{index + 1}</td>
-
-                <td style={styles.td}>
-                  {invoice.clientCompanyName || "-"}
-                </td>
-
-                <td style={styles.td}>
-                  {invoice.purchaseOrderDate || "-"}
-                </td>
-
-                <td style={styles.td}>
-                  {invoice.invoiceNumber || "-"}
-                </td>
-
-                <td style={styles.td}>
-                  {invoice.pid || "-"}
-                </td>
-
-                <td style={styles.td}>
-                  {invoice.createdOn || "-"}
-                </td>
-
-                <td style={styles.td}>
-                  {invoice.eWayBillNumber || "-"}
-                </td>
-
-                <td
-                  style={styles.td}
-                  title={invoice.irnnumber || ""}
-                >
-                  {hasIRN
-                    ? `${invoice.irnnumber.slice(0, 6)}...`
-                    : "-"}
-                </td>
-
-                <td style={styles.td}>
-                  <span
-                    style={{
-                      color: hasEWayBill ? "green" : "red",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {hasEWayBill ? "Done" : "Pending"}
-                  </span>
-                </td>
-     <td style={styles.actionTd}>
-  <div style={styles.buttonGroup}>
-    {/* Show Generate button only before IRN is generated */}
-    {!hasIRN && (
       <button
-        style={styles.einvoiceBtn}
-        onClick={() => handleGenerateEinvoice(invoice)}
+        style={styles.refreshBtn}
+        onClick={getInvoiceData} // Replace with your API function
       >
-        Gene E-Invoice
+        🔄 Refresh Invoices
       </button>
-    )}
+    </div>
 
-    {/* Show these buttons only after IRN is generated */}
-    {hasIRN && (
-      <>
-        <button
-          style={styles.downloadEInvoiceBtn}
-          onClick={() => handleDownloadEInvoice(invoice)}
-        >
-          Down E-Invoice
-        </button>
+    {loading && <div style={styles.loading}>Loading...</div>}
+    {error && <div style={styles.error}>{error}</div>}
 
-        <button
-          style={styles.downloadEWayBillBtn}
-          onClick={() => handleDownloadEWayBill(invoice)}
-        >
-          Down E-Way
-        </button>
+    <div style={styles.tableWrapper}>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>S.No</th>
+            <th style={styles.th}>Customer</th>
+            <th style={styles.th}>PO Date</th>
+            <th style={styles.th}>Invoice No</th>
+            <th style={styles.th}>Primary Key</th>
+            <th style={styles.th}>Created On</th>
+            <th style={styles.th}>EWB No</th>
+            <th style={styles.th}>IRN No</th>
+            <th style={styles.th}>Status</th>
+            <th style={styles.th}>Action</th>
+          </tr>
+        </thead>
 
-        <button
-          style={styles.deleteIrnBtn}
-          onClick={() => handleDeleteIRN(invoice)}
-        >
-          Del IRN
-        </button>
+        <tbody>
+          {invoiceData.length > 0 ? (
+            invoiceData.map((invoice, index) => {
+              const hasIRN = !!invoice.irnnumber;
+              const hasEWayBill = !!invoice.eWayBillNumber;
 
-        <button
-          style={styles.deleteEwbBtn}
-          onClick={() => handleDeleteEwayBill(invoice)}
-        >
-          Del EWB
-        </button>
-      </>
-    )}
-  </div>
-</td>
-              
+              return (
+                <tr key={invoice.refID || index}>
+                  <td style={styles.td}>{index + 1}</td>
+
+                  <td style={styles.td}>
+                    {invoice.clientCompanyName || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    {invoice.purchaseOrderDate || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    {invoice.invoiceNumber || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    {invoice.pid || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    {invoice.createdOn || "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    {invoice.eWayBillNumber || "-"}
+                  </td>
+
+                  <td
+                    style={styles.td}
+                    title={invoice.irnnumber || ""}
+                  >
+                    {hasIRN
+                      ? `${invoice.irnnumber.slice(0, 6)}...`
+                      : "-"}
+                  </td>
+
+                  <td style={styles.td}>
+                    <span
+                      style={{
+                        color: hasEWayBill ? "green" : "red",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {hasEWayBill ? "Done" : "Pending"}
+                    </span>
+                  </td>
+
+                  <td style={styles.actionTd}>
+                    {hasIRN && (
+                      <>
+                        <button
+                          style={styles.downloadEInvoiceBtn}
+                          onClick={() => handleDownloadEInvoice(invoice)}
+                        >
+                          Down E-Invoice
+                        </button>
+
+                        <button
+                          style={styles.downloadEWayBillBtn}
+                          onClick={() => handleDownloadEWayBill(invoice)}
+                        >
+                          Down E-Way
+                        </button>
+
+                        <button
+                          style={styles.deleteIrnBtn}
+                          onClick={() => handleDeleteIRN(invoice)}
+                        >
+                          Del IRN
+                        </button>
+
+                        <button
+                          style={styles.deleteEwbBtn}
+                          onClick={() => handleDeleteEwayBill(invoice)}
+                        >
+                          Del EWB
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })
+          ) : (
+            !loading && (
+              <tr>
+                <td
+                  colSpan={10}
+                  style={{
+                    textAlign: "center",
+                    padding: "20px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  No Invoice Data Found
+                </td>
               </tr>
-            );
-          })
-        ) : (
-          !loading && (
-            <tr>
-              <td
-                colSpan={10}
-                style={{
-                  textAlign: "center",
-                  padding: "20px",
-                  fontWeight: "bold",
-                }}
-              >
-                No Invoice Data Found
-              </td>
-            </tr>
-          )
-        )}
-      </tbody>
-    </table>
+            )
+          )}
+        </tbody>
+      </table>
+    </div>
+
   </div>
 );
 };
@@ -562,7 +568,7 @@ const styles = {
   },
 
   heading: {
-    fontSize: "28px",
+    fontSize: "32px", // Increased from 28px
     color: "#1976d2",
     fontWeight: "bold",
     margin: 0,
@@ -572,7 +578,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     background: "#fff",
-    padding: "8px 16px",
+    padding: "10px 18px", // Slightly increased padding
     borderRadius: "8px",
     boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
   },
@@ -581,32 +587,34 @@ const styles = {
     fontWeight: "bold",
     color: "#333",
     marginRight: "10px",
-    fontSize: "14px",
+    fontSize: "16px", // Increased from 14px
   },
 
   select: {
-    padding: "8px 12px",
+    padding: "10px 14px",
     borderRadius: "5px",
     border: "1px solid #ccc",
     outline: "none",
     cursor: "pointer",
-    fontSize: "14px",
+    fontSize: "16px", // Increased from 14px
   },
 
   loading: {
-    padding: "10px",
+    padding: "12px",
     marginBottom: "15px",
     background: "#fff3cd",
     color: "#856404",
     borderRadius: "5px",
+    fontSize: "16px",
   },
 
   error: {
-    padding: "10px",
+    padding: "12px",
     marginBottom: "15px",
     background: "#f8d7da",
     color: "#721c24",
     borderRadius: "5px",
+    fontSize: "16px",
   },
 
   tableWrapper: {
@@ -625,31 +633,32 @@ const styles = {
   th: {
     background: "#1976d2",
     color: "#fff",
-    padding: "10px",
+    padding: "12px",
     textAlign: "center",
-    fontSize: "13px",
+    fontSize: "15px", // Increased from 13px
+    fontWeight: "600",
     whiteSpace: "nowrap",
   },
 
   td: {
-    padding: "8px",
+    padding: "10px",
     borderBottom: "1px solid #ddd",
     textAlign: "center",
-    fontSize: "13px",
+    fontSize: "15px", // Increased from 13px
     whiteSpace: "nowrap",
   },
 
   actionTd: {
     borderBottom: "1px solid #ddd",
-    padding: "6px",
-    minWidth: "110px",
+    padding: "8px",
+    minWidth: "130px",
     verticalAlign: "top",
   },
 
   buttonGroup: {
     display: "flex",
     flexDirection: "column",
-    gap: "4px",
+    gap: "6px",
     width: "100%",
   },
 
@@ -657,30 +666,35 @@ const styles = {
     ...smallButtonStyle,
     background: "#1976d2",
     color: "#fff",
+    fontSize: "14px",
   },
 
   downloadEInvoiceBtn: {
     ...smallButtonStyle,
     background: "#0d6efd",
     color: "#fff",
+    fontSize: "14px",
   },
 
   downloadEWayBillBtn: {
     ...smallButtonStyle,
     background: "#198754",
     color: "#fff",
+    fontSize: "14px",
   },
 
   deleteIrnBtn: {
     ...smallButtonStyle,
     background: "#ff9800",
     color: "#fff",
+    fontSize: "14px",
   },
 
   deleteEwbBtn: {
     ...smallButtonStyle,
     background: "#f44336",
     color: "#fff",
+    fontSize: "14px",
   },
 
   noData: {
@@ -688,7 +702,33 @@ const styles = {
     textAlign: "center",
     fontWeight: "bold",
     color: "#666",
+    fontSize: "18px",
   },
+  headerRow: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "15px",
+},
+
+heading: {
+  fontSize: "24px",
+  fontWeight: "bold",
+  color: "#1976d2",
+  margin: 0,
+},
+
+refreshBtn: {
+  background: "#28a745",
+  color: "#fff",
+  border: "none",
+  padding: "10px 18px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "15px",
+  fontWeight: "600",
+  transition: "0.3s",
+},
 };
 
 export default EinvfeildsDisplay;
