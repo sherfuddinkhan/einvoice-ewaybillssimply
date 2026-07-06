@@ -722,8 +722,11 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
 
  const handleDownloadEInvoice = async (invoice) => {
   try {
+    const selectedInvoice = JSON.parse(localStorage.getItem("selectedInvoice"));
+
+const keyID = selectedInvoice?.keyID;
     const response = await axios.get(
-      `https://einvoice.fcssoftwares.com/api/OrderList/GetICCIRNReport/${invoice.pid}`,
+      `https://einvoice.fcssoftwares.com/api/OrderList/GetICCIRNReport/${keyID}`,
       {
         responseType: "blob",
       }
@@ -737,7 +740,7 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Invoice_${invoice.invoiceNumber}.pdf`;
+    link.download = `Invoice_${invoice.invoiceNumber|| keyID}.pdf`;
     link.click();
 
     window.URL.revokeObjectURL(url);
@@ -1145,9 +1148,15 @@ const dynamicId =
         // Automatically save generated IRN details to DB
         const saved = await handleSaveToDB(data);
 
-        if (saved) {
-          console.log("Invoice synced to DB successfully.");
-        }
+     if (saved) {
+  const latest = await axios.get(
+    `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${invoiceData.keyID}/invoicecumchallan`
+  );
+
+  console.log("Latest Invoice:", latest.data);
+
+  setResponse(latest.data);
+}
       }
 
     } finally {
@@ -1291,8 +1300,11 @@ console.log("PID:", invoiceData?.pid);
 
 const handleDownloadEWayBill = async () => {
   try {
+    const selectedInvoice = JSON.parse(localStorage.getItem("selectedInvoice"));
+
+const keyID = selectedInvoice?.keyID;
     const response = await axios.get(
-      `https://einvoice.fcssoftwares.com/api/OrderList/GetEWayBillReport/${dynamicId}`,
+      `https://einvoice.fcssoftwares.com/api/OrderList/GetEWayBillReport/${keyID}`,
       {
         responseType: "blob",
       }
@@ -1306,7 +1318,7 @@ const handleDownloadEWayBill = async () => {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `EWayBill_${invoiceData.eWayBillNumber || dynamicId}.pdf`;
+    link.download = `EWayBill_${invoiceData.eWayBillNumber || keyID}.pdf`;
 
     document.body.appendChild(link);
     link.click();
