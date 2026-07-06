@@ -398,11 +398,11 @@ return (
 
     {/* Header */}
     <div style={styles.headerRow}>
-      <h2 style={styles.heading}>E-Invoice List</h2>
+      <h2 style={styles.heading}>Invoice List</h2>
 
       <button
         style={styles.refreshBtn}
-        onClick={getInvoiceData} // Replace with your API function
+        onClick={getInvoiceData} 
       >
         🔄 Refresh Invoices
       </button>
