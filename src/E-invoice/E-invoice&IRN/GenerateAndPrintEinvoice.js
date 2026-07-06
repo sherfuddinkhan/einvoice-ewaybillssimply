@@ -720,11 +720,14 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
   };
 };
 
- const handleDownloadEInvoice = async (invoice) => {
+const handleDownloadEInvoice = async () => {
   try {
-    const selectedInvoice = JSON.parse(localStorage.getItem("selectedInvoice"));
+    const selectedInvoice = JSON.parse(
+      localStorage.getItem("selectedInvoice")
+    );
 
-const keyID = selectedInvoice?.keyID;
+    const keyID = selectedInvoice?.keyID;
+
     const response = await axios.get(
       `https://einvoice.fcssoftwares.com/api/OrderList/GetICCIRNReport/${keyID}`,
       {
@@ -740,8 +743,11 @@ const keyID = selectedInvoice?.keyID;
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Invoice_${invoice.invoiceNumber|| keyID}.pdf`;
+    link.download = `Invoice_${keyID}.pdf`;
+
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 
     window.URL.revokeObjectURL(url);
   } catch (err) {
@@ -749,6 +755,44 @@ const keyID = selectedInvoice?.keyID;
     alert("Unable to download Invoice.");
   }
 };
+
+  const LabeledInput = ({
+  label,
+  value,
+  onChange,
+  readOnly = false,
+}) => (
+  <div style={{ display: "flex", flexDirection: "column" }}>
+    <label
+      style={{
+        fontSize: "13px",
+        fontWeight: "600",
+        marginBottom: "4px",
+      }}
+    >
+      {label}
+    </label>
+
+    <input
+      type="text"
+      value={value || ""}
+      readOnly={readOnly}
+     onChange={(e) => onChange?.(e.target.value) 
+    }
+      style={{
+        width: "100%",
+        padding: "8px 10px",
+        border: "1px solid #ccc",
+        borderRadius: "4px",
+        fontSize: "14px",
+        boxSizing: "border-box",
+        backgroundColor: "#fff", // same look as editable inputs
+        color: "#000",
+        cursor: readOnly ? "default" : "text",
+      }}
+    />
+  </div>
+);
 export const GenerateAndPrintEinvoice = () => {
   const { token, companyId } = useAuth();
   const { setLastInvoice } = useAuth();
@@ -758,6 +802,7 @@ export const GenerateAndPrintEinvoice = () => {
   const [pdfMessage, setPdfMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("B2B");
   const [lastGeneratedId, setLastGeneratedId] = useState(null);
+  const [invoiceDetails, setInvoiceDetails] = useState(null);
   const [genEwb, setGenEwb] = useState("Y");
   const [showPdf, setShowPdf] = useState(false);
   const location = useLocation();
@@ -1149,13 +1194,7 @@ const dynamicId =
         const saved = await handleSaveToDB(data);
 
      if (saved) {
-  const latest = await axios.get(
-    `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${invoiceData.keyID}/invoicecumchallan`
-  );
-
-  console.log("Latest Invoice:", latest.data);
-
-  setResponse(latest.data);
+  alert("IRN generated and saved successfully.");
 }
       }
 
@@ -1232,57 +1271,6 @@ const dynamicId =
     }
   };
 
-
-  /// downloading the pdf of invoice with respect to last generated id of invoice
-  const downloadPDF = async () => {
-    // If no invoice was generated yet, use the local form ID payload as sandbox template baseline
-    const finalInvoiceId =
-      manualInvoiceId.trim() ||
-      lastGeneratedId ||
-      response?.response?.id ||
-      response?.response?.Id ||
-      payload?.id ||
-      "1001";
-
-    try {
-      setPdfMessage("Processing PDF download...");
-
-      // API URL
-      const url = `https://einvoice.fcssoftwares.com/api/gst/einvoice/print?id=${finalInvoiceId}`;
-
-      const resp = await axios.get(url, {
-        headers: {
-          "X-Auth-Token": token,
-          companyId: companyId,
-          product: "ONYX",
-          "ConnectionType": connectionType || "Online"
-        },
-        responseType: "blob",
-      });
-
-      // Create blob URL for download
-      const blobUrl = window.URL.createObjectURL(
-        new Blob([resp.data], { type: "application/pdf" })
-      );
-
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.setAttribute("download", `EInvoice_${finalInvoiceId}.pdf`);
-
-      document.body.appendChild(link);
-      link.click();
-
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-
-      setPdfMessage("✅ PDF downloaded successfully.");
-    } catch (error) {
-      console.error(error);
-      setPdfMessage("❌ Failed to download PDF.");
-    }
-  };
-
-
   useEffect(() => {
   const value =
     response?.response?.EwbNo ||
@@ -1300,9 +1288,23 @@ console.log("PID:", invoiceData?.pid);
 
 const handleDownloadEWayBill = async () => {
   try {
-    const selectedInvoice = JSON.parse(localStorage.getItem("selectedInvoice"));
+    const selectedInvoice = JSON.parse(
+      localStorage.getItem("selectedInvoice")
+    );
 
-const keyID = selectedInvoice?.keyID;
+    const keyID = selectedInvoice?.keyID;
+
+    // Fetch latest invoice details from DB
+    const latest = await axios.get(
+      `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${keyID}/invoicecumchallan`
+    );
+
+    console.log("Latest Invoice:", latest.data);
+
+    // Optional: update UI
+   setInvoiceDetails(latest.data);
+
+    // Download latest E-Way Bill
     const response = await axios.get(
       `https://einvoice.fcssoftwares.com/api/OrderList/GetEWayBillReport/${keyID}`,
       {
@@ -1318,7 +1320,9 @@ const keyID = selectedInvoice?.keyID;
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `EWayBill_${invoiceData.eWayBillNumber || keyID}.pdf`;
+    link.download = `EWayBill_${
+      latest.data?.eWayBillNumber || keyID
+    }.pdf`;
 
     document.body.appendChild(link);
     link.click();
@@ -1326,49 +1330,10 @@ const keyID = selectedInvoice?.keyID;
 
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error("Download Error:", err);
+    console.error(err);
     alert("Unable to download E-Way Bill.");
   }
 };
-  const LabeledInput = ({
-  label,
-  value,
-  onChange,
-  readOnly = false,
-}) => (
-  <div style={{ display: "flex", flexDirection: "column" }}>
-    <label
-      style={{
-        fontSize: "13px",
-        fontWeight: "600",
-        marginBottom: "4px",
-      }}
-    >
-      {label}
-    </label>
-
-    <input
-      type="text"
-      value={value || ""}
-      readOnly={readOnly}
-     onChange={(e) => onChange?.(e.target.value) 
-    }
-      style={{
-        width: "100%",
-        padding: "8px 10px",
-        border: "1px solid #ccc",
-        borderRadius: "4px",
-        fontSize: "14px",
-        boxSizing: "border-box",
-        backgroundColor: "#fff", // same look as editable inputs
-        color: "#000",
-        cursor: readOnly ? "default" : "text",
-      }}
-    />
-  </div>
-);
-
-
   return (
     <div style={tableStyles.container}>
       <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
