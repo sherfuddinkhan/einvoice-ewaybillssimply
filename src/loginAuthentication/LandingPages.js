@@ -27,9 +27,7 @@ const LandingPage = () => {
 
   const [connectionType, setConnectionType] = useState("DEFAULT");
   const [yearName, setYearName] = useState("26-27");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+
 
   const [loading, setLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState(null);
@@ -44,14 +42,7 @@ const LandingPage = () => {
     }));
   };
 
-  useEffect(() => {
-  const rememberMe = localStorage.getItem("rememberMe");
-  const token = localStorage.getItem("token");
 
-  if (rememberMe === "true" && token) {
-    navigate("/dashboard");
-  }
-}, [navigate]);
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -235,21 +226,6 @@ const LandingPage = () => {
               <option value="26-27">26-27</option>
             </select>
           </div>
-          {/* Remember Me Checkbox */}
-      <div style={styles.checkboxContainer}>
-        <input
-          type="checkbox"
-          id="rememberMe"
-          checked={rememberMe}
-          onChange={(e) => setRememberMe(e.target.checked)}
-        />
-
-        <label htmlFor="rememberMe" style={styles.label}>
-          Remember Me
-        </label>
-      </div>
-
-
           <button
             type="submit"
             disabled={loading}
