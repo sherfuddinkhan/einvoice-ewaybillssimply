@@ -16,10 +16,8 @@ const EInvoiceLoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const currentConnectionType =
-        localStorage.getItem("connectionType") || "DEFAULT";
+       sessionStorage.getItem("connectionType") || "DEFAULT";
 
-        console.log("connectionType from localStorage:", localStorage.getItem("connectionType"));
-console.log("All localStorage:", { ...localStorage });
   // ==========================================
   // LOGIN
   // ==========================================
@@ -34,7 +32,7 @@ console.log("All localStorage:", { ...localStorage });
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-          ConnectionType: localStorage.getItem("connectionType") || "DEFAULT",
+             ConnectionType: currentConnectionType,
           },
           body: JSON.stringify({
             email,
@@ -132,10 +130,6 @@ setTimeout(() => {
             <option value="PROFORMA">Proforma E-Invoice</option>
           </select>
         </div> */}
-   
-
-        
-    
         <button
           onClick={handleLogin}
           disabled={loading}
