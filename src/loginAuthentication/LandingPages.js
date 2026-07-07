@@ -65,12 +65,9 @@ const LandingPage = () => {
       setApiResponse(res.data);
 
       // Save settings in session storage
-      sessionStorage.setItem("connectionType", connectionType);
-      localStorage.setItem("connectionType", connectionType);
+     localStorage.setItem("connectionType", connectionType);
       localStorage.setItem("yearName", yearName);
-    
-      sessionStorage.setItem("yearName", yearName);
-      sessionStorage.setItem(
+      localStorage.setItem(
         "authResponse",
         JSON.stringify(res.data)
       );

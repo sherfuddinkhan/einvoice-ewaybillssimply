@@ -16,7 +16,7 @@ const EInvoiceLoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const currentConnectionType =
-        localStorage.getItem("connectionType") || "DEFAULT";
+       sessionStorage.getItem("connectionType") || "DEFAULT";
 
   // ==========================================
   // LOGIN
