@@ -66,6 +66,9 @@ const LandingPage = () => {
 
       // Save settings in session storage
       sessionStorage.setItem("connectionType", connectionType);
+      localStorage.setItem("connectionType", connectionType);
+      localStorage.setItem("yearName", yearName);
+    
       sessionStorage.setItem("yearName", yearName);
       sessionStorage.setItem(
         "authResponse",
@@ -85,6 +88,8 @@ const LandingPage = () => {
             "userLoginRef",
             String(backendCompanyId)
           );
+
+           localStorage.setItem("userLoginRef",  String(backendCompanyId));
         }
 
         
