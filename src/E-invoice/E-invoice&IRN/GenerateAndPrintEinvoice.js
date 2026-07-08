@@ -627,7 +627,7 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
     slglNm: inv?.company_Name || null,
     sbnm: inv?.company_Name || null,
     // sflno: null,
-     sflno: inv?.floorAddressForIRN || null, //ateeq changed on 02 july to from database.
+    sflno: inv?.floorAddressForIRN || null, //ateeq changed on 02 july to from database.
     // sloc: inv?.companyBranches?.officeAddress || null,
     sloc: inv?.addressForIRN || null,//ateeq changed on 02 july to from database.
     sdst: inv?.company_State || null,
@@ -726,12 +726,19 @@ const handleDownloadEInvoice = async () => {
       localStorage.getItem("selectedInvoice")
     );
 
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
+
     const keyID = selectedInvoice?.keyID;
 
     const response = await axios.get(
       `https://einvoice.fcssoftwares.com/api/OrderList/GetICCIRNReport/${keyID}`,
       {
         responseType: "blob",
+          headers: {
+            Accept: "*/*",
+            ConnectionType: currentConnectionType,
+          }
       }
     );
 
@@ -756,7 +763,7 @@ const handleDownloadEInvoice = async () => {
   }
 };
 
-  const LabeledInput = ({
+const LabeledInput = ({
   label,
   value,
   onChange,
@@ -777,8 +784,8 @@ const handleDownloadEInvoice = async () => {
       type="text"
       value={value || ""}
       readOnly={readOnly}
-     onChange={(e) => onChange?.(e.target.value) 
-    }
+      onChange={(e) => onChange?.(e.target.value)
+      }
       style={{
         width: "100%",
         padding: "8px 10px",
@@ -811,11 +818,11 @@ export const GenerateAndPrintEinvoice = () => {
   console.log("received data", receivedData)
   const invoiceData = location.state?.invoiceData || {};
   const invoicenumber = location.state?.invoiceNumber;
-const dynamicId =
-  invoiceData?.pid ??
-  receivedData?.pid ??
-  receivedData?.id;
- const [ewbNo, setEwbNo] = useState("");
+  const dynamicId =
+    invoiceData?.pid ??
+    receivedData?.pid ??
+    receivedData?.id;
+  const [ewbNo, setEwbNo] = useState("");
   const [connectionType, setConnectionType] = useState(
     localStorage.getItem("connectionType") || "DEFAULT"
   );
@@ -1175,7 +1182,7 @@ const dynamicId =
       );
 
       const data = await res.json();
-      
+
       setResponse(data);
 
       const generatedId =
@@ -1193,9 +1200,9 @@ const dynamicId =
         // Automatically save generated IRN details to DB
         const saved = await handleSaveToDB(data);
 
-     if (saved) {
-  alert("IRN generated and saved successfully.");
-}
+        if (saved) {
+          alert("IRN generated and saved successfully.");
+        }
       }
 
     } finally {
@@ -1272,68 +1279,74 @@ const dynamicId =
   };
 
   useEffect(() => {
-  const value =
-    response?.response?.EwbNo ||
-    response?.response?.ewbNo ||
-    response?.eWayBillNumber ||
-    response?.ewayBillNo ||
-    "";
+    const value =
+      response?.response?.EwbNo ||
+      response?.response?.ewbNo ||
+      response?.eWayBillNumber ||
+      response?.ewayBillNo ||
+      "";
 
-  setEwbNo(value);
-}, [response]);
+    setEwbNo(value);
+  }, [response]);
 
-console.log("invoiceData:", invoiceData);
-console.log("dynamicId:", dynamicId);
-console.log("PID:", invoiceData?.pid);
+  console.log("invoiceData:", invoiceData);
+  console.log("dynamicId:", dynamicId);
+  console.log("PID:", invoiceData?.pid);
 
-const handleDownloadEWayBill = async () => {
-  try {
-    const selectedInvoice = JSON.parse(
-      localStorage.getItem("selectedInvoice")
-    );
+  const handleDownloadEWayBill = async () => {
+    try {
+      const selectedInvoice = JSON.parse(
+        localStorage.getItem("selectedInvoice")
+      );
 
-    const keyID = selectedInvoice?.keyID;
+      const currentConnectionType =
+        localStorage.getItem("connectionType") || "DEFAULT";
 
-    // Fetch latest invoice details from DB
-    const latest = await axios.get(
-      `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${keyID}/invoicecumchallan`
-    );
+      const keyID = selectedInvoice?.keyID;
 
-    console.log("Latest Invoice:", latest.data);
+      // Fetch latest invoice details from DB
+      const latest = await axios.get(
+        `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${keyID}/invoicecumchallan`
+      );
 
-    // Optional: update UI
-   setInvoiceDetails(latest.data);
+      console.log("Latest Invoice:", latest.data);
 
-    // Download latest E-Way Bill
-    const response = await axios.get(
-      `https://einvoice.fcssoftwares.com/api/OrderList/GetEWayBillReport/${keyID}`,
-      {
-        responseType: "blob",
-      }
-    );
+      // Optional: update UI
+      setInvoiceDetails(latest.data);
 
-    const blob = new Blob([response.data], {
-      type: "application/pdf",
-    });
+      // Download latest E-Way Bill
+      const response = await axios.get(
+        `https://einvoice.fcssoftwares.com/api/OrderList/GetEWayBillReport/${keyID}`,
+        {
+          responseType: "blob",
+          headers: {
+            Accept: "*/*",
+            ConnectionType: currentConnectionType,
+          }
+        }
+      );
 
-    const url = window.URL.createObjectURL(blob);
+      const blob = new Blob([response.data], {
+        type: "application/pdf",
+      });
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `EWayBill_${
-      latest.data?.eWayBillNumber || keyID
-    }.pdf`;
+      const url = window.URL.createObjectURL(blob);
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `EWayBill_${latest.data?.eWayBillNumber || keyID
+        }.pdf`;
 
-    window.URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error(err);
-    alert("Unable to download E-Way Bill.");
-  }
-};
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Unable to download E-Way Bill.");
+    }
+  };
   return (
     <div style={tableStyles.container}>
       <h1 style={tableStyles.header}>Dynamic E-Invoice Generator ({selectedCategory} Mode)</h1>
@@ -1367,9 +1380,9 @@ const handleDownloadEWayBill = async () => {
             <td style={tableStyles.td}><LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
             <td style={tableStyles.td}><LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} /></td>
           </tr>
-          
+
           <tr>
-            <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no}   readOnly={true} onChange={(v) => setField("no", v)} /></td>
+            <td style={tableStyles.td}><LabeledInput label="Invoice Number" value={payload.no} readOnly={true} onChange={(v) => setField("no", v)} /></td>
             <td style={tableStyles.td}><LabeledInput label="Invoice Date" value={payload.dt} onChange={(v) => setField("dt", v)} /></td>
             <td style={tableStyles.td}><LabeledSelect label="Supply Type" value={payload.supplyType || "O"} options={["O", "E"]} onChange={(v) => setField("supplyType", v)} />
             </td>
@@ -1509,79 +1522,79 @@ const handleDownloadEWayBill = async () => {
       </div>
 
 
-   {/* ==================== ACTION CONSOLE ==================== */}
+      {/* ==================== ACTION CONSOLE ==================== */}
 
-{/* Generate E-Invoice */}
-<button
-  style={{
-    ...tableStyles.btnGenerate(loading, token),
-    padding: "8px 16px",
-    fontSize: "13px",
-    marginBottom: "15px",
-  }}
-  onClick={handleGenerate}
-  disabled={loading || !token}
->
-  {loading
-    ? "Registering Invoice Core..."
-    : "🚀 Generate IRN / E-Invoice"}
-</button>
+      {/* Generate E-Invoice */}
+      <button
+        style={{
+          ...tableStyles.btnGenerate(loading, token),
+          padding: "8px 16px",
+          fontSize: "13px",
+          marginBottom: "15px",
+        }}
+        onClick={handleGenerate}
+        disabled={loading || !token}
+      >
+        {loading
+          ? "Registering Invoice Core..."
+          : "🚀 Generate IRN / E-Invoice"}
+      </button>
 
-{/* E-Way Bill Controls */}
-<div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginTop: "15px",
-    marginBottom: "15px",
-    flexWrap: "wrap",
-  }}
->
-  {/* Download E-Invoice PDF */}
-  {/* Show both buttons only after IRN is generated */}
-{response && (irnValue || response.status === "SUCCESS") && (
-  <>
-    {/* Download E-Invoice */}
-    <button
-      onClick={handleDownloadEInvoice}
-      style={{
-        padding: "8px 16px",
-        height: "34px",
-        background: "#722ed1",
-        color: "#fff",
-        border: "none",
-        borderRadius: "4px",
-        cursor: "pointer",
-        fontSize: "13px",
-        fontWeight: "500",
-      }}
-    >
-      📥 Download E-Invoice
-    </button>
+      {/* E-Way Bill Controls */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          marginTop: "15px",
+          marginBottom: "15px",
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Download E-Invoice PDF */}
+        {/* Show both buttons only after IRN is generated */}
+        {response && (irnValue || response.status === "SUCCESS") && (
+          <>
+            {/* Download E-Invoice */}
+            <button
+              onClick={handleDownloadEInvoice}
+              style={{
+                padding: "8px 16px",
+                height: "34px",
+                background: "#722ed1",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: "500",
+              }}
+            >
+              📥 Download E-Invoice
+            </button>
 
-    {/* Download E-Way Bill */}
-    <button
-      onClick={handleDownloadEWayBill}
-      style={{
-        padding: "8px 16px",
-        height: "34px",
-        background: "#198754",
-        color: "#fff",
-        border: "none",
-        borderRadius: "4px",
-        cursor: "pointer",
-        fontSize: "13px",
-        fontWeight: "500",
-      }}
-    >
-      🚚 Download E-Way Bill
-    </button>
-  </>
-)}
+            {/* Download E-Way Bill */}
+            <button
+              onClick={handleDownloadEWayBill}
+              style={{
+                padding: "8px 16px",
+                height: "34px",
+                background: "#198754",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: "500",
+              }}
+            >
+              🚚 Download E-Way Bill
+            </button>
+          </>
+        )}
 
 
-</div>
+      </div>
 
       {/* ==================== API RESPONSE DISPLAY ==================== */}
       {response && (
