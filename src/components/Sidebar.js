@@ -119,6 +119,8 @@ const Sidebar = () => {
         { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
         { path: "/einvoice/get-by-irn", label: "Get by IRN" },
         { path: "/einvoice/get-ewb-by-irn", label: "Get EWB by IRN" },
+        { path: "/einvoice/generate-ewb-by-irn", label: "Get EWB by IRN & payload" },
+         
       ],
     },
 
