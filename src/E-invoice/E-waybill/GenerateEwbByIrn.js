@@ -102,31 +102,112 @@ const GenerateEwbByIrn = () => {
     return `${dd}-${mm}-${yyyy}`;
   };
 
-  // ================= INITIAL PAYLOAD =================
-  const getInitialBody = () => ({
-    // Basic
-    irn: inv?.irn || FALLBACK_DEFAULTS.irn,
-    userGstin: inv?.gstin || authUserGstin || FALLBACK_DEFAULTS.userGstin,
 
-    // Transport
-    vehTyp: "R",
-    transDist: Number(inv?.distance || 0),
-    transDocNo: inv?.transporterDocNo || inv?.despatchedDocumentNumber || `DOC${inv?.keyID || "001"}`,
-    transDocDate: formatDate(inv?.deliveryNoteDate || inv?.invoicecreatedOn || new Date()),
-    vehNo: inv?.vehicleNo || FALLBACK_DEFAULTS.vehNo,
-    transId: inv?.transporterID || FALLBACK_DEFAULTS.transId,
-    transName: inv?.transporterName || "",
-    transMode: inv?.transportMode || "Road",
+const getInitialBody = () => ({
+  // -----------------------------
+  // Basic
+  // -----------------------------
+  irn: inv?.irn || FALLBACK_DEFAULTS.irn,
+  userGstin: inv?.gstin || authUserGstin || FALLBACK_DEFAULTS.userGstin,
 
-    // Supply
-    subSplyTyp: "Supply",
-    subSplyDes: "",
+  // -----------------------------
+  // Transport
+  // -----------------------------
+  vehTyp: "R",
 
-    // Dispatch & Delivery (commonly required)
-    paddr1: "", paddr2: "", ploc: "", pstcd: "", ppin: "", pobewb: "",
-    dNm: "", daddr1: "", daddr2: "", disloc: "", disstcd: "", dispin: "",
-  });
+  transDist: Number(inv?.distance || 0),
 
+  transDocNo:
+    inv?.transporterDocNo ||
+    inv?.despatchedDocumentNumber ||
+    `DOC${inv?.keyID || "001"}`,
+
+  transDocDate: formatDate(
+    inv?.deliveryNoteDate ||
+    inv?.invoicecreatedOn ||
+    new Date()
+  ),
+
+  vehNo: inv?.vehicleNo || FALLBACK_DEFAULTS.vehNo,
+
+  transId:
+    inv?.transporterID ||
+    FALLBACK_DEFAULTS.transId,
+
+  transName:
+    inv?.transporterName ||
+    inv?.transport ||
+    "SELF",
+
+  transMode:
+    (inv?.transportMode || "Road").trim(),
+
+  // -----------------------------
+  // Supply
+  // -----------------------------
+  subSplyTyp: "Supply",
+  subSplyDes: "",
+
+  // -----------------------------
+  // Dispatch From Details
+  // Dispatch From Details
+dNm: inv?.company_Name,
+
+daddr1:
+  inv?.floorAddressForIRN ||
+  inv?.company_Address ||
+  inv?.companyBranches?.officeAddress,
+
+daddr2:
+  inv?.addressForIRN ||
+  inv?.companyBranches?.poBox,
+
+disloc:
+  inv?.company_City,
+
+disstcd:
+  inv?.stateCode,
+
+dispin:
+  inv?.company_PINCode,
+  // -----------------------------
+  // Ship To / Port Details
+  // -----------------------------
+  paddr1:
+    inv?.buyerClients?.officeAddress ||
+    inv?.buyerClients?.address ||
+    inv?.clients?.officeAddress ||
+    inv?.clients?.address ||
+    "",
+
+  paddr2:
+    inv?.buyerClients?.poBox ||
+    inv?.buyerClients?.address2 ||
+    inv?.clients?.poBox ||
+    inv?.clients?.address2 ||
+    "",
+
+  ploc:
+    inv?.buyerClients?.city ||
+    inv?.buyerClients?.location ||
+    inv?.clients?.city ||
+    inv?.clients?.location ||
+    "",
+
+  pstcd:
+    inv?.buyerClients?.stateCode ||
+    inv?.clients?.stateCode ||
+    "",
+
+  ppin:
+    inv?.buyerClients?.pinCode ||
+    inv?.buyerClients?.pincode ||
+    inv?.clients?.pinCode ||
+    inv?.clients?.pincode ||
+    "",
+
+  pobewb: "",
+});
   const [body, setBody] = useState(getInitialBody);
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -134,9 +215,8 @@ const GenerateEwbByIrn = () => {
   const isReady = !!(companyId && token);
 
   // Sync invoice data when it changes
-  useEffect(() => {
-    setBody(getInitialBody());
-  }, [inv, authUserGstin]);
+
+
 
   const handleChange = (key, value) => {
     setBody(prev => ({ ...prev, [key]: value }));
@@ -255,34 +335,92 @@ const GenerateEwbByIrn = () => {
         </table>
 
         {/* Dispatch & Delivery */}
-        <table style={tableStyles.table}>
-          <thead>
-            <tr>
-              <th style={{ background: colors.success, color: "white" }}>Dispatch Details</th>
-              <th style={{ background: colors.primary, color: "white" }}>Delivery Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={tableStyles.td}>
-                <LabeledInput label="Address 1" value={body.paddr1} onChange={v => handleChange('paddr1', v)} />
-                <LabeledInput label="Address 2" value={body.paddr2} onChange={v => handleChange('paddr2', v)} />
-                <LabeledInput label="Location" value={body.ploc} onChange={v => handleChange('ploc', v)} />
-                <LabeledInput label="State Code" value={body.pstcd} onChange={v => handleChange('pstcd', v)} />
-                <LabeledInput label="PIN" value={body.ppin} onChange={v => handleChange('ppin', v)} />
-                <LabeledInput label="Place of EWB" value={body.pobewb} onChange={v => handleChange('pobewb', v)} />
-              </td>
-              <td style={tableStyles.td}>
-                <LabeledInput label="Recipient Name" value={body.dNm} onChange={v => handleChange('dNm', v)} />
-                <LabeledInput label="Address 1" value={body.daddr1} onChange={v => handleChange('daddr1', v)} />
-                <LabeledInput label="Address 2" value={body.daddr2} onChange={v => handleChange('daddr2', v)} />
-                <LabeledInput label="Location" value={body.disloc} onChange={v => handleChange('disloc', v)} />
-                <LabeledInput label="State Code" value={body.disstcd} onChange={v => handleChange('disstcd', v)} />
-                <LabeledInput label="PIN" value={body.dispin} onChange={v => handleChange('dispin', v)} />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+       <table style={tableStyles.table}>
+  <thead>
+    <tr>
+      <th style={{ background: colors.success, color: "white" }}>
+        Dispatch Details
+      </th>
+      <th style={{ background: colors.primary, color: "white" }}>
+        Delivery Details
+      </th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr>
+
+      {/* Dispatch */}
+      <td style={tableStyles.td}>
+        <LabeledInput
+          label="Trade Name"
+          value={body.dNm}
+          onChange={v => handleChange("dNm", v)}
+        />
+        <LabeledInput
+          label="Address 1"
+          value={body.daddr1}
+          onChange={v => handleChange("daddr1", v)}
+        />
+        <LabeledInput
+          label="Address 2"
+          value={body.daddr2}
+          onChange={v => handleChange("daddr2", v)}
+        />
+        <LabeledInput
+          label="Location"
+          value={body.disloc}
+          onChange={v => handleChange("disloc", v)}
+        />
+        <LabeledInput
+          label="State Code"
+          value={body.disstcd}
+          onChange={v => handleChange("disstcd", v)}
+        />
+        <LabeledInput
+          label="PIN"
+          value={body.dispin}
+          onChange={v => handleChange("dispin", v)}
+        />
+      </td>
+
+      {/* Delivery */}
+      <td style={tableStyles.td}>
+        <LabeledInput
+          label="Address 1"
+          value={body.paddr1}
+          onChange={v => handleChange("paddr1", v)}
+        />
+        <LabeledInput
+          label="Address 2"
+          value={body.paddr2}
+          onChange={v => handleChange("paddr2", v)}
+        />
+        <LabeledInput
+          label="Location"
+          value={body.ploc}
+          onChange={v => handleChange("ploc", v)}
+        />
+        <LabeledInput
+          label="State Code"
+          value={body.pstcd}
+          onChange={v => handleChange("pstcd", v)}
+        />
+        <LabeledInput
+          label="PIN"
+          value={body.ppin}
+          onChange={v => handleChange("ppin", v)}
+        />
+        <LabeledInput
+          label="Place of EWB"
+          value={body.pobewb}
+          onChange={v => handleChange("pobewb", v)}
+        />
+      </td>
+
+    </tr>
+  </tbody>
+</table>
 
         {/* Generate Button */}
         <div style={{ textAlign: "center", margin: "40px 0" }}>
