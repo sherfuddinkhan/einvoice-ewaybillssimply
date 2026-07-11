@@ -187,21 +187,7 @@ const isReady = !!(companyId && token && config.params.irn);
           margin: '0 auto',
         }}
       >
-        {/* HEADERS */}
-        <h2 style={{ color: '#0d47a1' }}>Request Headers</h2>
-        <pre
-          style={{
-            background: '#e3f2fd',
-            padding: '15px',
-            borderRadius: '10px',
-            border: '2px solid #64b5f6',
-            fontFamily: 'monospace',
-            fontSize: '14px',
-          }}
-        >
-          {JSON.stringify(config.headers, null, 2)}
-        </pre>
-
+        
         {/* FULL REQUEST URL */}
         <h2 style={{ color: '#0d47a1', marginTop: '30px' }}>Request URL</h2>
         <div
@@ -231,7 +217,7 @@ const isReady = !!(companyId && token && config.params.irn);
               }))
             }
             style={{
-              width: '100%',
+              width: '700px',
               padding: '15px',
               marginTop: '8px',
               borderRadius: '10px',
@@ -245,12 +231,12 @@ const isReady = !!(companyId && token && config.params.irn);
 
         {/* INPUT: GSTIN */}
         <div style={{ marginTop: '25px' }}>
-          <strong>User GSTIN:</strong>
+          <strong>GSTIN:</strong>
           <input
             value={config.params.userGstin}
             readOnly
             style={{
-              width: '100%',
+              width: '300px',
               padding: '15px',
               marginTop: '8px',
               borderRadius: '10px',

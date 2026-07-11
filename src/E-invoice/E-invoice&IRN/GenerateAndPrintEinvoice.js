@@ -521,15 +521,27 @@ const LabeledSelect = ({ label, id, value, options, onChange }) => (
 );
 
 const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", invoiceCreatedOn, refid01) => {
+
   const inv = invoiceData;
   const pid = dynamicId;
   const invoicedate = invoiceCreatedOn;
 
+  
+
   console.log("📦 FULL INVOICE:", inv);
   console.log("📦 invoicenumber", inv.invoiceNumber);
   console.log("📦 invoicedate", invoicedate);
+  const transactionTypeMap = {
+  REG: "REG",
+  BILLTO_SHIPTO: "Bill To - Ship To",
+  BILLFROM_DISPATCHFROM: "Bill From - Dispatch From",
+  COMBINED: "Bill To - Ship To and Bill From - Dispatch From",
+};
 
-  const selectedTrnTyp = inv?.transactionType || "REG";
+const selectedTrnTyp = inv?.transactionType || "REG";
+  console.log("🚚 Transaction Type:", selectedTrnTyp);
+
+
   console.log("🚚 Transaction Type:", selectedTrnTyp);
 
   const sellerGstin =
@@ -603,6 +615,14 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
     return `${dd}-${mm}-${yyyy}`;
   };
 
+  const showShipTo =
+  selectedTrnTyp === "Bill To - Ship To " ||
+  selectedTrnTyp === "COMBINED";
+
+const showDispatch =
+  selectedTrnTyp === "Bill From - Dispatch From" ||
+  selectedTrnTyp === "COMBINED";
+
   return {
     //id: refid01,
     id: inv?.invoiceNumber, //ateeq chagned on 3 07 2026.... as refid not required.
@@ -650,24 +670,22 @@ const createBasePayload = (invoiceData = {}, dynamicId, selectedCatg = "B2B", in
     bem: inv?.buyerClients?.email || null,
 
     // ================= SHIP TO =================
-    togstin: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.gstin || buyerGstin) : null,
-    totrdNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || null) : null,
-    tolglNm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.companyName || null) : null,
-    tobnm: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? null : null,
-    toloc: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.officeAddress || null) : null,
-    tostcd: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? buyerStateCode : null,
-    topin: (selectedTrnTyp === "BILLTO_SHIPTO" || selectedTrnTyp === "COMBINED") ? (inv?.buyerClients?.poBox || null) : null,
+ // Ship To
+togstin: showShipTo ? (inv?.buyerClients?.gstin || buyerGstin) : null,
+totrdNm: showShipTo ? (inv?.buyerClients?.companyName || "") : "",
+tolglNm: showShipTo ? (inv?.buyerClients?.companyName || "") : "",
+toloc: showShipTo ? (inv?.buyerClients?.officeAddress || "") : "",
+tostcd: showShipTo ? buyerStateCode : "",
+topin: showShipTo ? (inv?.buyerClients?.poBox || "") : "",
 
-    // ================= DISPATCH =================
-    dgstin: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? sellerGstin : null,
-    dtrdNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.companyTallyName || null) : null,
-    dlglNm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.nameEng || null) : null,
-    dbnm: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? null : null,
-    dflno: null,
-    dloc: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.poBox || null) : null,
-    ddst: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? "BENGALURU" : null,
-    dstcd: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? sellerStateCode : null,
-    dpin: (selectedTrnTyp === "BILLFROM_DISPATCHFROM" || selectedTrnTyp === "COMBINED") ? (inv?.companyBranches?.pinCode || null) : null,
+// Dispatch From
+dgstin: showDispatch ? (inv?.clients?.companyBranches?.gstin || sellerGstin) : null,
+dtrdNm: showDispatch ? (inv?.company_Name || "") : "",
+dlglNm: showDispatch ? (inv?.company_Name || "") : "",
+dloc: showDispatch ? (inv?.companyBranches?.poBox || "") : "",
+ddst: showDispatch ? (inv?.company_State || "") : "",
+dstcd: showDispatch ? sellerStateCode : "",
+dpin: showDispatch ? (inv?.companyBranches?.pinCode || "") : "",
 
     // ================= TRANSPORT =================
     subSplyTyp: "Supply",
@@ -811,10 +829,7 @@ export const GenerateAndPrintEinvoice = () => {
   console.log("received data", receivedData)
   const invoiceData = location.state?.invoiceData || {};
   const invoicenumber = location.state?.invoiceNumber;
-const dynamicId =
-  invoiceData?.pid ??
-  receivedData?.pid ??
-  receivedData?.id;
+ const dynamicId =invoiceData?.pid ?? receivedData?.pid ?? receivedData?.id;
  const [ewbNo, setEwbNo] = useState("");
   const [connectionType, setConnectionType] = useState(
     localStorage.getItem("connectionType") || "DEFAULT"
@@ -957,11 +972,28 @@ const dynamicId =
     if (!invoiceData) return;
     const basePayload = createBasePayload(invoiceData, dynamicId, category, invoiceCreatedOn, refid01);
     setPayload(recalculateTotals(basePayload));
+    console.log("Ship To:", {
+  togstin: basePayload.togstin,
+  totrdNm: basePayload.totrdNm,
+  tolglNm: basePayload.tolglNm,
+  toloc: basePayload.toloc,
+  tostcd: basePayload.tostcd,
+  topin: basePayload.topin,
+});
+
+console.log("Dispatch:", {
+  dgstin: basePayload.dgstin,
+  dtrdNm: basePayload.dtrdNm,
+  dlglNm: basePayload.dlglNm,
+  dloc: basePayload.dloc,
+  dstcd: basePayload.dstcd,
+  dpin: basePayload.dpin,
+});
   };
 
   useEffect(() => {
     if (!invoiceData) return;
-
+console.log("Payload state:", payload.trnTyp);
     if (!initializedRef.current) {
       const basePayload = createBasePayload(invoiceData, dynamicId, selectedCategory, invoiceCreatedOn, refid01);
       setPayload(recalculateTotals(basePayload));
@@ -1153,10 +1185,68 @@ const dynamicId =
     setResponse(null);
 
     try {
-      const finalPayload = recalculateTotals({
-        ...payload,
-        genewb: genEwb,
-      });
+      const finalPayload = {
+  ...recalculateTotals({
+    ...payload,
+    genewb: genEwb,
+  }),
+};
+console.log("final payload trntype", finalPayload.trnTyp);
+// Remove Dispatch From for BILLTO_SHIPTO
+if (finalPayload.trnTyp === "Bill To - Ship To") {
+  delete finalPayload.dgstin;
+  delete finalPayload.dtrdNm;
+  delete finalPayload.dlglNm;
+  delete finalPayload.dbnm;
+  delete finalPayload.dflno;
+  delete finalPayload.dloc;
+  delete finalPayload.ddst;
+  delete finalPayload.dstcd;
+  delete finalPayload.dpin;
+}
+
+// Remove Ship To for BILLFROM_DISPATCHFROM
+if (finalPayload.trnTyp === "Bill From - Dispatch From") {
+  delete finalPayload.togstin;
+  delete finalPayload.totrdNm;
+  delete finalPayload.tolglNm;
+  delete finalPayload.tobnm;
+  delete finalPayload.toloc;
+  delete finalPayload.tostcd;
+  delete finalPayload.topin;
+}
+
+// Remove both for REG
+if (finalPayload.trnTyp === "REG") {
+  delete finalPayload.dgstin;
+  delete finalPayload.dtrdNm;
+  delete finalPayload.dlglNm;
+  delete finalPayload.dbnm;
+  delete finalPayload.dflno;
+  delete finalPayload.dloc;
+  delete finalPayload.ddst;
+  delete finalPayload.dstcd;
+  delete finalPayload.dpin;
+
+  delete finalPayload.togstin;
+  delete finalPayload.totrdNm;
+  delete finalPayload.tolglNm;
+  delete finalPayload.tobnm;
+  delete finalPayload.toloc;
+  delete finalPayload.tostcd;
+  delete finalPayload.topin;
+}
+
+console.log("🚀 Final Payload:", finalPayload);
+console.log("Ship To:", {
+  trnTyp: finalPayload.trnTyp,
+  togstin: finalPayload.togstin,
+  totrdNm: finalPayload.totrdNm,
+  tolglNm: finalPayload.tolglNm,
+  toloc: finalPayload.toloc,
+  tostcd: finalPayload.tostcd,
+  topin: finalPayload.topin,
+});
 
       const res = await fetch(
         "https://einvoice.fcssoftwares.com/api/gst/einvoice/generate-irn",
@@ -1362,7 +1452,39 @@ const handleDownloadEWayBill = async () => {
               <LabeledSelect label="Invoice Scenario Category" value={selectedCategory} options={["B2B", "B2C", "EXP"]} onChange={handleCategorySelectionChange} />
             </td>
             <td style={tableStyles.td}>
-              <LabeledSelect label="Transaction Type" value={payload.trnTyp || "REG"} options={["REG", "BILLTO_SHIPTO", "BILLFROM_DISPATCHFROM"]} onChange={(v) => setField("trnTyp", v)} />
+             <LabeledSelect
+  label="Transaction Type"
+  value={payload.trnTyp || "REG"}
+options={[
+  "REG",
+  "Bill To - Ship To",
+  "Bill From - Dispatch From",
+    "COMBINED"
+]}
+  onChange={(v) => {
+  console.log("Selected from dropdown:", v);
+
+  const updatedInvoice = {
+    ...invoiceData,
+    transactionType: v,
+  };
+
+  console.log("Updated Invoice:", updatedInvoice.transactionType);
+
+  const basePayload = createBasePayload(
+    updatedInvoice,
+    dynamicId,
+    selectedCategory,
+    invoiceCreatedOn,
+    refid01
+  );
+
+  console.log("Base Payload trnTyp:", basePayload.trnTyp);
+
+  setPayload(recalculateTotals(basePayload));
+}}
+/>
+
             </td>
             <td style={tableStyles.td}><LabeledInput label="User GSTIN" value={payload.userGstin} onChange={(v) => setField("userGstin", v)} /></td>
             <td style={tableStyles.td}><LabeledInput label="Document Type" value={payload.docType} onChange={(v) => setField("docType", v)} /></td>

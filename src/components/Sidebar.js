@@ -118,6 +118,7 @@ const Sidebar = () => {
         { path: "/einvoice/generate-print", label: "Generate Invoice and print",navigationOnly: true, },
         { path: "/einvoice/cancel-irn", label: "Cancel IRN" },
         { path: "/einvoice/get-by-irn", label: "Get by IRN" },
+        { path: "/einvoice/get-ewb-by-irn", label: "Get EWB by IRN" },
       ],
     },
 
