@@ -102,6 +102,46 @@ const GenerateEwbByIrn = () => {
     return `${dd}-${mm}-${yyyy}`;
   };
 
+console.log("buyerClients", JSON.stringify(inv?.buyerClients, null, 2));
+const payload = {
+  togstin: inv?.buyerClients?.gstin || "",
+  paddr1:
+    inv?.buyerClients?.officeAddress ||
+    inv?.buyerClients?.address ||
+    inv?.clients?.officeAddress ||
+    inv?.clients?.address ||
+    "",
+
+  paddr2:
+    inv?.buyerClients?.poBox ||
+    inv?.buyerClients?.address2 ||
+    inv?.clients?.poBox ||
+    inv?.clients?.address2 ||
+    "",
+
+  ploc:
+    inv?.buyerClients?.city ||
+    inv?.buyerClients?.location ||
+    inv?.clients?.city ||
+    inv?.clients?.location ||
+    "",
+
+  pstcd:
+    inv?.buyerClients?.stateCode ||
+    inv?.clients?.stateCode ||
+    "",
+
+  ppin:
+    inv?.buyerClients?.pinCode ||
+    inv?.buyerClients?.pincode ||
+    inv?.clients?.pinCode ||
+    inv?.clients?.pincode ||
+    "",
+
+  pobewb: "",
+};
+
+console.log("Buyer Address Details:", payload);
 
 const getInitialBody = () => ({
   // -----------------------------
@@ -150,7 +190,6 @@ const getInitialBody = () => ({
 
   // -----------------------------
   // Dispatch From Details
-  // Dispatch From Details
 dNm: inv?.company_Name,
 
 daddr1:
@@ -173,6 +212,8 @@ dispin:
   // -----------------------------
   // Ship To / Port Details
   // -----------------------------
+    togstin: inv?.buyerClients?.gstin || "",
+
   paddr1:
     inv?.buyerClients?.officeAddress ||
     inv?.buyerClients?.address ||
@@ -188,23 +229,13 @@ dispin:
     "",
 
   ploc:
-    inv?.buyerClients?.city ||
-    inv?.buyerClients?.location ||
-    inv?.clients?.city ||
-    inv?.clients?.location ||
-    "",
+    inv?.buyerClients?.officeAddress || "",
 
   pstcd:
-    inv?.buyerClients?.stateCode ||
-    inv?.clients?.stateCode ||
-    "",
+    inv?.buyerClients?.masterStateNames?.stateCode || "",
 
   ppin:
-    inv?.buyerClients?.pinCode ||
-    inv?.buyerClients?.pincode ||
-    inv?.clients?.pinCode ||
-    inv?.clients?.pincode ||
-    "",
+    inv?.buyerClients?.poBox || "",
 
   pobewb: "",
 });
@@ -386,6 +417,11 @@ dispin:
 
       {/* Delivery */}
       <td style={tableStyles.td}>
+      <LabeledInput
+  label="GSTIN"
+  value={body.togstin || ""}
+  onChange={v => handleChange("togstin", v)}
+/>
         <LabeledInput
           label="Address 1"
           value={body.paddr1}

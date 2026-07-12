@@ -692,7 +692,7 @@ dpin: showDispatch ? (inv?.companyBranches?.pinCode || "") : "",
     transId: inv?.transporterID || null, //ateeq added here on 27 06 2026...,,
     transMode: inv?.transportMode || null, //ateeq added here on 27 06 2026...,,
     transDist: inv?.distance || null, //ateeq added here on 27 06 2026...
-    transName: inv?.transporterName || null, //ateeq added here on 27 06 2026...,
+    transName: inv?.transport||inv?. transporterName, //ateeq added here on 27 06 2026...,
     transDocNo: inv?.transporterDocNo || null, //ateeq added here on 27 06 2026...,,,
     transDocDate: inv?.deliveryNoteDate || null, //ateeq added here on 27 06 2026...,,,
     vehNo: inv?.vehicleNo || null,
