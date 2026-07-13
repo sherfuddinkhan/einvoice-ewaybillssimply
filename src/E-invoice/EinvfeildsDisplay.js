@@ -75,7 +75,7 @@ const EinvfeildsDisplay = () => {
       );
 
       console.log("Invoice API Response:", response.data);
-      console.log("Invoice API Response:", response.data[0]?.gstin);
+     // console.log("Invoice API Response:", response.data[0]?.gstin);
       const UserGstin = response.data[0]?.gstin
       setInvoiceData(response.data || []);
     } catch (error) {
@@ -375,6 +375,54 @@ const EinvfeildsDisplay = () => {
     }
   };
 
+const handleGenerateEWayBill = async (invoice) => {
+  try {
+    setLoading(true);
+
+    if (!invoice || !invoice.pid) {
+      alert("Invoice not found");
+      return;
+    }
+
+    const pid = invoice.pid;
+    const invoiceCreatedOn = invoice.invoiceCreatedOn;
+    const refid = invoice.refID;
+
+    console.log("Selected Invoice:", invoice);
+
+    // Save the selected row
+    localStorage.setItem(
+      "selectedInvoice",
+      JSON.stringify(invoice)
+    );
+
+    localStorage.setItem(
+      "invoicecreatedOn",
+      JSON.stringify(invoiceCreatedOn || "")
+    );
+
+    localStorage.setItem(
+      "refid",
+      JSON.stringify(refid || "")
+    );
+
+    // Navigate to Generate EWB page
+    navigate("/einvoice/generate-ewb-by-irn", {
+      state: {
+        invoiceData: invoice,
+        invoicecreatedOn: invoiceCreatedOn,
+        refid,
+        pid,
+      },
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to open Generate E-Way Bill page.");
+  } finally {
+    setLoading(false);
+  }
+};
   const handleDownloadEWayBill = async (invoice) => {
     try {
       const currentConnectionType =
@@ -516,12 +564,21 @@ const EinvfeildsDisplay = () => {
                             Down E-Invoice
                           </button>
 
-                          <button
-                            style={styles.downloadEWayBillBtn}
-                            onClick={() => handleDownloadEWayBill(invoice)}
-                          >
-                            Down E-Way
-                          </button>
+                          {hasEWayBill ? (
+  <button
+    style={styles.downloadEWayBillBtn}
+    onClick={() => handleDownloadEWayBill(invoice)}
+  >
+    Down E-Way
+  </button>
+) : (
+  <button
+    style={styles.generateEWayBillBtn}
+    onClick={() => handleGenerateEWayBill(invoice)}
+  >
+    Generate EWB
+  </button>
+)}
 
                           <button
                             style={styles.deleteIrnBtn}
@@ -754,6 +811,15 @@ const styles = {
     fontWeight: "600",
     transition: "0.3s",
   },
+generateEWayBillBtn: {
+  ...smallButtonStyle,
+  background: "#1976d2",
+  color: "#fff",
+  width: "170px",      // Increase width
+  fontSize: "14px",    // Slightly larger text
+  padding: "6px 10px", // More padding
+},
 };
+
 
 export default EinvfeildsDisplay;
