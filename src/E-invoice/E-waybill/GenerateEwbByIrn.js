@@ -84,7 +84,7 @@ const GenerateEwbByIrn = () => {
 
   const invoiceData = location.state?.invoiceData || JSON.parse(localStorage.getItem("selectedInvoice") || "{}");
   const inv = invoiceData;
-  console.log("irn",inv.irnnumber);
+  console.log("inv",inv);
 
   // ================= DATE FORMAT =================
   const formatDate = (dateInput) => {
@@ -173,15 +173,9 @@ const fetchInvoiceDetails = async () => {
     transDist: Number(data.distance || 0),
     vehNo: data.vehicleNo || "",
 
-    transDocNo:
-        data.transporterDocNo ||
-        data.despatchedDocumentNumber ||
-        "",
+    transDocNo:data.transporterDocNo || data.despatchedDocumentNumber || "",
 
-    transDocDate: formatDate(
-        data.deliveryNoteDate ||
-        data.invoiceCreatedOn
-    ),
+    transDocDate: formatDate(data.deliveryNoteDate ||data.invoiceCreatedOn),
 
     transId: data.transporterID || "",
     transName: data.transporterName || data.transport || "",
@@ -190,37 +184,26 @@ const fetchInvoiceDetails = async () => {
     subSplyTyp: "Supply",
     subSplyDes: "",
 
-    dNm: data.company_Name || "",
+    //dNm: data.company_Name || "",
 
-    daddr1:
-        data.floorAddressForIRN ||
-        data.company_Address ||
-        "",
+   // daddr1:data.floorAddressForIRN ||data.company_Address || "",
 
-    daddr2:
-        data.addressForIRN ||
-        "",
+   // daddr2:data.addressForIRN || "",
 
-    disloc: data.company_City || "",
-    disstcd: data.stateCode || "",
-    dispin: data.company_PINCode || "",
+   // disloc: data.company_City || "",
+   // disstcd: data.stateCode || "",
+   // dispin: data.company_PINCode || "",
 
-    togstin: data.buyerClients?.gstin || "",
+    //shipToGSTIN: data.buyerClients?.gstin || "",
 
-    paddr1:
-        data.buyerClients?.officeAddress || "",
+    //paddr1:data.buyerClients?.officeAddress || "",
 
-    paddr2:
-        data.buyerClients?.poBox || "",
+    //paddr2:data.buyerClients?.poBox || "",
 
-    ploc:
-        data.buyerClients?.officeAddress || "",
+    //ploc:data.buyerClients?.officeAddress || "",
 
-    pstcd:
-        data.buyerClients?.masterStateNames?.stateCode || "",
-
-    ppin:
-        data.buyerClients?.poBox || "",
+    //pstcd:data.buyerClients?.masterStateNames?.stateCode || "",
+    //ppin:data.buyerClients?.poBox || "",
 
     pobewb: ""
 });
@@ -250,17 +233,19 @@ useEffect(() => {
     setBody(prev => ({ ...prev, [key]: value }));
   };
 
-  const generateEWB = async () => {
-    if (!body.irn?.trim()) {
-      alert("IRN is required!");
-      return;
-    }
+ const generateEWB = async () => {
+  if (!body.irn?.trim()) {
+    alert("IRN is required!");
+    return;
+  }
 
-    setLoading(true);
-    setResponse(null);
+  setLoading(true);
+  setResponse(null);
 
-    try {
-      const res = await fetch("https://einvoice.fcssoftwares.com/api/gst/einvoice/generate-ewb", {
+  try {
+    const res = await fetch(
+      "https://einvoice.fcssoftwares.com/api/gst/einvoice/generate-ewb",
+      {
         method: "PUT",
         headers: {
           Accept: "application/json",
@@ -270,32 +255,108 @@ useEffect(() => {
           product: "ONYX",
         },
         body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-      
-
-      const result = {
-        status: res.status,
-        body: data,
-        time: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-      };
-
-      setResponse(result);
-
-      if (res.ok && data.status === "SUCCESS") {
-        alert("E-Way Bill Generated Successfully!");
-        localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
       }
-    } catch (err) {
-      setResponse({ error: err.message });
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
 
+    const data = await res.json();
+
+    const result = {
+      status: res.status,
+      body: data,
+      time: new Date().toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+      }),
+    };
+
+    console.log("Generate EWB Response:", result);
+
+    setResponse(result);
+
+    if (res.ok && data.status === "SUCCESS") {
+      // Save API response locally
+      localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+
+      // Save EWB Number to Database
+      const saved = await handleSaveToDB(data);
+
+      if (saved) {
+        alert("✅ E-Way Bill Generated & Database Updated Successfully!");
+      } else {
+        alert(
+          "⚠️ E-Way Bill Generated Successfully, but Database Update Failed."
+        );
+      }
+    } else {
+      alert(data.message || "Failed to generate E-Way Bill.");
+    }
+  } catch (err) {
+    console.error(err);
+
+    setResponse({
+      status: "ERROR",
+      error: err.message,
+    });
+
+    alert(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleSaveToDB = async (generatedResponse = response) => {
+  if (!generatedResponse) {
+    alert("No response available.");
+    return false;
+  }
+
+  try {
+    const apiData = generatedResponse.body?.response || {};
+  
+console.log("EwbNo", generatedResponse.response?.EwbNo);
+    const invoiceData = JSON.parse(
+      localStorage.getItem("selectedInvoice") || "{}"
+    );
+
+    const putPayload = {
+      id: invoiceData.pid, // or invoiceData.pid if your API expects pid
+      eWayBillNumber:  generatedResponse.response?.EwbNo|| "",
+      barcode: "",
+      ewayQrCode: "",
+    };
+
+    console.log("Update EWB Payload:", putPayload);
+
+    const res = await fetch(
+      "https://einvoice.fcssoftwares.com/api/OrderList/UpdateEWBetailsToInvoice",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ConnectionType:
+            localStorage.getItem("connectionType") || "DEFAULT",
+        },
+        body: JSON.stringify(putPayload),
+      }
+    );
+
+    const result = await res.json();
+
+    console.log("Update Response:", result);
+
+    if (!res.ok) {
+      alert("Database Update Failed");
+      return false;
+    }
+
+    alert("✅ E-Way Bill details saved successfully.");
+    return true;
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+    return false;
+  }
+};
   const isSuccessResponse = response?.status === 200 || response?.body?.status === "SUCCESS";
 
 
@@ -514,11 +575,12 @@ return (
           </td>
 
           {/* Delivery */}
+          
           <td style={tableStyles.td}>
             <LabeledInput
               label="GSTIN"
-              value={body.togstin || ""}
-              onChange={(v) => handleChange("togstin", v)}
+              value={body.shipToGSTIN|| ""}
+              onChange={(v) => handleChange("shipToGSTIN", v)}
             />
 
             <LabeledInput

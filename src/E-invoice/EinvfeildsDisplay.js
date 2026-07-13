@@ -375,7 +375,7 @@ const EinvfeildsDisplay = () => {
     }
   };
 
-const handleGenerateEWayBill = async (invoice) => {
+ const handleGenerateEWayBill = async (invoice) => {
   try {
     setLoading(true);
 
