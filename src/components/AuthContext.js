@@ -52,6 +52,9 @@ export const AuthProvider = ({ children }) => {
   ========================== */
 
   const clearSession = useCallback(() => {
+      localStorage.removeItem("selectedInvoice");
+  localStorage.removeItem("iris_einvoice_response");
+  localStorage.removeItem("iris_einvoice_irn_ewabill");
     sessionStorage.removeItem(EWAY_KEY);
     sessionStorage.removeItem(EINVOICE_KEY);
 

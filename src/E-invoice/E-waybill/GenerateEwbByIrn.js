@@ -76,13 +76,7 @@ const LabeledInput = ({ label, value, onChange, type = 'text', isHighlighted = f
 const STORAGE_KEY = "iris_einvoice_response";
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 
-const FALLBACK_DEFAULTS = {
-  irn: "5eb8ce1121003e0b0b44059d85b660d2f4f00e3587bac05e16fed14a791386cd",
-  userGstin: "01AAACI9260R002",
-  vehNo: "MH20ZZ8888",
-  transId: "01ACQPN4602B002",
-  transDocDate: "14-11-2025",
-};
+
 
 const GenerateEwbByIrn = () => {
   const location = useLocation();
@@ -147,40 +141,36 @@ const getInitialBody = () => ({
   // -----------------------------
   // Basic
   // -----------------------------
-  irn: inv?.irn || FALLBACK_DEFAULTS.irn,
-  userGstin: inv?.gstin || authUserGstin || FALLBACK_DEFAULTS.userGstin,
+  irn: inv?.irn ,
+  userGstin: inv?.gstin || authUserGstin,
 
   // -----------------------------
   // Transport
   // -----------------------------
   vehTyp: "R",
 
-  transDist: Number(inv?.distance || 0),
+  transDist: Number(inv?.distance),
 
   transDocNo:
     inv?.transporterDocNo ||
-    inv?.despatchedDocumentNumber ||
-    `DOC${inv?.keyID || "001"}`,
+    inv?.despatchedDocumentNumber,
 
   transDocDate: formatDate(
     inv?.deliveryNoteDate ||
-    inv?.invoicecreatedOn ||
-    new Date()
+    inv?.invoicecreatedOn
   ),
 
-  vehNo: inv?.vehicleNo || FALLBACK_DEFAULTS.vehNo,
+  vehNo: inv?.vehicleNo ,
 
   transId:
-    inv?.transporterID ||
-    FALLBACK_DEFAULTS.transId,
+    inv?.transporterID ,
 
   transName:
     inv?.transporterName ||
-    inv?.transport ||
-    "SELF",
+    inv?.transport,
 
   transMode:
-    (inv?.transportMode || "Road").trim(),
+    inv?.transportMode ,
 
   // -----------------------------
   // Supply
