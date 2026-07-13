@@ -18,14 +18,18 @@ const LandingPage = () => {
     PRODUCT_MAP[location.pathname] || "EINVOICE";
 
   const [formData, setFormData] = useState({
-    userName: "swastikmachineryhyd@gmail.com",
-    password: "SMC@123",
+    //userName: "swastikmachineryhyd@gmail.com",
+      //password: "SMC@123",
+    //loginRef: "56860",
+
+    userName: "demo12345@gmail.com",
+    password: "demo12345",
     userType: "Admin",
-    loginRef: "56860",
+    loginRef: "",
     yearName: "26-27",
   });
 
-  const [connectionType, setConnectionType] = useState("DEFAULT");
+  const [connectionType, setConnectionType] = useState("LIVE");
   const [yearName, setYearName] = useState("26-27");
 
 
@@ -184,7 +188,6 @@ const LandingPage = () => {
               style={styles.input}
             >
               <option value="Admin">Admin</option>
-              <option value="User">User</option>
             </select>
           </div>
 

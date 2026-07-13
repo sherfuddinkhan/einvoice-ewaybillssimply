@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
 const EInvoiceLoginPage = () => {
-  const [email, setEmail] = useState("ateeq@calibrecue.com");
-  const [password, setPassword] = useState("Ateeq@123");
+  const [email, setEmail] = useState("ateeqpasha@gmail.com");
+  // const [password, setPassword] = useState("Ateeq@123");
+  const [password, setPassword] = useState();
   const [invoiceMode, setInvoiceMode] = useState("NORMAL");
   const [connectionType, setConnectionType] = useState(
       localStorage.getItem("connectionType") || "DEFAULT"
