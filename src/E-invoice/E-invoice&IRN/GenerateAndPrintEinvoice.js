@@ -1619,6 +1619,7 @@ options={[
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginBottom: "8px" }}>
               <LabeledInput label="Product Name" value={item.prdNm} onChange={(v) => updateItem(idx, "prdNm", v)} />
               <LabeledInput label="Product Description" value={item.prdDesc} onChange={(v) => updateItem(idx, "prdDesc", v)} />
+              <LabeledInput label="UOM" value={item.unit} onChange={(v) => updateItem(idx, "unit", v)} />
               <LabeledInput label="HSN Code" value={item.hsnCd} onChange={(v) => updateItem(idx, "hsnCd", v)} />
               <LabeledInput label="Quantity" type="number" value={item.qty} onChange={(v) => updateItem(idx, "qty", v)} />
               <LabeledInput label="Unit Price" type="number" step="0.01" value={item.unitPrice} onChange={(v) => updateItem(idx, "unitPrice", v)} />

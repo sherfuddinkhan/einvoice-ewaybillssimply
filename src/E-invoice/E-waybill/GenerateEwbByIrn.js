@@ -76,13 +76,7 @@ const LabeledInput = ({ label, value, onChange, type = 'text', isHighlighted = f
 const STORAGE_KEY = "iris_einvoice_response";
 const STORAGE_KEY2 = "iris_einvoice_irn_ewabill";
 
-const FALLBACK_DEFAULTS = {
-  irn: "5eb8ce1121003e0b0b44059d85b660d2f4f00e3587bac05e16fed14a791386cd",
-  userGstin: "01AAACI9260R002",
-  vehNo: "MH20ZZ8888",
-  transId: "01ACQPN4602B002",
-  transDocDate: "14-11-2025",
-};
+
 
 const GenerateEwbByIrn = () => {
   const location = useLocation();
@@ -90,6 +84,7 @@ const GenerateEwbByIrn = () => {
 
   const invoiceData = location.state?.invoiceData || JSON.parse(localStorage.getItem("selectedInvoice") || "{}");
   const inv = invoiceData;
+  console.log("inv",inv);
 
   // ================= DATE FORMAT =================
   const formatDate = (dateInput) => {
@@ -102,146 +97,131 @@ const GenerateEwbByIrn = () => {
     return `${dd}-${mm}-${yyyy}`;
   };
 
-console.log("buyerClients", JSON.stringify(inv?.buyerClients, null, 2));
-const payload = {
-  togstin: inv?.buyerClients?.gstin || "",
-  paddr1:
-    inv?.buyerClients?.officeAddress ||
-    inv?.buyerClients?.address ||
-    inv?.clients?.officeAddress ||
-    inv?.clients?.address ||
-    "",
-
-  paddr2:
-    inv?.buyerClients?.poBox ||
-    inv?.buyerClients?.address2 ||
-    inv?.clients?.poBox ||
-    inv?.clients?.address2 ||
-    "",
-
-  ploc:
-    inv?.buyerClients?.city ||
-    inv?.buyerClients?.location ||
-    inv?.clients?.city ||
-    inv?.clients?.location ||
-    "",
-
-  pstcd:
-    inv?.buyerClients?.stateCode ||
-    inv?.clients?.stateCode ||
-    "",
-
-  ppin:
-    inv?.buyerClients?.pinCode ||
-    inv?.buyerClients?.pincode ||
-    inv?.clients?.pinCode ||
-    inv?.clients?.pincode ||
-    "",
-
-  pobewb: "",
-};
-
-console.log("Buyer Address Details:", payload);
-
+console.log("data.irnnumber =", inv.irnnumber);
 const getInitialBody = () => ({
-  // -----------------------------
   // Basic
-  // -----------------------------
-  irn: inv?.irn || FALLBACK_DEFAULTS.irn,
-  userGstin: inv?.gstin || authUserGstin || FALLBACK_DEFAULTS.userGstin,
+  irn: inv?.irnnumber,
+  
+  userGstin: inv?.gstin || authUserGstin,
 
-  // -----------------------------
   // Transport
-  // -----------------------------
   vehTyp: "R",
-
   transDist: Number(inv?.distance || 0),
+  transDocNo: "",
+  transDocDate: "",
+  vehNo: inv?.vehicleNo || "",
+  transId: "",
+  transName: "",
+  transMode: "",
 
-  transDocNo:
-    inv?.transporterDocNo ||
-    inv?.despatchedDocumentNumber ||
-    `DOC${inv?.keyID || "001"}`,
-
-  transDocDate: formatDate(
-    inv?.deliveryNoteDate ||
-    inv?.invoicecreatedOn ||
-    new Date()
-  ),
-
-  vehNo: inv?.vehicleNo || FALLBACK_DEFAULTS.vehNo,
-
-  transId:
-    inv?.transporterID ||
-    FALLBACK_DEFAULTS.transId,
-
-  transName:
-    inv?.transporterName ||
-    inv?.transport ||
-    "SELF",
-
-  transMode:
-    (inv?.transportMode || "Road").trim(),
-
-  // -----------------------------
   // Supply
-  // -----------------------------
   subSplyTyp: "Supply",
   subSplyDes: "",
 
-  // -----------------------------
-  // Dispatch From Details
-dNm: inv?.company_Name,
+  // Dispatch
+  dNm: "",
+  daddr1: "",
+  daddr2: "",
+  disloc: "",
+  disstcd: "",
+  dispin: "",
 
-daddr1:
-  inv?.floorAddressForIRN ||
-  inv?.company_Address ||
-  inv?.companyBranches?.officeAddress,
-
-daddr2:
-  inv?.addressForIRN ||
-  inv?.companyBranches?.poBox,
-
-disloc:
-  inv?.company_City,
-
-disstcd:
-  inv?.stateCode,
-
-dispin:
-  inv?.company_PINCode,
-  // -----------------------------
-  // Ship To / Port Details
-  // -----------------------------
-    togstin: inv?.buyerClients?.gstin || "",
-
-  paddr1:
-    inv?.buyerClients?.officeAddress ||
-    inv?.buyerClients?.address ||
-    inv?.clients?.officeAddress ||
-    inv?.clients?.address ||
-    "",
-
-  paddr2:
-    inv?.buyerClients?.poBox ||
-    inv?.buyerClients?.address2 ||
-    inv?.clients?.poBox ||
-    inv?.clients?.address2 ||
-    "",
-
-  ploc:
-    inv?.buyerClients?.officeAddress || "",
-
-  pstcd:
-    inv?.buyerClients?.masterStateNames?.stateCode || "",
-
-  ppin:
-    inv?.buyerClients?.poBox || "",
-
+  // Delivery
+  togstin: "",
+  paddr1: "",
+  paddr2: "",
+  ploc: "",
+  pstcd: "",
+  ppin: "",
   pobewb: "",
 });
-  const [body, setBody] = useState(getInitialBody);
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState(false);
+
+const [body, setBody] = useState(getInitialBody());
+console.log("body",body)
+const [response, setResponse] = useState(null);
+const [loading, setLoading] = useState(false);
+const [pageLoading, setPageLoading] = useState(true);
+const fetchInvoiceDetails = async () => {
+  try {
+    setPageLoading(true);
+
+    const currentConnectionType =
+      localStorage.getItem("connectionType") || "DEFAULT";
+
+    if (!inv?.pid) return;
+
+    const res = await fetch(
+      `https://einvoice.fcssoftwares.com/api/OrderList/GetInvoiceDetails/${inv?.pid}/invoicecumchallan`,
+      {
+        headers: {
+          Accept: "*/*",
+          ConnectionType: currentConnectionType,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+
+    console.log("Latest Invoice Details", data);
+
+    setBody({
+    irn: inv.irnnumber,
+    userGstin: data.gstin,
+
+    vehTyp: "R",
+    transDist: Number(data.distance || 0),
+    vehNo: data.vehicleNo || "",
+
+    transDocNo:data.transporterDocNo || data.despatchedDocumentNumber || "",
+
+    transDocDate: formatDate(data.deliveryNoteDate ||data.invoiceCreatedOn),
+
+    transId: data.transporterID || "",
+    transName: data.transporterName || data.transport || "",
+    transMode: data.transportMode || "",
+
+    subSplyTyp: "Supply",
+    subSplyDes: "",
+
+    //dNm: data.company_Name || "",
+
+   // daddr1:data.floorAddressForIRN ||data.company_Address || "",
+
+   // daddr2:data.addressForIRN || "",
+
+   // disloc: data.company_City || "",
+   // disstcd: data.stateCode || "",
+   // dispin: data.company_PINCode || "",
+
+    //shipToGSTIN: data.buyerClients?.gstin || "",
+
+    //paddr1:data.buyerClients?.officeAddress || "",
+
+    //paddr2:data.buyerClients?.poBox || "",
+
+    //ploc:data.buyerClients?.officeAddress || "",
+
+    //pstcd:data.buyerClients?.masterStateNames?.stateCode || "",
+    //ppin:data.buyerClients?.poBox || "",
+
+    pobewb: ""
+});
+
+  } catch (err) {
+    console.error("Failed to fetch invoice details", err);
+  } finally {
+    setPageLoading(false);
+  }
+};
+
+useEffect(() => {
+  if (!inv?.pid) return;
+
+  fetchInvoiceDetails();
+}, []);
+
+
 
   const isReady = !!(companyId && token);
 
@@ -253,17 +233,19 @@ dispin:
     setBody(prev => ({ ...prev, [key]: value }));
   };
 
-  const generateEWB = async () => {
-    if (!body.irn?.trim()) {
-      alert("IRN is required!");
-      return;
-    }
+ const generateEWB = async () => {
+  if (!body.irn?.trim()) {
+    alert("IRN is required!");
+    return;
+  }
 
-    setLoading(true);
-    setResponse(null);
+  setLoading(true);
+  setResponse(null);
 
-    try {
-      const res = await fetch("https://einvoice.fcssoftwares.com/api/gst/einvoice/generate-ewb", {
+  try {
+    const res = await fetch(
+      "https://einvoice.fcssoftwares.com/api/gst/einvoice/generate-ewb",
+      {
         method: "PUT",
         headers: {
           Accept: "application/json",
@@ -273,216 +255,424 @@ dispin:
           product: "ONYX",
         },
         body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-
-      const result = {
-        status: res.status,
-        body: data,
-        time: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-      };
-
-      setResponse(result);
-
-      if (res.ok && data.status === "SUCCESS") {
-        alert("E-Way Bill Generated Successfully!");
-        localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
       }
-    } catch (err) {
-      setResponse({ error: err.message });
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
 
+    const data = await res.json();
+
+    const result = {
+      status: res.status,
+      body: data,
+      time: new Date().toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+      }),
+    };
+
+    console.log("Generate EWB Response:", result);
+
+    setResponse(result);
+
+    if (res.ok && data.status === "SUCCESS") {
+      // Save API response locally
+      localStorage.setItem(STORAGE_KEY2, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+
+      // Save EWB Number to Database
+      const saved = await handleSaveToDB(data);
+
+      if (saved) {
+        alert("✅ E-Way Bill Generated & Database Updated Successfully!");
+      } else {
+        alert(
+          "⚠️ E-Way Bill Generated Successfully, but Database Update Failed."
+        );
+      }
+    } else {
+      alert(data.message || "Failed to generate E-Way Bill.");
+    }
+  } catch (err) {
+    console.error(err);
+
+    setResponse({
+      status: "ERROR",
+      error: err.message,
+    });
+
+    alert(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleSaveToDB = async (generatedResponse = response) => {
+  if (!generatedResponse) {
+    alert("No response available.");
+    return false;
+  }
+
+  try {
+    const apiData = generatedResponse.body?.response || {};
+  
+console.log("EwbNo", generatedResponse.response?.EwbNo);
+    const invoiceData = JSON.parse(
+      localStorage.getItem("selectedInvoice") || "{}"
+    );
+
+    const putPayload = {
+      id: invoiceData.pid, // or invoiceData.pid if your API expects pid
+      eWayBillNumber:  generatedResponse.response?.EwbNo|| "",
+      barcode: "",
+      ewayQrCode: "",
+    };
+
+    console.log("Update EWB Payload:", putPayload);
+
+    const res = await fetch(
+      "https://einvoice.fcssoftwares.com/api/OrderList/UpdateEWBetailsToInvoice",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ConnectionType:
+            localStorage.getItem("connectionType") || "DEFAULT",
+        },
+        body: JSON.stringify(putPayload),
+      }
+    );
+
+    const result = await res.json();
+
+    console.log("Update Response:", result);
+
+    if (!res.ok) {
+      alert("Database Update Failed");
+      return false;
+    }
+
+    alert("✅ E-Way Bill details saved successfully.");
+    return true;
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+    return false;
+  }
+};
   const isSuccessResponse = response?.status === 200 || response?.body?.status === "SUCCESS";
 
-  return (
-    <div style={tableStyles.container}>
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-        <h1 style={tableStyles.header}>Generate E-Way Bill by IRN</h1>
 
-        <div style={{
-          padding: '12px',
-          background: isReady ? '#e8f5e9' : '#ffebee',
-          borderRadius: '10px',
-          marginBottom: '30px',
-          fontWeight: 'bold',
-          color: isReady ? colors.success : colors.danger,
-          textAlign: 'center'
-        }}>
-          Auth Status: {isReady ? '✅ Ready' : '❌ Missing Token or Company ID'}
-        </div>
+return (
+  <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+    <h2 style={{ textAlign: "center", marginBottom: 20 }}>
+      Generate E-Way Bill by IRN
+    </h2>
 
-        {/* E-Invoice Reference */}
-        <table style={tableStyles.table}>
-          <thead>
-            <tr><th colSpan={2} style={{ background: colors.primary, color: "white" }}>E-Invoice Reference & Supply Details</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={tableStyles.td}>
-                <LabeledInput label="IRN" value={body.irn} onChange={(v) => handleChange('irn', v)} isHighlighted />
-              </td>
-              <td style={tableStyles.td}>
-                <LabeledInput label="User GSTIN" value={body.userGstin} onChange={(v) => handleChange('userGstin', v)} isHighlighted />
-              </td>
-            </tr>
-            <tr>
-              <td style={tableStyles.td}>
-                <LabeledInput label="Supply Type" value={body.subSplyTyp} onChange={(v) => handleChange('subSplyTyp', v)} />
-              </td>
-              <td style={tableStyles.td}>
-                <LabeledInput label="Supply Description" value={body.subSplyDes} onChange={(v) => handleChange('subSplyDes', v)} />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        {/* Transport Details */}
-        <table style={tableStyles.table}>
-          <thead>
-            <tr><th colSpan={3} style={{ background: "#FF9800", color: "white" }}>Transport Details</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={tableStyles.td}><LabeledInput label="Vehicle No" value={body.vehNo} onChange={v => handleChange('vehNo', v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="Transporter ID" value={body.transId} onChange={v => handleChange('transId', v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="Transporter Name" value={body.transName} onChange={v => handleChange('transName', v)} /></td>
-            </tr>
-            <tr>
-              <td style={tableStyles.td}><LabeledInput label="Mode" value={body.transMode} onChange={v => handleChange('transMode', v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="Vehicle Type" value={body.vehTyp} onChange={v => handleChange('vehTyp', v)} /></td>
-              <td style={tableStyles.td}><LabeledInput label="Distance (km)" value={body.transDist} onChange={v => handleChange('transDist', v)} type="number" /></td>
-            </tr>
-            <tr>
-              <td style={tableStyles.td}><LabeledInput label="Trans Doc No" value={body.transDocNo} onChange={v => handleChange('transDocNo', v)} /></td>
-              <td colSpan={2} style={tableStyles.td}><LabeledInput label="Trans Doc Date" value={body.transDocDate} onChange={v => handleChange('transDocDate', v)} /></td>
-            </tr>
-          </tbody>
-        </table>
-
-        {/* Dispatch & Delivery */}
-       <table style={tableStyles.table}>
-  <thead>
-    <tr>
-      <th style={{ background: colors.success, color: "white" }}>
-        Dispatch Details
-      </th>
-      <th style={{ background: colors.primary, color: "white" }}>
-        Delivery Details
-      </th>
-    </tr>
-  </thead>
-
-  <tbody>
-    <tr>
-
-      {/* Dispatch */}
-      <td style={tableStyles.td}>
-        <LabeledInput
-          label="Trade Name"
-          value={body.dNm}
-          onChange={v => handleChange("dNm", v)}
-        />
-        <LabeledInput
-          label="Address 1"
-          value={body.daddr1}
-          onChange={v => handleChange("daddr1", v)}
-        />
-        <LabeledInput
-          label="Address 2"
-          value={body.daddr2}
-          onChange={v => handleChange("daddr2", v)}
-        />
-        <LabeledInput
-          label="Location"
-          value={body.disloc}
-          onChange={v => handleChange("disloc", v)}
-        />
-        <LabeledInput
-          label="State Code"
-          value={body.disstcd}
-          onChange={v => handleChange("disstcd", v)}
-        />
-        <LabeledInput
-          label="PIN"
-          value={body.dispin}
-          onChange={v => handleChange("dispin", v)}
-        />
-      </td>
-
-      {/* Delivery */}
-      <td style={tableStyles.td}>
-      <LabeledInput
-  label="GSTIN"
-  value={body.togstin || ""}
-  onChange={v => handleChange("togstin", v)}
-/>
-        <LabeledInput
-          label="Address 1"
-          value={body.paddr1}
-          onChange={v => handleChange("paddr1", v)}
-        />
-        <LabeledInput
-          label="Address 2"
-          value={body.paddr2}
-          onChange={v => handleChange("paddr2", v)}
-        />
-        <LabeledInput
-          label="Location"
-          value={body.ploc}
-          onChange={v => handleChange("ploc", v)}
-        />
-        <LabeledInput
-          label="State Code"
-          value={body.pstcd}
-          onChange={v => handleChange("pstcd", v)}
-        />
-        <LabeledInput
-          label="PIN"
-          value={body.ppin}
-          onChange={v => handleChange("ppin", v)}
-        />
-        <LabeledInput
-          label="Place of EWB"
-          value={body.pobewb}
-          onChange={v => handleChange("pobewb", v)}
-        />
-      </td>
-
-    </tr>
-  </tbody>
-</table>
-
-        {/* Generate Button */}
-        <div style={{ textAlign: "center", margin: "40px 0" }}>
-          <button
-            onClick={generateEWB}
-            disabled={loading || !isReady}
-            style={tableStyles.btnGenerate(loading, isReady)}
-          >
-            {loading ? 'Generating E-Way Bill...' : 'GENERATE E-WAY BILL'}
-          </button>
-        </div>
-
-        {/* Response */}
-        {response && (
-          <div>
-            <h3 style={{ color: isSuccessResponse ? colors.success : colors.danger, marginBottom: "16px" }}>
-              API Response {response.status && `(Status: ${response.status})`}
-            </h3>
-            <pre style={tableStyles.responseBox(response?.body?.status || response?.status)}>
-              {JSON.stringify(response?.body ?? response, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
+    <div
+      style={{
+        padding: "12px",
+        background: isReady ? "#e8f5e9" : "#ffebee",
+        borderRadius: "10px",
+        marginBottom: "30px",
+        fontWeight: "bold",
+        color: isReady ? colors.success : colors.danger,
+        textAlign: "center",
+      }}
+    >
+      Auth Status: {isReady ? "✅ Ready" : "❌ Missing Token or Company ID"}
     </div>
-  );
+
+    {/* E-Invoice Reference */}
+    <table style={tableStyles.table}>
+      <thead>
+        <tr>
+          <th
+            colSpan={2}
+            style={{ background: colors.primary, color: "#fff" }}
+          >
+            E-Invoice Reference & Supply Details
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="IRN"
+              value={body.irn || ""}
+              onChange={(v) => handleChange("irn", v)}
+              isHighlighted
+            />
+          </td>
+
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="User GSTIN"
+              value={body.userGstin || ""}
+              onChange={(v) => handleChange("userGstin", v)}
+              isHighlighted
+            />
+          </td>
+        </tr>
+
+        <tr>
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Supply Type"
+              value={body.subSplyTyp || ""}
+              onChange={(v) => handleChange("subSplyTyp", v)}
+            />
+          </td>
+
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Supply Description"
+              value={body.subSplyDes || ""}
+              onChange={(v) => handleChange("subSplyDes", v)}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    {/* Transport Details */}
+    <table style={tableStyles.table}>
+      <thead>
+        <tr>
+          <th
+            colSpan={3}
+            style={{ background: "#FF9800", color: "#fff" }}
+          >
+            Transport Details
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Vehicle No"
+              value={body.vehNo || ""}
+              onChange={(v) => handleChange("vehNo", v)}
+            />
+          </td>
+
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Transporter ID"
+              value={body.transId || ""}
+              onChange={(v) => handleChange("transId", v)}
+            />
+          </td>
+
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Transporter Name"
+              value={body.transName || ""}
+              onChange={(v) => handleChange("transName", v)}
+            />
+          </td>
+        </tr>
+
+        <tr>
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Mode"
+              value={body.transMode || ""}
+              onChange={(v) => handleChange("transMode", v)}
+            />
+          </td>
+
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Vehicle Type"
+              value={body.vehTyp || ""}
+              onChange={(v) => handleChange("vehTyp", v)}
+            />
+          </td>
+
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Distance (km)"
+              value={body.transDist || ""}
+              onChange={(v) => handleChange("transDist", v)}
+              type="number"
+            />
+          </td>
+        </tr>
+
+        <tr>
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Trans Doc No"
+              value={body.transDocNo || ""}
+              onChange={(v) => handleChange("transDocNo", v)}
+            />
+          </td>
+
+          <td colSpan={2} style={tableStyles.td}>
+            <LabeledInput
+              label="Trans Doc Date"
+              value={body.transDocDate || ""}
+              onChange={(v) => handleChange("transDocDate", v)}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+       {/* Dispatch & Delivery */}
+    <table style={tableStyles.table}>
+      <thead>
+        <tr>
+          <th style={{ background: colors.success, color: "#fff" }}>
+            Dispatch Details
+          </th>
+          <th style={{ background: colors.primary, color: "#fff" }}>
+            Delivery Details
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          {/* Dispatch */}
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="Trade Name"
+              value={body.dNm || ""}
+              onChange={(v) => handleChange("dNm", v)}
+            />
+
+            <LabeledInput
+              label="Address 1"
+              value={body.daddr1 || ""}
+              onChange={(v) => handleChange("daddr1", v)}
+            />
+
+            <LabeledInput
+              label="Address 2"
+              value={body.daddr2 || ""}
+              onChange={(v) => handleChange("daddr2", v)}
+            />
+
+            <LabeledInput
+              label="Location"
+              value={body.disloc || ""}
+              onChange={(v) => handleChange("disloc", v)}
+            />
+
+            <LabeledInput
+              label="State Code"
+              value={body.disstcd || ""}
+              onChange={(v) => handleChange("disstcd", v)}
+            />
+
+            <LabeledInput
+              label="PIN"
+              value={body.dispin || ""}
+              onChange={(v) => handleChange("dispin", v)}
+            />
+          </td>
+
+          {/* Delivery */}
+          
+          <td style={tableStyles.td}>
+            <LabeledInput
+              label="GSTIN"
+              value={body.shipToGSTIN|| ""}
+              onChange={(v) => handleChange("shipToGSTIN", v)}
+            />
+
+            <LabeledInput
+              label="Address 1"
+              value={body.paddr1 || ""}
+              onChange={(v) => handleChange("paddr1", v)}
+            />
+
+            <LabeledInput
+              label="Address 2"
+              value={body.paddr2 || ""}
+              onChange={(v) => handleChange("paddr2", v)}
+            />
+
+            <LabeledInput
+              label="Location"
+              value={body.ploc || ""}
+              onChange={(v) => handleChange("ploc", v)}
+            />
+
+            <LabeledInput
+              label="State Code"
+              value={body.pstcd || ""}
+              onChange={(v) => handleChange("pstcd", v)}
+            />
+
+            <LabeledInput
+              label="PIN"
+              value={body.ppin || ""}
+              onChange={(v) => handleChange("ppin", v)}
+            />
+
+            <LabeledInput
+              label="Place of EWB"
+              value={body.pobewb || ""}
+              onChange={(v) => handleChange("pobewb", v)}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    {/* Generate Button */}
+    <div
+      style={{
+        textAlign: "center",
+        margin: "40px 0",
+      }}
+    >
+      <button
+        onClick={generateEWB}
+        disabled={loading || !isReady}
+        style={tableStyles.btnGenerate(loading, isReady)}
+      >
+        {loading
+          ? "Generating E-Way Bill..."
+          : "GENERATE E-WAY BILL"}
+      </button>
+    </div>
+
+    {/* Response */}
+    {response && (
+      <div>
+        <h3
+          style={{
+            color: isSuccessResponse
+              ? colors.success
+              : colors.danger,
+            marginBottom: "16px",
+          }}
+        >
+          API Response
+          {response.status &&
+            ` (Status: ${response.status})`}
+        </h3>
+
+        <pre
+          style={tableStyles.responseBox(
+            response?.body?.status ||
+              response?.status
+          )}
+        >
+          {JSON.stringify(
+            response?.body ?? response,
+            null,
+            2
+          )}
+        </pre>
+      </div>
+    )}
+  </div>
+);
 };
 
 export default GenerateEwbByIrn;
