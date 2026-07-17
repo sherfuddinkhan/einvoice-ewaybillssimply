@@ -32,7 +32,7 @@ const EInvoiceLoginPage = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-             ConnectionType: currentConnectionType,
+             ConnectionType: connectionType,
           },
           body: JSON.stringify({
             email,
